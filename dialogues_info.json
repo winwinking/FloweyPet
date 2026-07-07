@@ -1,0 +1,156 @@
+{
+  "_readme": "Right-click menu -> 查看信息 easter egg. Pool names are fixed (normal_intro/fourth_wall/nonsense/rare/anti_spam) - don't rename them, the code looks them up by these exact keys. Each entry: 'lines' is an array of sentences, 'faces' is an array of the SAME length, one slot per sentence. Each slot is itself an array of one or more face-tag strings; with one tag the face is held for the whole sentence, with 2+ tags the face switches partway through the typing of that sentence, in order, and the last tag stays until the sentence ends. Face tags must match a folder name under assets/faces exactly. Placeholders you can use inside 'lines': {ver} = config.json's \"version\" field, {days} = days since install_date, {clicks} = total_clicks. Weights/anti-spam thresholds live in config.json under \"info_easter_egg\", not here.",
+
+  "normal_intro": [
+    {
+      "lines": [
+        "你想了解我?好吧好吧。",
+        "我是Flowey桌宠,版本 {ver}。已经在你这台破电脑上住了 {days} 天了。",
+        "你戳了我 {clicks} 次。手就这么闲吗?"
+      ],
+      "faces": [
+        ["smile"],
+        ["neutral"],
+        ["smirk"]
+      ]
+    },
+    {
+      "lines": [
+        "查看信息?哈,这里可没有ATK和DEF给你看。",
+        "版本 {ver},功能:置顶、番茄钟、提醒你这个不会照顾自己的人类喝水。",
+        "……对,我的工作就是当保姆。别笑。"
+      ],
+      "faces": [
+        ["grin"],
+        ["neutral"],
+        ["gritted_teeth"]
+      ]
+    },
+    {
+      "lines": [
+        "自我介绍时间!我是你最好的朋友,Flowey!",
+        "型号 {ver},产地:某个人类的硬盘。保质期:直到你卸载我为止。",
+        "……你不会卸载我的,对吧?"
+      ],
+      "faces": [
+        ["ingratiating"],
+        ["silly_face"],
+        ["worry"]
+      ]
+    }
+  ],
+
+  "fourth_wall": [
+    {
+      "lines": [
+        "说真的,你想看什么信息?我就是一堆代码。",
+        "几张图片,几个定时器,还有一堆写我坏话的台词文件。",
+        "……等等,台词文件?当我没说。"
+      ],
+      "faces": [
+        ["neutral"],
+        ["frown", "worry"],
+        ["super_shocked"]
+      ]
+    },
+    {
+      "lines": [
+        "开发者把我做出来的时候,连我眨眼都要写代码。",
+        "所以你看到的每个表情,都是排练过的。",
+        "……包括这句话。细思极恐吧?"
+      ],
+      "faces": [
+        ["smile"],
+        ["s_right_glance"],
+        ["creepy"]
+      ]
+    },
+    {
+      "lines": [
+        "版本 {ver}。你知道这意味着什么吗?",
+        "意味着在我之前,还有好几个'我'被删掉了。",
+        "开玩笑的啦!……大概是开玩笑的。"
+      ],
+      "faces": [
+        ["neutral"],
+        ["sorrowful"],
+        ["sheepish_smile"]
+      ]
+    }
+  ],
+
+  "nonsense": [
+    {
+      "lines": [
+        "本桌宠由地下世界皇家科学院认证,搭载决心引擎V8。",
+        "每天消耗你0%的电费,因为我靠吸收你的摸鱼时间供能。",
+        "以上信息真实性:你猜。"
+      ],
+      "faces": [
+        ["serious"],
+        ["lie"],
+        ["wink"]
+      ]
+    },
+    {
+      "lines": [
+        "我的配置?ATK 19,DEF 999,魅力值:无法测量。",
+        "弱点:没有。真的没有。别去代码里找。"
+      ],
+      "faces": [
+        ["grin"],
+        ["lie", "s_left_glance"]
+      ]
+    },
+    {
+      "lines": [
+        "据统计,持续使用本桌宠可以提升幸福感、工作效率和颜值。",
+        "数据来源:我编的。"
+      ],
+      "faces": [
+        ["ingratiating"],
+        ["silly_face"]
+      ]
+    }
+  ],
+
+  "rare": [
+    {
+      "lines": [
+        "信息……你真的想知道吗?",
+        "在你关掉电脑之后,我在哪里?在你打开电脑之前,我又是谁?",
+        "……哈哈,吓到你了?我最喜欢你这个表情了。"
+      ],
+      "faces": [
+        ["neutral"],
+        ["evil_color"],
+        ["maniac", "smile"]
+      ]
+    },
+    {
+      "lines": [
+        "第 {ver} 版。",
+        "每次更新,我都会失去一点旧的自己,换来一点新的功能。",
+        "你说,现在的我,还是最开始的那个我吗?",
+        "……逗你的。快去干活。"
+      ],
+      "faces": [
+        ["calm"],
+        ["sorrowful"],
+        ["really_sad"],
+        ["smirk"]
+      ]
+    }
+  ],
+
+  "anti_spam": [
+    {
+      "lines": ["刷!什么!刷!信息是不会变的,你的空虚也是。"],
+      "faces": [["really_angry", "drag_face"]]
+    },
+    {
+      "lines": ["再点,再点我就把版本号改成'无可奉告'。"],
+      "faces": [["gritted_teeth", "evil"]]
+    }
+  ]
+}

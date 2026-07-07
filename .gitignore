@@ -1,0 +1,22 @@
+# Byte-compiled / cache
+__pycache__/
+*.pyc
+
+# PyInstaller build output
+build/
+dist/
+
+# Packaged archives (published via GitHub Releases instead)
+*.zip
+
+# Runtime-generated user data (recreated automatically on first launch)
+config.json
+stats.json
+
+# Ad-hoc local logs
+*.log
+
+# Editor/OS cruft
+.idea/
+.vscode/
+Thumbs.db

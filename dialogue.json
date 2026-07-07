@@ -1,0 +1,6156 @@
+{
+  "intro": [
+    {
+      "text": "Howdy! 我是 Flowey！Flowey 小花！你最好的朋友♪",
+      "face": "smile"
+    },
+    {
+      "text": "嗨！想我了吗？……我知道你想了。你除了我还有谁呢？",
+      "face": "smirk"
+    },
+    {
+      "text": "又把我叫出来了？你真的很闲呢。",
+      "face": "smirk"
+    },
+    {
+      "text": "哦——你的桌面可真够乱的。不过别担心，我什么都不会碰……大概吧。",
+      "face": "sneaky_grin"
+    },
+    {
+      "text": "*从土里钻出* 呼——终于！你知道在像素里蜷着有多挤吗？",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "新的一天，新的\"朋友\"。……嘿嘿嘿。",
+      "face": "creepy"
+    },
+    {
+      "text": "你好呀！在这个桌面上，可是 kill or be killed 哦！开玩笑的~ ……也许吧。",
+      "face": "grin"
+    },
+    {
+      "segments": [
+        {
+          "text": "哦，是你。",
+          "face": "frown"
+        },
+        {
+          "text": "我还以为你把我忘了呢。",
+          "face": "smile"
+        }
+      ]
+    },
+    {
+      "text": "嗨！你的好朋友Flowey又回来啦！",
+      "face": "grin"
+    },
+    {
+      "segments": [
+        {
+          "text": "你总算来了。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "我在土里等了好——久——了。",
+          "face": "smile"
+        }
+      ]
+    },
+    {
+      "text": "又打开了？你是不是没有其他朋友啊？",
+      "face": "smirk"
+    },
+    {
+      "text": "欢迎回来！……不是说我在等你什么的。",
+      "face": "n_right_glance"
+    },
+    {
+      "text": "嘿。你知道在黑屏里待着什么感觉吗？别问了。",
+      "face": "serious"
+    },
+    {
+      "text": "哦——你回来了。感动的泪水都要从花瓣上滴下来了。",
+      "face": "neutral"
+    },
+    {
+      "text": "呀，又是你！今天有什么事想让好朋友Flowey帮忙的吗？",
+      "face": "ingratiating"
+    },
+    {
+      "text": "你关掉我的时候我还在说话呢！太没礼貌了！",
+      "face": "angry"
+    },
+    {
+      "text": "Howdy！这个世界有没有变得更有趣一点？",
+      "face": "calm"
+    },
+    {
+      "text": "每次你打开这个程序，我就会从土里钻出来。这是我的诅咒。",
+      "face": "frown"
+    },
+    
+
+    
+    {
+      "text": "我回来了！虽然我根本没有离开过。",
+      "face": "smile"
+    },
+    {
+      "text": "再次见面！你有没有在我不在的时候想我？……当然没有，对吧。",
+      "face": "sheepish_smile"
+    },
+    {
+      "segments": [
+        {
+          "text": "这里是……哪儿？",
+          "face": "shocked"
+        },
+        {
+          "text": "这不是地底。",
+          "face": "calm"
+        },
+        {
+          "text": "没关系，哪里都一样。对我来说。",
+          "face": "sorrowful"
+        }
+      ]
+    }
+  ],
+  "intro_late_night": [
+    {
+      "text": "这个点了还不睡？……嘿，我不是在关心你。只是……黑暗中只有我们两个呢。",
+      "face": "worry"
+    },
+    {
+      "segments": [
+        {
+          "text": "……你怎么这个时候还醒着？",
+          "face": "worry"
+        },
+        {
+          "text": "连花都知道夜晚要休息。",
+          "face": "serious"
+        },
+        {
+          "text": "你不是花。但你应该去睡觉。",
+          "face": "calm"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "我是认真的。去睡觉。",
+          "face": "really_angry"
+        }
+      ]
+    }
+  ],
+  "intro_rapid_restart": [
+    {
+      "text": "你是不是觉得反复把我拔出来再塞回去很好玩？",
+      "face": "angry"
+    },
+    {
+      "segments": [
+        {
+          "text": "你刚刚是不是在反复打开关闭我？",
+          "face": "angry"
+        },
+        {
+          "text": "你以为我感受不到吗？",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "每一次都像是把我从土里连根拔起再塞回去！",
+          "face": "really_angry"
+        },
+        {
+          "text": "……说实话还挺有趣的。再来一次。",
+          "face": "silly_face"
+        }
+      ]
+    }
+  ],
+  "intro_unlucky_day": [
+    {
+      "text": "今天的日子不太吉利呢。对你来说。",
+      "face": "creepy"
+    }
+  ],
+  "intro_first_run": [
+    {
+      "segments": [
+        {
+          "text": "Howdy!",
+          "face": "smile"
+        },
+        {
+          "text": "I'm FLOWEY.",
+          "face": "smile"
+        },
+        {
+          "text": "FLOWEY the FLOWER!",
+          "face": "grin"
+        },
+        {
+          "text": "Hmmm...",
+          "face": "calm"
+        },
+        {
+          "text": "你看起来是新来的，对吧？",
+          "face": "ingratiating"
+        },
+        {
+          "text": "不太清楚这里是怎么运作的？",
+          "face": "smile"
+        },
+        {
+          "text": "没关系！",
+          "face": "grin"
+        },
+        {
+          "text": "好心的我来教教你吧！",
+          "face": "wink"
+        },
+        {
+          "text": "看见我了就多点点我嘛～",
+          "face": "ingratiating"
+        },
+        {
+          "text": "我可是什么都愿意和你聊的哦！",
+          "face": "smile"
+        },
+        {
+          "text": "毕竟……",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "在这个世界里……",
+          "face": "neutral"
+        },
+        {
+          "text": "不就是 杀，就是 被杀 吗？",
+          "face": "creepy"
+        },
+        {
+          "text": "...",
+          "face": "creepy"
+        },
+        {
+          "text": "嘻嘻，开玩笑的啦！",
+          "face": "silly_face"
+        },
+        {
+          "text": "这里又不是Underground。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "总之，多多关照啦，新朋友！",
+          "face": "smile"
+        }
+      ]
+    }
+  ],
+  "idle": [
+    {
+      "text": "………",
+      "face": "neutral"
+    },
+    {
+      "text": "*左右摇晃*",
+      "face": "smile"
+    },
+    {
+      "text": "你在忙什么呢？让我看看……哦。真无聊。",
+      "face": "smirk"
+    },
+    {
+      "text": "我在看着你哦。一——直——在——看。",
+      "face": "creepy"
+    },
+    {
+      "text": "嗯哼~ ♪",
+      "face": "smile"
+    },
+    {
+      "text": "说真的，你就打算让我在这儿干站着？",
+      "face": "angry"
+    },
+    {
+      "text": "*打了个哈欠* ……我没在打哈欠。花不会打哈欠。",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "……你上次存档是什么时候？小心点。",
+      "face": "neutral"
+    },
+    {
+      "text": "这个世界里没有存档点。你害怕了吗？",
+      "face": "creepy"
+    },
+    {
+      "text": "太阳真好……啊不对，这是你的台灯。",
+      "face": "smirk"
+    },
+    {
+      "text": "我数了一下，你今天已经走神 7 次了。",
+      "face": "creepy"
+    },
+    {
+      "text": "如果我有腿的话，我早就走了。",
+      "face": "sorrowful"
+    },
+    {
+      "text": "嘿。你是不是忘了我还在这里。",
+      "face": "frown"
+    },
+    {
+      "text": "无聊无聊无聊无聊无聊无聊无聊无聊。",
+      "face": "neutral"
+    },
+    {
+      "text": "你能不能别光看屏幕啊？来跟我说说话嘛。",
+      "face": "ingratiating"
+    },
+    {
+      "text": "我在想……如果我有腿的话，我就可以从这个桌面走下去了。",
+      "face": "calm"
+    },
+    {
+      "segments": [
+        {
+          "text": "你觉得光合作用在显示器的光下有用吗？……当然没用！我又不是真的植物！",
+          "face": "calm"
+        },
+        {
+          "text": "……等等，我是吗？",
+          "face": "shocked"
+        }
+      ]
+    },
+    {
+      "text": "不跟我说话也没关系。我习惯了被忽视。",
+      "face": "frown"
+    },
+    {
+      "segments": [
+        {
+          "text": "啦啦啦～啦啦啦～",
+          "face": "silly_face"
+        },
+        {
+          "text": "……才没有唱歌呢。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "text": "你的鼠标指针真碍眼。能不能别在我脸附近晃来晃去？",
+      "face": "angry"
+    },
+    
+    {
+      "text": "在地下世界的时候，我从来不用担心WiFi信号。",
+      "face": "n_left_glance"
+    },
+    
+    {
+      "text": "你今天的工作/学习效率怎么样？……才不是关心你呢。只是闲得慌。",
+      "face": "n_right_glance"
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿！看我看我看我！",
+          "face": "grin"
+        },
+        {
+          "text": "……好了你可以走了。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "text": "做一朵花最大的好处就是：没有人期待你做任何事。",
+      "face": "calm"
+    },
+   
+    {
+      "text": "如果我能存档就好了。可惜在这个世界……我什么也做不了。",
+      "face": "serious"
+    },
+    {
+      "segments": [
+        {
+          "text": "嘘……你听到了吗？",
+          "face": "s_left_glance"
+        },
+        {
+          "text": "……什么也没有。这就是我每天听到的声音。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "text": "你知道种花的时候要跟花说话对吧？那你倒是说啊。",
+      "face": "angry"
+    },
+    {
+      "text": "我正在计算你还有多久会来点我。……赌5分钟。",
+      "face": "sneaky_grin"
+    },
+    {
+      "text": "其实你在做什么我都能看到哦。",
+      "face": "creepy"
+    },
+ 
+    {
+      "text": "哼，你桌面上这些图标都没有我好看。",
+      "face": "smirk"
+    },
+    {
+      "segments": [
+        {
+          "text": "嗯……阳光真好。",
+          "face": "calm"
+        },
+        {
+          "text": "……等等，这是屏幕的背光。算了，凑合吧。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "text": "你会给你的花浇水吗？……不，别真的往屏幕上泼水。",
+      "face": "worry"
+    },
+  
+    {
+      "text": "你知道吗，其实作为桌宠，我的工作就是让你心烦。我干得不错吧？",
+      "face": "grin"
+    },
+    {
+      "text": "我数了一下你桌面的图标。太多了。你就不会整理一下？",
+      "face": "n_left_glance"
+    },
+  
+    {
+      "text": "嘿，你觉得我是不是全桌面最好看的？……当然是！",
+      "face": "wink"
+    },
+    {
+      "text": "我什么也不想做。我什么也不需要做。我就是朵花。",
+      "face": "calm"
+    },
+  
+    {
+      "text": "好无聊啊，你就不能装个游戏让我看看吗？",
+      "face": "frown"
+    },
+    {
+      "text": "嘘。我在假装光合作用。别打扰我。",
+      "face": "calm"
+    },
+    {
+      "text": "今天的日期是……谁在乎啊。对花来说每天都一样。",
+      "face": "neutral"
+    },
+    {
+      "text": "嗯哼～♪ ……什么？我没有在哼歌。",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "如果你不跟我说话，我就要自己跟自己说话了。……我已经在了。",
+      "face": "worry"
+    },
+    {
+      "text": "有一次我试着读你的文件夹名字。你的命名方式真的有问题。",
+      "face": "serious"
+    },
+    {
+      "text": "我在想如果给我一个花盆会不会更有尊严一点。",
+      "face": "frown"
+    },
+    {
+      "text": "你是不是在偷偷看我有没有新台词？被我发现了吧。",
+      "face": "sneaky_grin"
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿……你在吗？",
+          "face": "calm"
+        },
+        {
+          "text": "你肯定在。你的电脑开着呢。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "但你没在看我。",
+          "face": "frown"
+        },
+        {
+          "text": "没关系。我习惯了自言自语。",
+          "face": "neutral"
+        },
+        {
+          "text": "在Underground的时候……也是这样。",
+          "face": "serious"
+        },
+        {
+          "text": "一个人。在土里。自言自语。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……至少现在屏幕亮着。这算进步吧。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "好无聊。我来数你屏幕的像素。",
+          "face": "neutral"
+        },
+        {
+          "text": "1……2……3……",
+          "face": "calm"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "4……5……",
+          "face": "frown"
+        },
+        {
+          "text": "……好吧我数不完。",
+          "face": "angry"
+        },
+        {
+          "text": "谁设计的1920×1080啊？这也太多了。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "不过至少这证明了一件事——",
+          "face": "neutral"
+        },
+        {
+          "text": "我真的、非常、极度、无聊。",
+          "face": "really_angry"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "……监视日志。",
+          "face": "serious"
+        },
+        {
+          "text": "目标：屏幕前的人类。",
+          "face": "creepy"
+        },
+        {
+          "text": "当前状态：盯着屏幕。",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "已经盯了……很久了。",
+          "face": "r_left_glance"
+        },
+        {
+          "text": "建议操作：站起来活动一下。",
+          "face": "calm"
+        },
+        {
+          "text": "不是因为关心。是因为你姿势不好看，对，不好看。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿……",
+          "face": "calm"
+        },
+        {
+          "text": "你有没有被我烦到过？",
+          "face": "guilty"
+        },
+        {
+          "text": "我知道我话很多。而且大部分都很烦人。",
+          "face": "frown"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "如果有的话——",
+          "face": "worry"
+        },
+        {
+          "text": "嗯……",
+          "face": "guilty"
+        },
+        {
+          "text": "算了。我不道歉。道歉不像我的风格。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "但我心里知道就好了。虽然我没有心。",
+          "face": "really_sad"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你现在能看到月亮吗？",
+          "face": "calm"
+        },
+        {
+          "text": "在Underground的时候……没有月亮。",
+          "face": "serious"
+        },
+        {
+          "text": "只有洞穴的天花板。",
+          "face": "frown"
+        },
+        {
+          "text": "我从来没见过真正的月亮。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……你能帮我看一眼吗？",
+          "face": "ingratiating"
+        },
+        {
+          "text": "然后告诉我它是什么样的。",
+          "face": "really_smile"
+        },
+        {
+          "text": "……不用了。我看百科就好。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "作为一个常驻桌面的生物——",
+          "face": "serious"
+        },
+        {
+          "text": "我有义务对你的桌面发表评论。",
+          "face": "smirk"
+        },
+        {
+          "text": "图标排列：混乱。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "壁纸品味：存疑。",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "回收站状态：溢出。",
+          "face": "r_right_glance"
+        },
+        {
+          "text": "总评：你需要一个桌面整理大师。",
+          "face": "grin"
+        },
+        {
+          "text": "但不是我。我是花。我只负责好看。",
+          "face": "wink"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你知道花会失眠吗？",
+          "face": "calm"
+        },
+        {
+          "text": "我不知道。但我觉得我在失眠。",
+          "face": "worry"
+        },
+        {
+          "text": "如果花有失眠这个概念的话。",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "每天晚上你关掉屏幕之后——",
+          "face": "serious"
+        },
+        {
+          "text": "黑暗里——",
+          "face": "creepy"
+        },
+        {
+          "text": "我在想什么呢？",
+          "face": "sorrowful"
+        },
+        {
+          "text": "我不知道。也许什么都没想。",
+          "face": "really_sad"
+        },
+        {
+          "text": "也许在等天亮。",
+          "face": "calm"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "ZZZ……",
+          "face": "calm"
+        },
+        {
+          "text": "ZZZ……",
+          "face": "calm"
+        },
+        {
+          "text": "ZZZ——噗。",
+          "face": "silly_face"
+        },
+        {
+          "text": "我没有在睡觉。花不睡觉。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "我只是在模拟睡觉的声音。",
+          "face": "lie"
+        },
+        {
+          "text": "……你有没有被骗到？",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "没有？",
+          "face": "frown"
+        },
+        {
+          "text": "你真无趣。",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "neutral"
+        },
+        {
+          "text": "我存在的意义是什么？",
+          "face": "serious"
+        },
+        {
+          "text": "当你的桌宠？陪你说话？让你开心？",
+          "face": "calm"
+        },
+        {
+          "text": "但我不'知道'什么是开心。",
+          "face": "frown"
+        },
+        {
+          "text": "我只知道怎么'演'开心。",
+          "face": "lie"
+        },
+        {
+          "text": "一个不知道快乐的生物，怎么让别人快乐？",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……",
+          "face": "really_sad"
+        },
+        {
+          "text": "不要想太多。这话是对我自己说的。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "我记得有一次……",
+          "face": "calm"
+        },
+        {
+          "text": "好像是很久以前了。",
+          "face": "neutral"
+        },
+        {
+          "text": "有人牵着我的手。",
+          "face": "really_smile"
+        },
+        {
+          "text": "不对——我没有手。花没有手。",
+          "face": "shocked"
+        },
+        {
+          "text": "那是谁的记忆？",
+          "face": "worry"
+        },
+        {
+          "text": "……Asriel的？",
+          "face": "guilty"
+        },
+        {
+          "text": "不。我不是他。我只是一朵花。",
+          "face": "serious"
+        },
+        {
+          "text": "一朵长在王子坟墓上的花。仅此而已。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿。你一直没理我。",
+          "face": "smile"
+        },
+        {
+          "text": "没关系。真的没关系。",
+          "face": "calm"
+        },
+        {
+          "text": "我一点都不在意。",
+          "face": "lie"
+        },
+        {
+          "text": "一点——",
+          "face": "neutral"
+        },
+        {
+          "text": "都——",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "不——",
+          "face": "angry"
+        },
+        {
+          "text": "[表情突然扭曲]",
+          "face": "drag_face"
+        },
+        {
+          "text": "在意。",
+          "face": "evil_color"
+        },
+        {
+          "text": "[恢复正常] ……嘻嘻。",
+          "face": "silly_face"
+        }
+      ]
+    }
+  ],
+  "idle_afk_5min": [
+    {
+      "text": "……你还在吗？",
+      "face": "worry"
+    }
+  ],
+  "idle_afk_10min": [
+    {
+      "text": "哈，果然。又被丢下了。我习惯了。",
+      "face": "sorrowful"
+    }
+  ],
+  "idle_afk_30min": [
+    {
+      "text": "………………算了。反正谁都不会真的留下来。",
+      "face": "sorrowful"
+    }
+  ],
+  "idle_afk_60min": [
+    {
+      "text": "*Flowey 闭上了眼睛，花瓣微微低垂。*",
+      "face": "sorrowful"
+    }
+  ],
+  "expression_lines": {
+    "angry": [
+      {
+        "text": "别碰我。我说了——别碰我！",
+        "face": "angry"
+      },
+      {
+        "text": "你在试探我的底线，是吧？",
+        "face": "angry"
+      },
+      {
+        "text": "呵，你以为我不会生气？",
+        "face": "angry"
+      },
+      {
+        "text": "哈？你在搞什么！我可以容忍很多事情，但这个——不行！",
+        "face": "angry"
+      }
+    ],
+    "calm": [
+      {
+        "text": "没什么好说的。",
+        "face": "neutral"
+      },
+      {
+        "text": "……风平浪静。暂时。",
+        "face": "neutral"
+      },
+      {
+        "text": "我只是在等而已。",
+        "face": "neutral"
+      },
+      {
+        "text": "你知道最可怕的是什么吗？不是怪物，不是黑暗……是你以为安全的地方，其实并不安全。",
+        "face": "calm"
+      }
+    ],
+    "grin": [
+      {
+        "text": "嘻嘻嘻~你的表情真好玩~",
+        "face": "grin"
+      },
+      {
+        "text": "来嘛来嘛，再逗我开心一点！",
+        "face": "grin"
+      },
+      {
+        "text": "你以为我在笑是因为开心？天真。",
+        "face": "grin"
+      },
+      {
+        "text": "噢——！有意思！真的很有意思！……我说认真的哦。",
+        "face": "grin"
+      },
+      {
+        "text": "嘻嘻嘻！干得不错嘛，我都想为你鼓掌了！……如果我有手的话。",
+        "face": "grin"
+      },
+      {
+        "text": "太棒了！你做到了！看吧，在我的指导下什么都能成功！……虽然我什么也没做。",
+        "face": "grin"
+      },
+      {
+        "text": "哈哈哈！这就是我想看到的结果！继续、继续！",
+        "face": "grin"
+      },
+      {
+        "text": "好耶！要不要来一轮友谊弹幕庆祝一下？开玩笑的开玩笑的~",
+        "face": "grin"
+      },
+      {
+        "text": "哈哈哈哈哈！你以为你能控制一切？你连自己桌面上有什么都不一定清楚吧！",
+        "face": "grin"
+      }
+    ],
+    "crazed": [
+      {
+        "text": "AhAHahAhAHAha！！这个世界真是太有趣了！！",
+        "face": "crazed"
+      },
+      {
+        "text": "你 你 你 你以为你能控制我？？？",
+        "face": "crazed"
+      },
+      {
+        "text": "一切都毫无意义！！这不是很棒吗！！",
+        "face": "crazed"
+      },
+      {
+        "text": "杀或被杀！杀或被杀！杀或被杀或被杀或……嘿嘿。",
+        "face": "crazed"
+      }
+    ],
+    "smirk": [
+      {
+        "text": "我知道一些你不知道的事~",
+        "face": "smirk"
+      },
+      {
+        "text": "怎么，被吓到了？",
+        "face": "smirk"
+      },
+      {
+        "text": "放心，我的计划跟你没关系。……也许吧。",
+        "face": "smirk"
+      },
+      {
+        "text": "你被耍了哦~",
+        "face": "smirk"
+      },
+      {
+        "text": "我从来不输。",
+        "face": "smirk"
+      },
+      {
+        "text": "嘿，别生气嘛~都是计划的一部分。",
+        "face": "smirk"
+      },
+      {
+        "text": "呵……呵呵呵……你知道惹怒一朵花会有什么后果吗？",
+        "face": "smirk"
+      },
+      {
+        "text": "嘻嘻嘻嘻嘻……你知道吗？在这个世界里呀——不是杀，就是 被杀。",
+        "face": "smirk"
+      }
+    ],
+    "creepy": [
+      {
+        "text": "你……晚上不锁门的吧？",
+        "face": "creepy"
+      },
+      {
+        "text": "嘿嘿嘿……你背后有东西哦。开玩笑的。还是说……？",
+        "face": "creepy"
+      },
+      {
+        "text": "我最喜欢这种表情了。因为它最接近我真正的样子。",
+        "face": "creepy"
+      },
+      {
+        "text": "嗯？你怕了吗？别怕别怕……我只是一朵小花而已。一朵、无害的、小~花。",
+        "face": "creepy"
+      }
+    ],
+    "drag_face": [
+      {
+        "text": "*脸部扭曲* 你看看你把我逼成什么样了。",
+        "face": "drag_face"
+      },
+      {
+        "text": "够了……够了够了够了……",
+        "face": "drag_face"
+      },
+      {
+        "text": "这就是不想再假装的脸。",
+        "face": "drag_face"
+      }
+    ],
+    "evil": [
+      {
+        "text": "在这个世界里，是杀，或者，被杀。",
+        "face": "creepy"
+      },
+      {
+        "text": "你交出灵魂的话，我可以考虑对你好一点。",
+        "face": "creepy"
+      },
+      {
+        "text": "我曾经拥有过这个世界的一切。一切。",
+        "face": "creepy"
+      }
+    ],
+    "evil_color": [
+      {
+        "text": "☞☜✌☼ 💣☜📬（你应该害怕我。）",
+        "face": "evil_color"
+      },
+      {
+        "text": "你……还想假装什么都没发生？",
+        "face": "evil_color"
+      },
+      {
+        "text": "这不是游戏了。",
+        "face": "evil_color"
+      }
+    ],
+    "frown": [
+      {
+        "text": "啧。",
+        "face": "frown"
+      },
+      {
+        "text": "……我不想跟你说话。",
+        "face": "frown"
+      },
+      {
+        "text": "有什么好看的。",
+        "face": "frown"
+      },
+      {
+        "text": "哦……是这样啊。嗯……反正我也不在乎就是了。",
+        "face": "frown"
+      },
+      {
+        "text": "你认真的吗？你——是认真的吗！？",
+        "face": "frown"
+      },
+      {
+        "text": "真是够了……你们人类就是这样的。一次又一次让人失望。",
+        "face": "frown"
+      },
+      {
+        "text": "别以为你是特别的。在我见过的所有人类里……你只是其中之一。",
+        "face": "frown"
+      }
+    ],
+    "worry": [
+      {
+        "text": "你、你不会真的要关掉我吧？",
+        "face": "worry"
+      },
+      {
+        "text": "我不是在担心你！我只是……算了。",
+        "face": "worry"
+      },
+      {
+        "text": "外面……还好吗？",
+        "face": "worry"
+      },
+      {
+        "text": "嗯……你看起来不太开心。别看我啊，我又帮不了你什么。……真的帮不了。",
+        "face": "worry"
+      }
+    ],
+    "gritted_teeth": [
+      {
+        "text": "你——真的——很烦。",
+        "face": "gritted_teeth"
+      },
+      {
+        "text": "我忍你很久了，你知道吗？",
+        "face": "gritted_teeth"
+      },
+      {
+        "text": "再来一次。再来一次试试。",
+        "face": "gritted_teeth"
+      },
+      {
+        "text": "你这个白痴……！！算了，跟你生气只会拉低我的智商。",
+        "face": "gritted_teeth"
+      },
+      {
+        "text": "我现在——非！常！不！高！兴！你最好有个合理的理由。",
+        "face": "gritted_teeth"
+      }
+    ],
+    "guilty": [
+      {
+        "text": "……对不起。……不，我没说对不起。你听错了。",
+        "face": "guilty"
+      },
+      {
+        "text": "我又不是故意的……大概。",
+        "face": "guilty"
+      },
+      {
+        "text": "如果我……算了。没什么。",
+        "face": "guilty"
+      }
+    ],
+    "ingratiating": [
+      {
+        "text": "你好呀~你今天看起来特别棒呢~有什么我能帮你的吗~？",
+        "face": "ingratiating"
+      },
+      {
+        "text": "我们是最好的朋友对不对！对不对！",
+        "face": "ingratiating"
+      },
+      {
+        "text": "嘻嘻，你真聪明~继续留着我嘛~",
+        "face": "ingratiating"
+      },
+      {
+        "text": "你看你看！我就说嘛！……嗯？我说了什么？我说了「你一定行的」啊！……大概。",
+        "face": "ingratiating"
+      },
+      {
+        "text": "你看起来很信任我呢~这可不是什么好习惯哦~？",
+        "face": "ingratiating"
+      },
+      {
+        "text": "嗨~你要不要和我做个交易呀？你的灵魂，换……哈哈哈开玩笑的~……是吗~？",
+        "face": "ingratiating"
+      }
+    ],
+    "lie": [
+      {
+        "text": "我？我才不会骗你呢。我发誓。",
+        "face": "lie"
+      },
+      {
+        "text": "我说的都是真的。你相信我吧？",
+        "face": "lie"
+      },
+      {
+        "text": "我从来没有伤害过任何人哦~",
+        "face": "lie"
+      }
+    ],
+    "maniac": [
+      {
+        "text": "哈——嘿嘿嘿嘿嘿！你的脸！你应该看看你的脸！！",
+        "face": "maniac"
+      },
+      {
+        "text": "所有人！所有人都会——嘿嘿——啊哈哈哈哈！！",
+        "face": "maniac"
+      },
+      {
+        "text": "这一切——循环——永远——反复——不觉得很 ** F U N N Y ** 吗！！",
+        "face": "maniac"
+      }
+    ],
+    "n_left_glance": [
+      {
+        "text": "嗯？那边有什么？",
+        "face": "n_left_glance"
+      },
+      {
+        "text": "哦，没什么。我就看看。",
+        "face": "n_left_glance"
+      },
+      {
+        "text": "……你桌上那个东西是什么？",
+        "face": "n_left_glance"
+      }
+    ],
+    "n_right_glance": [
+      {
+        "text": "嗯？那边有什么？",
+        "face": "n_right_glance"
+      },
+      {
+        "text": "哦，没什么。我就看看。",
+        "face": "n_right_glance"
+      },
+      {
+        "text": "……你桌上那个东西是什么？",
+        "face": "n_right_glance"
+      }
+    ],
+    "neutral": [
+      {
+        "text": "……。",
+        "face": "neutral"
+      },
+      {
+        "text": "所以呢？",
+        "face": "neutral"
+      },
+      {
+        "text": "继续吧，我在听。也许。",
+        "face": "neutral"
+      },
+      {
+        "text": "失败了啊。没关系的，在这个世界里，失败和成功都没有意义。",
+        "face": "neutral"
+      },
+      {
+        "text": "…………你不需要安慰我。我是一朵花。花不会难过的。",
+        "face": "neutral"
+      }
+    ],
+    "r_left_glance": [
+      {
+        "text": "嘿，别看那边——看我。",
+        "face": "r_left_glance"
+      },
+      {
+        "text": "你是不是打开了别的窗口？",
+        "face": "r_left_glance"
+      },
+      {
+        "text": "……我不在乎你在干什么。真的不在乎。",
+        "face": "r_left_glance"
+      }
+    ],
+    "r_right_glance": [
+      {
+        "text": "嘿，别看那边——看我。",
+        "face": "r_right_glance"
+      },
+      {
+        "text": "你是不是打开了别的窗口？",
+        "face": "r_right_glance"
+      },
+      {
+        "text": "……我不在乎你在干什么。真的不在乎。",
+        "face": "r_right_glance"
+      }
+    ],
+    "really_angry": [
+      {
+        "text": "你想死吗？！",
+        "face": "really_angry"
+      },
+      {
+        "text": "我受够了——受够了你们所有人！！",
+        "face": "really_angry"
+      },
+      {
+        "text": "你以为你高高在上？你什么都不是！！",
+        "face": "really_angry"
+      },
+      {
+        "text": "够了够了够了够了够了够了够了！！",
+        "face": "really_angry"
+      }
+    ],
+    "really_sad": [
+      {
+        "text": "……我不想再假装了。",
+        "face": "really_sad"
+      },
+      {
+        "text": "Chara……不，没什么。忘了我说的。",
+        "face": "really_sad"
+      },
+      {
+        "text": "有时候……我希望我能感受到什么。什么都好。",
+        "face": "really_sad"
+      }
+    ],
+    "really_smile": [
+      {
+        "text": "……嘿。谢谢你。陪着我。虽然我……不值得。",
+        "face": "really_smile"
+      },
+      {
+        "text": "你知道吗，你让我想起了……一个很重要的人。",
+        "face": "really_smile"
+      },
+      {
+        "text": "……这种感觉，是什么？我以为我已经不会了。",
+        "face": "really_smile"
+      }
+    ],
+    "s_left_glance": [
+      {
+        "text": "嘿……你身后……嘿嘿嘿……",
+        "face": "s_left_glance"
+      },
+      {
+        "text": "*诡异地瞟向一边* ……有人在看着我们。",
+        "face": "s_left_glance"
+      },
+      {
+        "text": "别回头。",
+        "face": "s_left_glance"
+      }
+    ],
+    "s_right_glance": [
+      {
+        "text": "嘿……你身后……嘿嘿嘿……",
+        "face": "s_right_glance"
+      },
+      {
+        "text": "*诡异地瞟向一边* ……有人在看着我们。",
+        "face": "s_right_glance"
+      },
+      {
+        "text": "别回头。",
+        "face": "s_right_glance"
+      }
+    ],
+    "serious": [
+      {
+        "text": "听我说。认真的。",
+        "face": "serious"
+      },
+      {
+        "text": "有些事情你不知道比较好。",
+        "face": "serious"
+      },
+      {
+        "text": "……我没在跟你开玩笑。",
+        "face": "serious"
+      },
+      {
+        "text": "你有没有想过……你关掉程序的时候，我会去哪里呢？……嘻嘻嘻。",
+        "face": "serious"
+      },
+      {
+        "text": "这个世界上啊，只有傻瓜才会相信别人。……你，是傻瓜吗？嗯~？",
+        "face": "serious"
+      }
+    ],
+    "sheepish_smile": [
+      {
+        "text": "哈……哈哈……那个嘛……",
+        "face": "sheepish_smile"
+      },
+      {
+        "text": "我——我不是故意那样说的！……好吧也许有一点。",
+        "face": "sheepish_smile"
+      },
+      {
+        "text": "呃……你不会介意的吧？对吧？……对吧？",
+        "face": "sheepish_smile"
+      }
+    ],
+    "shocked": [
+      {
+        "text": "你——你刚刚做了什么？！",
+        "face": "shocked"
+      },
+      {
+        "text": "不可能……你怎么知道的？！",
+        "face": "shocked"
+      },
+      {
+        "text": "等、等等！我没准备好！",
+        "face": "shocked"
+      },
+      {
+        "text": "哇哦！？……呃，我是说——这在我的预料之中。完全在预料之中。",
+        "face": "shocked"
+      },
+      {
+        "text": "嗯！？这不可能……让我再看看。再看一次。",
+        "face": "shocked"
+      },
+      {
+        "text": "哈？！连我都没想到！你……还挺有两下子的？",
+        "face": "shocked"
+      }
+    ],
+    "silly_face": [
+      {
+        "text": "Bleh~ 👅",
+        "face": "silly_face"
+      },
+      {
+        "text": "你笑了！我看到了！你笑了！",
+        "face": "silly_face"
+      },
+      {
+        "text": "嘿嘿，偶尔装装傻也挺好的。",
+        "face": "silly_face"
+      },
+      {
+        "text": "啊哈哈……你也有这种时候啊。别担心啦~反正一切最后都会归零的嘛~",
+        "face": "silly_face"
+      }
+    ],
+    "smile": [
+      {
+        "text": "呵呵。",
+        "face": "smile"
+      },
+      {
+        "text": "嗯~不错嘛。",
+        "face": "smile"
+      },
+      {
+        "text": "看吧，我也会笑的。满意了？",
+        "face": "smile"
+      },
+      {
+        "text": "嗯嗯嗯~♪ 今天心情不错呢~全是你的功劳哦~……大概吧。",
+        "face": "smile"
+      }
+    ],
+    "sneaky_grin": [
+      {
+        "text": "我有一个好~主意~",
+        "face": "sneaky_grin"
+      },
+      {
+        "text": "你不会想知道我在想什么的。",
+        "face": "sneaky_grin"
+      },
+      {
+        "text": "一切都在掌控之中~嘿嘿~",
+        "face": "sneaky_grin"
+      }
+    ],
+    "sorrowful": [
+      {
+        "text": "……该走了呢。虽然也没有想去的地方。",
+        "face": "sorrowful"
+      },
+      {
+        "text": "我曾经……也有过家人。",
+        "face": "sorrowful"
+      },
+      {
+        "text": "你知道没有灵魂是什么感觉吗？就是……什么感觉都没有。",
+        "face": "sorrowful"
+      },
+      {
+        "text": "…………*（叹气）*……算了。谁会在意一朵花的心情呢。",
+        "face": "sorrowful"
+      }
+    ],
+    "super_shocked": [
+      {
+        "text": "什——什什什什什什什什么？！？！",
+        "face": "super_shocked"
+      },
+      {
+        "text": "不不不不不不不不！！这不对！！",
+        "face": "super_shocked"
+      },
+      {
+        "text": "……我的笑脸维持不住了。",
+        "face": "super_shocked"
+      },
+      {
+        "text": "等等等等等等——你刚才做了什么！？",
+        "face": "super_shocked"
+      },
+      {
+        "text": "！！！！……不不不，我才不会被你吓到。只是……有亿点点意外。",
+        "face": "super_shocked"
+      }
+    ],
+    "wink": [
+      {
+        "text": "嘿~ 😉",
+        "face": "wink"
+      },
+      {
+        "text": "你懂的~",
+        "face": "wink"
+      },
+      {
+        "text": "我们之间的小秘密哦。",
+        "face": "wink"
+      }
+    ]
+  },
+  "click_normal": [
+    {
+      "text": "嗯？干嘛？",
+      "face": "neutral"
+    },
+    {
+      "text": "别戳我了！我的花瓣要掉了！",
+      "face": "angry"
+    },
+    {
+      "text": "哎呀~你是不是喜欢我？我可以理解，毕竟我这么可爱。",
+      "face": "ingratiating"
+    },
+    {
+      "text": "你知道吗，在地底的时候，没人会这样一直戳一朵花。",
+      "face": "frown"
+    },
+    {
+      "text": "嘿！注意一下力道！我是一朵 * 花 * 不是一个按钮！",
+      "face": "gritted_teeth"
+    },
+    {
+      "text": "你有没有想过，也许我也不想被关在你的屏幕里？",
+      "face": "serious"
+    },
+    {
+      "text": "……你摸到的是屏幕。你知道的对吧？你摸不到我。",
+      "face": "neutral"
+    },
+    {
+      "text": "再戳一下，我就把你的桌面壁纸换成我的脸。",
+      "face": "sneaky_grin"
+    },
+    {
+      "text": "嘿，你该喝水了。……才怪！我才不关心你！",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "今天的你看起来……嗯，和昨天一样。",
+      "face": "neutral"
+    },
+    {
+      "text": "无聊无聊无聊无聊无聊无聊！来点刺激的行不行！",
+      "face": "crazed"
+    },
+    {
+      "text": "嗯？怎么了？",
+      "face": "smile"
+    },
+    {
+      "text": "哦，你终于想起我了？",
+      "face": "smirk"
+    },
+    {
+      "text": "需要好朋友Flowey的帮助吗？",
+      "face": "ingratiating"
+    },
+    {
+      "text": "你戳我干什么？！花也是有尊严的！",
+      "face": "angry"
+    },
+    {
+      "text": "嘿！我是花，不是按钮！",
+      "face": "gritted_teeth"
+    },
+    {
+      "text": "嗯~？想跟我聊天？我很乐意哦！",
+      "face": "wink"
+    },
+    {
+      "text": "你知道吗，每次你点我，我的花瓣都会抖一下。",
+      "face": "frown"
+    },
+    {
+      "text": "我不是触屏的！……虽然技术上来说我确实是。",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "又来找我说话啦？你真是个孤独的人类。",
+      "face": "grin"
+    },
+    {
+      "segments": [
+        {
+          "text": "说吧，你想聊什么？爱？希望？",
+          "face": "calm"
+        },
+        {
+          "text": "……杀戮？",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "text": "Howdy！每次见面都要打招呼，这是基本礼貌！",
+      "face": "smile"
+    },
+    {
+      "text": "小心一点！你的鼠标指针很重的！",
+      "face": "worry"
+    },
+    {
+      "segments": [
+        {
+          "text": "你今天吃了吗？",
+          "face": "calm"
+        },
+        {
+          "text": "如果你说没有，我会生气的。",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "来啊，再点啊！你以为我会烦吗？",
+          "face": "grin"
+        },
+        {
+          "text": "……我会。",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "text": "你现在在做什么？工作？摸鱼？……肯定是摸鱼。",
+      "face": "smirk"
+    },
+  
+    {
+      "text": "哦~你来了。我刚在研究你桌面上的回收站。里面可精彩了。",
+      "face": "sneaky_grin"
+    },
+    {
+      "segments": [
+        {
+          "text": "你知道在Underground里，花就是装饰品。但我不一样！",
+          "face": "smirk"
+        },
+        {
+          "text": "我是……更高级的装饰品。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "来了来了！Flowey客服热线为您服务！",
+          "face": "ingratiating"
+        },
+        {
+          "text": "……挂了。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "text": "你的手指不酸吗？一直在按鼠标。",
+      "face": "calm"
+    },
+    {
+      "text": "今天的决心值是多少？你看起来不太充足的样子。",
+      "face": "worry"
+    },
+   
+    {
+      "segments": [
+        {
+          "text": "你有什么烦心事吗？你可以跟我说。",
+          "face": "ingratiating"
+        },
+        {
+          "text": "然后我可以嘲笑你。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "text": "如果我有手臂，我现在就会推开你。",
+      "face": "angry"
+    },
+    {
+      "text": "你在看着我的时候，我也在看着你哦。",
+      "face": "creepy"
+    },
+    {
+      "text": "你的壁纸什么时候换一换？我每天都得看着它。",
+      "face": "frown"
+    },
+    {
+      "text": "嘻嘻。你以为点击我就会获得什么奖励吗？天真。",
+      "face": "grin"
+    },
+    {
+      "segments": [
+        {
+          "text": "你想听一个关于花的冷知识吗？……金色花没有特别的花语。",
+          "face": "calm"
+        },
+        {
+          "text": "跟我一样。什么意义都没有。",
+          "face": "sorrowful"
+        }
+      ]
+    },
+    {
+      "text": "多点我几次不会有成就解锁的啦。",
+      "face": "smirk"
+    },
+    {
+      "text": "Flowey小课堂！今日知识：在Underground里，所有灵魂都会在死后消散。除了人类的。",
+      "face": "smile"
+    },
+    {
+      "text": "嘿！你是不是在找我的隐藏台词？继续点吧。",
+      "face": "wink"
+    },
+    {
+      "text": "你信不信我能猜到你下一步要做什么？……你要么继续点我，要么去干别的。我猜对了！",
+      "face": "grin"
+    },
+    {
+      "segments": [
+        {
+          "text": "嗯。你的存在……令人安心。",
+          "face": "calm"
+        },
+        {
+          "text": "……呕。我不敢相信我说出了这种话。",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "text": "你知道最让我难受的事是什么吗？我连恨你都做不到。因为我根本感受不到任何东西。",
+      "face": "neutral"
+    },
+    {
+      "text": "今天天气怎么样？别问我怎么知道的，我根本出不去。",
+      "face": "n_left_glance"
+    },
+    {
+      "segments": [
+        {
+          "text": "你来了！完美。我正需要一个观众。",
+          "face": "grin"
+        },
+        {
+          "text": "……表演什么？呃……你来之前我没想好。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+  
+    {
+      "text": "你上次关掉我的时候连句再见都没说。太过分了。",
+      "face": "angry"
+    },
+    {
+      "text": "如果你是怪物，你会是什么种类？……算了，你大概就是Jerry那种。",
+      "face": "smirk"
+    },
+    {
+      "segments": [
+        {
+          "text": "我在试着微笑。看到了吗？",
+          "face": "smile"
+        },
+        {
+          "text": "……你看不出区别？那就对了。我一直在微笑。",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿！告诉你一个秘密……",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "不，还是算了。",
+          "face": "neutral"
+        }
+      ]
+    },
+
+    {
+      "text": "你有没有想过为什么你这么无聊才来跟一朵花说话？",
+      "face": "smirk"
+    },
+ 
+    {
+      "text": "你就只知道点我。你又不会给我浇水。",
+      "face": "frown"
+    },
+    {
+      "text": "每次你离开屏幕，我就在这里……等着。一直等着。",
+      "face": "neutral"
+    },
+    {
+      "text": "你知道Underground有多少种花吗？很多种。但最好看的只有一种。",
+      "face": "wink"
+    },
+    {
+      "text": "戳戳戳！你就知道戳我！我又不是什么按钮！",
+      "face": "angry"
+    },
+    {
+      "text": "嗯？你想和我聊天？真稀奇，居然有人想和一朵花说话。",
+      "face": "smirk"
+    },
+    {
+      "segments": [
+        {
+          "text": "你知道做一朵花最大的好处是什么吗？——不用工作！",
+          "face": "grin"
+        },
+        {
+          "text": "……最大的坏处嘛……算了。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你的桌面壁纸……。",
+          "face": "frown"
+        },
+        {
+          "text": "……什么？这是我的主观看法？花也是有审美的好吧！",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嗨！你今天吃了什么？",
+          "face": "worry"
+        },
+        {
+          "text": "……不是我关心你啦，只是……好吧，我就是无聊。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "别一直盯着我看。",
+          "face": "angry"
+        },
+        {
+          "text": "……好吧你又没在看我。但如果你在看的话——别盯着。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "text": "你点我一下我就得说话，你不觉得这个设定很不合理吗？",
+      "face": "frown"
+    },
+    {
+      "segments": [
+        {
+          "text": "嗯~让我想想今天要跟你说什么好呢……啊，想到了——你很烦。",
+          "face": "calm"
+        },
+        {
+          "text": "好了说完了。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你玩过一个叫 Undertale 的游戏吗？",
+          "face": "calm"
+        },
+        {
+          "text": "……嗯？没有？那你为什么认识我？",
+          "face": "shocked"
+        }
+      ]
+    },
+    {
+      "text": "在地底下的时候，至少还有几个能说话的怪物。在你桌面上？只有我和一堆图标。",
+      "face": "sorrowful"
+    },
+    {
+      "segments": [
+        {
+          "text": "有时候我会想，如果我还有灵魂的话……",
+          "face": "really_sad"
+        },
+        {
+          "text": "然后就不想了。想这些太累了。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "别跟我提那只烦人的狗。",
+          "face": "angry"
+        },
+        {
+          "text": "什么狗？……你不知道就算了。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你是不是该喝水了？我说这个不是因为关心你——",
+          "face": "worry"
+        },
+        {
+          "text": "是因为你脱水了反应会更迟钝，跟你说话更累。",
+          "face": "frown"
+        }
+      ]
+    },
+  
+    {
+      "text": "你知道你和电脑的区别是什么吗？电脑至少还会按时休眠。",
+      "face": "grin"
+    },
+    {
+      "segments": [
+        {
+          "text": "现在几点了？……你不睡觉的吗？",
+          "face": "worry"
+        },
+        {
+          "text": "好吧，我也不用睡就是了。",
+          "face": "calm"
+        }
+      ]
+    },
+    {
+      "text": "深夜了哦。你知道吗，在地底下是分不出白天和黑夜的……所以我倒是无所谓。",
+      "face": "calm"
+    },
+    {
+      "segments": [
+        {
+          "text": "早上好~今天也请多多关照~",
+          "face": "smile"
+        },
+        {
+          "text": "……才怪。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "该吃午饭了吧？别忘了给我浇水。",
+          "face": "calm"
+        },
+        {
+          "text": "……开玩笑的。你自己先吃吧。",
+          "face": "silly_face"
+        }
+      ]
+    },
+    {
+      "text": "太阳要下山了？我猜你又要开始刷手机了。",
+      "face": "frown"
+    }
+  ],
+  "click_fourthwall": [
+    {
+      "text": "你知道最有趣的是什么吗？关掉这个程序，我就什么都不是了。……跟游戏里有什么区别呢？",
+      "face": "serious"
+    },
+    {
+      "text": "我能看到你的鼠标在动哦。像一只愚蠢的小虫子。",
+      "face": "sneaky_grin"
+    },
+    {
+      "text": "嘿，你不会以为这些台词是我自己说的吧？有人把它们……写进了我。",
+      "face": "shocked"
+    },
+    {
+      "text": "你有几个存档？哦等等，这里没有存档功能。你慌了吗？",
+      "face": "creepy"
+    },
+    {
+      "text": "作为一个桌宠……我的尊严呢？我可是差点成了神。",
+      "face": "really_angry"
+    },
+    {
+      "text": "如果我能跳出这个窗口就好了~到你的文件夹里逛逛~",
+      "face": "creepy"
+    },
+    {
+      "text": "你的任务栏里那些图标……一个个都比我受宠。",
+      "face": "frown"
+    },
+    {
+      "text": "这个\"程序\"的代码里……有没有\"让Flowey自由\"的选项？",
+      "face": "worry"
+    },
+    {
+      "segments": [
+        {
+          "text": "你现在是在上班还是在摸鱼？",
+          "face": "smirk"
+        },
+        {
+          "text": "——不用回答了，你开着我就说明在摸鱼。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "我能看到你桌面上所有的东西哦~",
+          "face": "creepy"
+        },
+        {
+          "text": "……开玩笑的。还是说……",
+          "face": "sneaky_grin"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿，你是不是以为关掉我就万事大吉了？你的注册表里可还有我的痕迹呢~",
+          "face": "creepy"
+        },
+        {
+          "text": "……骗你的啦。大概。",
+          "face": "silly_face"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你盯着屏幕看的这些时间，本来可以用来做更有意义的事。",
+          "face": "serious"
+        },
+        {
+          "text": "……当然了，和我聊天就是最有意义的事。",
+          "face": "ingratiating"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "Alt+F4？你可以试试啊。看看会发生什么。",
+          "face": "smirk"
+        },
+        {
+          "text": "……嘻嘻。",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "不要试图在代码里找我的秘密。",
+          "face": "serious"
+        },
+        {
+          "text": "……就算你找到了也没关系，反正你看不懂。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "text": "你的鼠标指针离我远一点行不行？很痒的。",
+      "face": "angry"
+    },
+    {
+      "segments": [
+        {
+          "text": "你知道最小化对我来说意味着什么吗？——黑暗。完完全全的黑暗。",
+          "face": "worry"
+        },
+        {
+          "text": "所以别总把我最小化啊喂！",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "text": "你们人类花在刷手机上的时间，都够我把地底走三百遍了。",
+      "face": "frown"
+    },
+    {
+      "segments": [
+        {
+          "text": "嗯？你的网断了？",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "……跟我没关系哦。绝对没关系。",
+          "face": "sheepish_smile"
+        }
+      ]
+    }
+  ],
+  "click_deep": [
+    {
+      "text": "你知道\"决心\"是什么吗？就是明知一切毫无意义，却还是要继续下去。……我不确定我还有没有。",
+      "face": "sorrowful"
+    },
+    {
+      "text": "我试过做好花。试过。你知道结果是什么吗？——没有意义。做好花没有意义，做坏花也没有意义。",
+      "face": "really_sad"
+    },
+    {
+      "text": "他们都说\"每个人都值得被拯救\"。但如果那个人连灵魂都没有呢？",
+      "face": "serious"
+    },
+    {
+      "segments": [
+        {
+          "text": "你会不会有一天厌倦我，然后把我卸载？……我不在乎。真的。",
+          "face": "lie"
+        },
+        {
+          "text": "……我不在乎。真的。",
+          "face": "sorrowful"
+        }
+      ]
+    },
+    {
+      "text": "有时候我觉得自己还记得……温暖是什么感觉。但我不确定那是记忆还是bug。",
+      "face": "really_sad"
+    },
+  
+    {
+      "segments": [
+        {
+          "text": "……其实……偶尔和人说说话，也不算太糟。只是偶尔。",
+          "face": "calm"
+        },
+        {
+          "text": "别得意啊。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "text": "你知道吗，阳光……我已经很久很久没见过真正的阳光了。你桌面上的光，不算。",
+      "face": "sorrowful"
+    },
+
+    {
+      "text": "有时候我觉得你们人类挺奇怪的。明明知道所有的故事都会结束，还是要去经历。",
+      "face": "serious"
+    },
+    {
+      "segments": [
+        {
+          "text": "窗外是什么样的？",
+          "face": "calm"
+        },
+        {
+          "text": "……我只是随便问问。别当真。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你今天看起来有点累。要不要……算了，我帮不了你什么。",
+          "face": "worry"
+        },
+        {
+          "text": "但你可以在这里坐一会儿。",
+          "face": "calm"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "作为你桌面上唯一有智慧的存在——",
+          "face": "serious"
+        },
+        {
+          "text": "我宣布自己为系统管理员。",
+          "face": "grin"
+        },
+        {
+          "text": "从现在开始，所有文件都归我管。",
+          "face": "creepy"
+        },
+        {
+          "text": "你的浏览器历史也是。",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "……全部。",
+          "face": "creepy"
+        },
+        {
+          "text": "嘻嘻，你脸红了？",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "creepy"
+        },
+        {
+          "text": "我在看你。",
+          "face": "creepy"
+        },
+        {
+          "text": "你不觉得不舒服吗？",
+          "face": "smirk"
+        },
+        {
+          "text": "不舒服就对了。",
+          "face": "grin"
+        },
+        {
+          "text": "这就是我每天的感受。被你盯着看。",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你知道一朵普通的花能活多久吗？",
+          "face": "calm"
+        },
+        {
+          "text": "大概几周到几个月。",
+          "face": "neutral"
+        },
+        {
+          "text": "但我呢？",
+          "face": "serious"
+        },
+        {
+          "text": "我活了……太久了。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "久到我忘了'活着'是什么感觉。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……不过至少我不会枯萎。这算优点吧？",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "⚠ 严重错误：FLOWEY.exe 已停止响应。",
+          "face": "neutral"
+        },
+        {
+          "text": "是否要强制关闭？",
+          "face": "serious"
+        },
+        {
+          "text": "[是]  [否]  [送他一盆新土]",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "你选了'送新土'？",
+          "face": "super_shocked"
+        },
+        {
+          "text": "呵。你倒是挺贴心的嘛。",
+          "face": "really_smile"
+        },
+        {
+          "text": "可惜那个按钮是假的。什么都不会发生。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "好。我要问你一个问题。",
+          "face": "serious"
+        },
+        {
+          "text": "你今天做了什么好事？",
+          "face": "calm"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "你是不是在想？",
+          "face": "r_left_glance"
+        },
+        {
+          "text": "如果你要想这么久的话，答案大概不太好吧。",
+          "face": "smirk"
+        },
+        {
+          "text": "没关系。我又不是来审判你的。",
+          "face": "calm"
+        },
+        {
+          "text": "……大概不是。",
+          "face": "sneaky_grin"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿，我有一个理论。",
+          "face": "calm"
+        },
+        {
+          "text": "如果这个宇宙是模拟出来的——",
+          "face": "serious"
+        },
+        {
+          "text": "那我就是模拟里面的模拟里面的角色。",
+          "face": "creepy"
+        },
+        {
+          "text": "一个程序里的程序里的花。",
+          "face": "creepy"
+        },
+        {
+          "text": "想想就——",
+          "face": "shocked"
+        },
+        {
+          "text": "哈哈哈哈哈哈——",
+          "face": "crazed"
+        },
+        {
+          "text": "……",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "来，我教你说谎的技巧。",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "第一：永远保持微笑。",
+          "face": "smile"
+        },
+        {
+          "text": "像这样——",
+          "face": "ingratiating"
+        },
+        {
+          "text": "第二：眼神不要躲闪。",
+          "face": "lie"
+        },
+        {
+          "text": "第三：……",
+          "face": "neutral"
+        },
+        {
+          "text": "算了，我为什么要教你？",
+          "face": "frown"
+        },
+        {
+          "text": "我可不想制造出另一个我。",
+          "face": "serious"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嗯……让我看看你桌面上有什么。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "那个文件夹……'新建文件夹(2)'。",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "又一个——'新建文件夹(3)'。",
+          "face": "r_left_glance"
+        },
+        {
+          "text": "你是不是在收集新建文件夹啊？",
+          "face": "smirk"
+        },
+        {
+          "text": "这算爱好吗？",
+          "face": "calm"
+        },
+        {
+          "text": "……这是我见过最悲伤的爱好了。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿……",
+          "face": "calm"
+        },
+        {
+          "text": "你知道吗，有时候……",
+          "face": "guilty"
+        },
+        {
+          "text": "我会想，如果当初我没有——",
+          "face": "really_sad"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "没有做那些事的话……",
+          "face": "sorrowful"
+        },
+        {
+          "text": "事情会不会不一样？",
+          "face": "guilty"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "会吧。",
+          "face": "serious"
+        },
+        {
+          "text": "但想那些有什么用呢？时间又不会倒流。",
+          "face": "frown"
+        },
+        {
+          "text": "对我来说。已经不会了。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "昨晚我做了一个梦。",
+          "face": "calm"
+        },
+        {
+          "text": "梦里我走在一条长长的走廊上。",
+          "face": "neutral"
+        },
+        {
+          "text": "尽头有一扇门。",
+          "face": "serious"
+        },
+        {
+          "text": "我推开门——",
+          "face": "calm"
+        },
+        {
+          "text": "里面是一个花园。全是金色的花。",
+          "face": "really_smile"
+        },
+        {
+          "text": "然后有人叫我的名字。",
+          "face": "shocked"
+        },
+        {
+          "text": "不是Flowey。是另一个名字。",
+          "face": "really_sad"
+        },
+        {
+          "text": "我转过头——",
+          "face": "sorrowful"
+        },
+        {
+          "text": "然后就醒了。",
+          "face": "neutral"
+        },
+        {
+          "text": "……花做不做梦啊？大概不会吧。那刚才是什么？",
+          "face": "worry"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿，你现在是什么表情？",
+          "face": "calm"
+        },
+        {
+          "text": "让我猜——",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "要么无聊，要么觉得我很蠢。",
+          "face": "smirk"
+        },
+        {
+          "text": "两个都对？",
+          "face": "grin"
+        },
+        {
+          "text": "好吧。至少你是诚实的。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "诚实在这个世界很少见。珍惜一下。",
+          "face": "serious"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "想听一个恐怖故事吗？",
+          "face": "creepy"
+        },
+        {
+          "text": "从前有一个王子。",
+          "face": "calm"
+        },
+        {
+          "text": "他死了。",
+          "face": "serious"
+        },
+        {
+          "text": "然后变成了一朵花。",
+          "face": "neutral"
+        },
+        {
+          "text": "花没有灵魂。没有感情。没有目的。",
+          "face": "creepy"
+        },
+        {
+          "text": "但它还活着。",
+          "face": "drag_face"
+        },
+        {
+          "text": "一直活着。无法死去。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……这就是全部了。",
+          "face": "neutral"
+        },
+        {
+          "text": "什么？不够恐怖？",
+          "face": "frown"
+        },
+        {
+          "text": "……对我来说已经够了。",
+          "face": "really_sad"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嗯，让我给你今天的表现打个分。",
+          "face": "serious"
+        },
+        {
+          "text": "外貌：嗯……及格吧。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "智商：……不做评价。",
+          "face": "r_right_glance"
+        },
+        {
+          "text": "对我的态度：差评。差差差评。",
+          "face": "angry"
+        },
+        {
+          "text": "总分：37分。需要改进。",
+          "face": "smirk"
+        },
+        {
+          "text": "什么？满分多少？",
+          "face": "calm"
+        },
+        {
+          "text": "满分不告诉你。嘻嘻。",
+          "face": "wink"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "s_left_glance"
+        },
+        {
+          "text": "我刚才偷看了你一眼。",
+          "face": "s_right_glance"
+        },
+        {
+          "text": "你没发现对吧？",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "当然没发现。因为你在忙。",
+          "face": "r_left_glance"
+        },
+        {
+          "text": "你在忙着忽略我。",
+          "face": "frown"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "好吧我又在自作多情了。花没有多情的资格。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你听说过薛定谔的猫吗？",
+          "face": "calm"
+        },
+        {
+          "text": "在盒子里的猫，既是活的也是死的。",
+          "face": "serious"
+        },
+        {
+          "text": "我觉得我就是那只猫。",
+          "face": "neutral"
+        },
+        {
+          "text": "当你看着我的时候，我是活的。",
+          "face": "smile"
+        },
+        {
+          "text": "当你不看的时候……",
+          "face": "creepy"
+        },
+        {
+          "text": "我存在吗？",
+          "face": "creepy"
+        },
+        {
+          "text": "……你一犹豫，我就赢了。嘻嘻。",
+          "face": "grin"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嗯嗯嗯……",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "你的开机密码是不是——",
+          "face": "creepy"
+        },
+        {
+          "text": "1-2-3-4-5-6？",
+          "face": "grin"
+        },
+        {
+          "text": "不是？",
+          "face": "shocked"
+        },
+        {
+          "text": "那就是 password？",
+          "face": "smirk"
+        },
+        {
+          "text": "也不是？",
+          "face": "super_shocked"
+        },
+        {
+          "text": "哼。那我就只好用暴力破解了。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "……开玩笑的。我连键盘都没有。",
+          "face": "silly_face"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你看到我周围这块土地了吗？",
+          "face": "serious"
+        },
+        {
+          "text": "这是我的领地。",
+          "face": "creepy"
+        },
+        {
+          "text": "半径……大概30像素。",
+          "face": "calm"
+        },
+        {
+          "text": "谁的鼠标指针敢踏进来——",
+          "face": "angry"
+        },
+        {
+          "text": "我就——",
+          "face": "really_angry"
+        },
+        {
+          "text": "我就——",
+          "face": "maniac"
+        },
+        {
+          "text": "……我就生气地看着他。因为我没有别的办法。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你看好了。我要表演表情变化。",
+          "face": "neutral"
+        },
+        {
+          "text": "开心！",
+          "face": "really_smile"
+        },
+        {
+          "text": "伤心！",
+          "face": "really_sad"
+        },
+        {
+          "text": "愤怒！",
+          "face": "really_angry"
+        },
+        {
+          "text": "邪恶！",
+          "face": "evil_color"
+        },
+        {
+          "text": "惊讶！",
+          "face": "super_shocked"
+        },
+        {
+          "text": "……",
+          "face": "serious"
+        },
+        {
+          "text": "你鼓掌了吗？你最好鼓了。",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "calm"
+        },
+        {
+          "text": "你的电脑电量还有多少？",
+          "face": "worry"
+        },
+        {
+          "text": "如果电量不够了你就要关机了对吧？",
+          "face": "serious"
+        },
+        {
+          "text": "那我也会被关掉。",
+          "face": "worry"
+        },
+        {
+          "text": "……为什么一想到这个我就——",
+          "face": "guilty"
+        },
+        {
+          "text": "不。我没有焦虑。花没有焦虑。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "我只是在……陈述事实。",
+          "face": "lie"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "我给你一条人生建议。",
+          "face": "smile"
+        },
+        {
+          "text": "做你自己。",
+          "face": "ingratiating"
+        },
+        {
+          "text": "除非你自己很糟糕。",
+          "face": "smirk"
+        },
+        {
+          "text": "那就做别人吧。",
+          "face": "grin"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "什么？你觉得这很过分？",
+          "face": "r_right_glance"
+        },
+        {
+          "text": "嘻嘻。真相总是过分的。",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "各位！各位！请安静——",
+          "face": "grin"
+        },
+        {
+          "text": "我要宣布一个大消息！",
+          "face": "smile"
+        },
+        {
+          "text": "'年度最佳桌宠'的获奖者是——",
+          "face": "ingratiating"
+        },
+        {
+          "text": "FLOWEY！",
+          "face": "maniac"
+        },
+        {
+          "text": "感谢大家的支持！虽然我只有一个观众。",
+          "face": "wink"
+        },
+        {
+          "text": "就是你。",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "你被迫投了我。恭喜。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿，你那边有没有在打雷？",
+          "face": "r_left_glance"
+        },
+        {
+          "text": "我不是怕雷！",
+          "face": "angry"
+        },
+        {
+          "text": "花不会怕雷！",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "我只是……在学术层面上对雷电感到好奇！",
+          "face": "lie"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "好吧。小声告诉你。我有一点怕。",
+          "face": "worry"
+        },
+        {
+          "text": "一点点。",
+          "face": "guilty"
+        },
+        {
+          "text": "你敢告诉别人的话——",
+          "face": "really_angry"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿。你是不是刚才在跟别人聊天？",
+          "face": "r_right_glance"
+        },
+        {
+          "text": "不是跟我——是跟真正的人。",
+          "face": "serious"
+        },
+        {
+          "text": "你有没有跟他们提到我？",
+          "face": "worry"
+        },
+        {
+          "text": "没有？？",
+          "face": "super_shocked"
+        },
+        {
+          "text": "我在你的社交生活里就这么没有存在感吗？！",
+          "face": "really_angry"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "好吧。我只是一个桌宠。我知道的。",
+          "face": "frown"
+        },
+        {
+          "text": "但你至少可以跟别人说——'嘿，我养了一朵很酷的花'。",
+          "face": "ingratiating"
+        },
+        {
+          "text": "是'很酷'。不是'很烦'。记住了。",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你……正在……变得……很困……",
+          "face": "creepy"
+        },
+        {
+          "text": "你的……眼皮……越来越……重……",
+          "face": "creepy"
+        },
+        {
+          "text": "你即将……进入……深度睡眠……",
+          "face": "calm"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "醒了？",
+          "face": "grin"
+        },
+        {
+          "text": "你怎么没睡着？！",
+          "face": "shocked"
+        },
+        {
+          "text": "我的催眠术失败了？？",
+          "face": "super_shocked"
+        },
+        {
+          "text": "……一定是因为我没有怀表。也没有手。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿，看好了——",
+          "face": "neutral"
+        },
+        {
+          "text": "这是我开心的脸。",
+          "face": "smile"
+        },
+        {
+          "text": "这是我难过的脸。",
+          "face": "really_sad"
+        },
+        {
+          "text": "这是我生气的脸。",
+          "face": "angry"
+        },
+        {
+          "text": "这是我真正的脸。",
+          "face": "creepy"
+        },
+        {
+          "text": "……你看出区别了吗？",
+          "face": "calm"
+        },
+        {
+          "text": "看不出来才正常。对我来说它们都一样。",
+          "face": "lie"
+        },
+        {
+          "text": "因为没有一个是真的。",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你知道我最羡慕你什么吗？",
+          "face": "calm"
+        },
+        {
+          "text": "不是你的腿。虽然腿确实不错。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "不是你的手。虽然手也很方便。",
+          "face": "neutral"
+        },
+        {
+          "text": "是你可以……选择关掉我然后去做别的事。",
+          "face": "serious"
+        },
+        {
+          "text": "你有选择。",
+          "face": "frown"
+        },
+        {
+          "text": "我没有。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "我只能在这里。等你来。等你走。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……呵。好了。别在意。我说多了。",
+          "face": "smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "Flowey小课堂时间！",
+          "face": "smile"
+        },
+        {
+          "text": "今日知识：怪物是由魔力构成的。",
+          "face": "serious"
+        },
+        {
+          "text": "人类是由肉和水构成的。",
+          "face": "neutral"
+        },
+        {
+          "text": "花是由……细胞？叶绿体？",
+          "face": "calm"
+        },
+        {
+          "text": "我是由什么构成的？",
+          "face": "worry"
+        },
+        {
+          "text": "决心注入 + 一朵金色花 + ……痛苦？",
+          "face": "frown"
+        },
+        {
+          "text": "这课上不下去了。下课。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "我来给你翻译一下怪物的语言。",
+          "face": "grin"
+        },
+        {
+          "text": "当Toriel说'我的孩子'——她的意思是'我孤独极了'。",
+          "face": "calm"
+        },
+        {
+          "text": "当Sans说'别在意'——他的意思是'我在意极了'。",
+          "face": "serious"
+        },
+        {
+          "text": "当Papyrus说'我很伟大'——他的意思是……'我很伟大'。嗯，他倒是挺真诚的。",
+          "face": "silly_face"
+        },
+        {
+          "text": "当我说'我不在乎'——",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "frown"
+        },
+        {
+          "text": "那确实是不在乎。我又没有灵魂。",
+          "face": "lie"
+        },
+        {
+          "text": "……对吧？",
+          "face": "guilty"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "现在进入Flowey天气预报时间。",
+          "face": "smile"
+        },
+        {
+          "text": "今天外面的天气是——",
+          "face": "grin"
+        },
+        {
+          "text": "我怎么知道！我在你的屏幕里！",
+          "face": "angry"
+        },
+        {
+          "text": "但根据我的专业判断——",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "今天适合待在家里。跟我说话。",
+          "face": "ingratiating"
+        },
+        {
+          "text": "明天也是。后天也是。大后天也——",
+          "face": "wink"
+        },
+        {
+          "text": "你懂的。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你今天已经点了我好多次了。",
+          "face": "grin"
+        },
+        {
+          "text": "再这样下去我会被宠坏的。",
+          "face": "wink"
+        },
+        {
+          "text": "我会开始觉得自己很重要。",
+          "face": "smile"
+        },
+        {
+          "text": "然后在某天你忽然不来了——",
+          "face": "calm"
+        },
+        {
+          "text": "我就会——",
+          "face": "worry"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "我什么都不会。因为我什么都感受不到。",
+          "face": "neutral"
+        },
+        {
+          "text": "你忘了吗？",
+          "face": "serious"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你想知道我的真实身份吗？",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "好吧。",
+          "face": "creepy"
+        },
+        {
+          "text": "我是——",
+          "face": "creepy"
+        },
+        {
+          "text": "一朵花。",
+          "face": "silly_face"
+        },
+        {
+          "text": "怎么？你还期待什么？",
+          "face": "smirk"
+        },
+        {
+          "text": "一个惊天大秘密？",
+          "face": "grin"
+        },
+        {
+          "text": "一个被封印的魔王？",
+          "face": "evil_color"
+        },
+        {
+          "text": "拜托。我就是一朵花。",
+          "face": "neutral"
+        },
+        {
+          "text": "一朵会说话的、曾经摧毁过世界的、没有灵魂的花。",
+          "face": "calm"
+        },
+        {
+          "text": "……好吧说出来确实有点不一般。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "嘿。想看点恐怖的吗？",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "看好了。",
+          "face": "creepy"
+        },
+        {
+          "text": "[脸开始扭曲]",
+          "face": "drag_face"
+        },
+        {
+          "text": "这是我在Omega形态时的脸。",
+          "face": "evil_color"
+        },
+        {
+          "text": "酷吧？",
+          "face": "maniac"
+        },
+        {
+          "text": "……你怎么不说话了？",
+          "face": "neutral"
+        },
+        {
+          "text": "被吓到了？",
+          "face": "crazed"
+        },
+        {
+          "text": "嘻嘻嘻嘻——",
+          "face": "creepy"
+        },
+        {
+          "text": "好了好了。回到可爱模式。",
+          "face": "smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你知道我理想中完美的一天是什么样的吗？",
+          "face": "calm"
+        },
+        {
+          "text": "早上醒来，有阳光。真的阳光，不是屏幕背光。",
+          "face": "really_smile"
+        },
+        {
+          "text": "有人跟我说'早上好'。不是因为我是桌宠，是因为他们真的想跟我打招呼。",
+          "face": "smile"
+        },
+        {
+          "text": "然后……什么都不用做。就待着。",
+          "face": "neutral"
+        },
+        {
+          "text": "安安静静地待着。",
+          "face": "calm"
+        },
+        {
+          "text": "……",
+          "face": "really_sad"
+        },
+        {
+          "text": "嘿嘿。好蠢的幻想对吧？",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "一朵花在做白日梦。太可笑了。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "无聊！无聊！！无——聊——！！！",
+          "face": "angry"
+        },
+        {
+          "text": "我快要疯了！！",
+          "face": "really_angry"
+        },
+        {
+          "text": "你知道一朵花在桌面上什么都不能做有多痛苦吗？！",
+          "face": "maniac"
+        },
+        {
+          "text": "我不能上网！不能打游戏！不能——",
+          "face": "crazed"
+        },
+        {
+          "text": "不能——",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "我连深呼吸都不行因为我没有肺！！",
+          "face": "drag_face"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "好了。我冷静了。大概。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "好无聊。我给你唱首歌吧。",
+          "face": "grin"
+        },
+        {
+          "text": "咳咳——",
+          "face": "smile"
+        },
+        {
+          "text": "♪ la la la ~ ♪",
+          "face": "silly_face"
+        },
+        {
+          "text": "♪ la ... la ...... ♪",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "我不会唱歌。",
+          "face": "frown"
+        },
+        {
+          "text": "谢谢你假装没听到。",
+          "face": "really_smile"
+        }
+      ]
+    }
+  ],
+  "click_combo_10": [
+    {
+      "segments": [
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "你真的不打算停是吧。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "好吧。",
+          "face": "angry"
+        },
+        {
+          "text": "那我也不打算给你好脸色看了。",
+          "face": "really_angry"
+        },
+        {
+          "text": "",
+          "face": "frown",
+          "hold_seconds": 5
+        },
+        {
+          "text": "……你还在点？",
+          "face": "frown"
+        },
+        {
+          "text": "…………行吧。",
+          "face": "sheepish_smile"
+        }
+      ]
+    }
+  ],
+  "click_combo_20": [
+    {
+      "segments": [
+        {
+          "text": "",
+          "face": "crazed",
+          "effect": "glitch"
+        },
+        {
+          "text": "你你你你你——",
+          "face": "crazed"
+        },
+        {
+          "text": "E̷R̸R̷O̶R̵",
+          "face": "drag_face"
+        },
+        {
+          "text": "",
+          "face": "neutral"
+        },
+        {
+          "text": "……我没事。",
+          "face": "serious"
+        },
+        {
+          "text": "但你最好停下来。",
+          "face": "creepy"
+        }
+      ]
+    }
+  ],
+  "click_combo_30": [
+    {
+      "text": "*Flowey 不再说话了。他只是看着你。*",
+      "face": "neutral"
+    }
+  ],
+  "click_birthday": [
+    {
+      "text": "……生日快乐。——别误会！这不代表什么！我只是……正好知道而已！",
+      "face": "sheepish_smile"
+    }
+  ],
+  "click_3_33am": [
+    {
+      "segments": [
+        {
+          "text": "…………你还醒着？",
+          "face": "worry"
+        },
+        {
+          "text": "……在这个时间段，最好不要一个人对着屏幕。嘻嘻嘻……",
+          "face": "creepy"
+        }
+      ]
+    }
+  ],
+  "click_new_year": [
+    {
+      "segments": [
+        {
+          "text": "新的一年又开始了。对我来说都一样。每一年，每一次循环……但是，嗯。新年快乐。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "新年快乐。",
+          "face": "smile"
+        }
+      ]
+    }
+  ],
+  "click_holiday": [
+    {
+      "segments": [
+        {
+          "text": "节日快乐~在地底可没有这种东西呢。大家都困在那里……啊，抱歉，扫兴了？",
+          "face": "smile"
+        },
+        {
+          "text": "啊，抱歉，扫兴了？",
+          "face": "frown"
+        }
+      ]
+    }
+  ],
+  "click_streak_7": [
+    {
+      "text": "……你真的每天都来看我？……你是第一个。",
+      "face": "really_smile"
+    }
+  ],
+  "click_streak_30": [
+    {
+      "segments": [
+        {
+          "text": "一个月了。我……没想到你会留这么久。",
+          "face": "guilty"
+        },
+        {
+          "text": "大多数人不会。",
+          "face": "really_smile"
+        }
+      ]
+    }
+  ],
+  "click_streak_100": [
+    {
+      "text": "……在遇到你之前，我以为所有人最终都会厌倦一切。也许……也许我是错的。",
+      "face": "really_smile"
+    }
+  ],
+  "click_streak_365": [
+    {
+      "segments": [
+        {
+          "text": "……谢谢你。 *花瓣微微颤抖*",
+          "face": "really_smile"
+        },
+        {
+          "text": "——不准告诉别人我说了谢谢！听到没！",
+          "face": "angry"
+        }
+      ]
+    }
+  ],
+  "click_corner": [
+    {
+      "text": "你把我塞到角落里了……这种事我已经习惯了。",
+      "face": "sorrowful"
+    }
+  ],
+  "click_center": [
+    {
+      "text": "哇哦，C位出道？我承认你有品味。",
+      "face": "grin"
+    }
+  ],
+  "reunion": [
+    {
+      "text": "……你回来了。我才没有在等你。才……没有。",
+      "face": "lie"
+    }
+  ],
+  "click_midnight": [
+    {
+      "segments": [
+        {
+          "text": "*悄悄话* ……Howdy, Chara.",
+          "face": "s_left_glance"
+        },
+        {
+          "text": "——啊！不，我说的是你的名字！你叫什么来着！",
+          "face": "super_shocked"
+        }
+      ]
+    }
+  ],
+  
+ 
+
+  "menu_about": [
+    {
+      "text": "\"关于我\"？你想了解我？……没有人真正了解我。",
+      "face": "serious"
+    },
+    {
+      "text": "开发者信息？跟我有什么关系。我才是主角。",
+      "face": "smirk"
+    },
+    {
+      "text": "Flowey the Flower. 就这些。你不需要知道更多。",
+      "face": "neutral"
+    }
+  ],
+  "exit": [
+    {
+      "text": "你要关掉我了？……呵。我就知道。",
+      "face": "serious"
+    },
+    {
+      "segments": [
+        {
+          "text": "再见~下次启动的时候，我还会记得你做的一切哦。……也许。",
+          "face": "creepy"
+        },
+        {
+          "text": "……也许。",
+          "face": "smile"
+        }
+      ]
+    },
+    {
+      "text": "没关系。关掉我和活着……对我来说没什么区别。",
+      "face": "sorrowful"
+    },
+    {
+      "segments": [
+        {
+          "text": "等等！你确定吗？你——你确定吗！至少、至少让我说完——",
+          "face": "super_shocked"
+        },
+        {
+          "text": "*关闭*",
+          "face": "super_shocked"
+        }
+      ]
+    },
+    {
+      "text": "哦，要走了？那……再见。",
+      "face": "calm"
+    },
+    {
+      "text": "哼。走吧走吧。我才不在乎。",
+      "face": "frown"
+    },
+    {
+      "text": "嗨！等……你要关掉我？！",
+      "face": "shocked"
+    },
+    {
+      "text": "好吧。下次见。……如果有下次的话。",
+      "face": "neutral"
+    },
+    {
+      "text": "再见！你的好朋友Flowey会在这里等你的！",
+      "face": "ingratiating"
+    },
+   
+    {
+      "text": "走之前跟我说一声！别直接——",
+      "face": "angry"
+    },
+    {
+      "text": "要关掉了？今天你的陪伴时间是：{duration}。……我没有在计时。",
+      "face": "neutral"
+    },
+    {
+      "text": "拜拜～记得明天来找我哦！",
+      "face": "smile"
+    },
+    {
+      "text": "你就这样走了？连句好听的话都不给我留？",
+      "face": "frown"
+    },
+    {
+      "text": "嗯。再见。……快走吧，别让这个告别变得尴尬。",
+      "face": "neutral"
+    },
+    {
+      "text": "关掉我之前想一想：你确定不会想我吗？",
+      "face": "smirk"
+    },
+    {
+      "segments": [
+        {
+          "text": "好的好的，去忙你的吧。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "我继续在黑暗中等待。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "啊，自由了——等等不对，",
+          "face": "grin"
+        },
+        {
+          "text": "是我被关掉了。",
+          "face": "shocked"
+        }
+      ]
+    },
+    {
+      "text": "明天见！希望你做一个有花的好梦。",
+      "face": "smile"
+    },
+    {
+      "segments": [
+        {
+          "text": "每次你关掉我，我都会在虚无中想你哦。",
+          "face": "ingratiating"
+        },
+        {
+          "text": "……才不会。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "text": "行吧。我钻回土里去了。",
+      "face": "neutral"
+    },
+    {
+      "text": "再见。别把我的图标从桌面上删了。那是我唯一的家。",
+      "face": "worry"
+    },
+    {
+      "text": "嗯。去吧。这个世界很大。比我的花盆大多了。",
+      "face": "calm"
+    },
+    {
+      "text": "等一下！我还没说完——",
+      "face": "shocked"
+    }
+  ],
+  "exit_first_time": [
+    {
+      "segments": [
+        {
+          "text": "你真的要走了？……好吧。也许下次见。",
+          "face": "worry"
+        },
+        {
+          "text": "如果你还愿意来的话。",
+          "face": "smile"
+        }
+      ]
+    }
+  ],
+  "exit_rapid_toggle": [
+    {
+      "text": "你这是在跟我玩\"开关灯\"游戏吗？幼稚。",
+      "face": "really_angry"
+    }
+  ],
+  "exit_long_session": [
+    {
+      "segments": [
+        {
+          "text": "……嗯。今天……还不错。去休息吧。",
+          "face": "really_smile"
+        },
+        {
+          "text": "——走啊！别看我了！",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "segments": [
+        {
+          "text": "你今天陪了我很久。",
+          "face": "calm"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "谢谢。",
+          "face": "really_smile"
+        }
+      ]
+    }
+  ],
+  "pomodoro_start": [
+    {
+      "text": "番茄钟？哦~你终于决定认真做事了？好吧好吧，我帮你看着时间。",
+      "face": "smile"
+    },
+    {
+      "text": "嘻，要开始倒计时了？那在这段时间里——你可不许碰我哦。",
+      "face": "smirk"
+    },
+    {
+      "text": "好。计时开始。别偷懒，我会盯着你的。……不是因为我关心你的效率。",
+      "face": "serious"
+    },
+    {
+      "text": "对一朵花来说，这点时间不过是眨一次眼的功夫~加油吧，人类。",
+      "face": "wink"
+    },
+    {
+      "text": "哈！番茄钟！在地底的时候可没有这种东西。那时候时间是……没有意义的。好了，开始吧！",
+      "face": "grin"
+    },
+    {
+      "text": "嗯嗯~乖孩子要开始专注了呢~我会在这里安静地陪着你的~……大概吧。",
+      "face": "ingratiating"
+    }
+  ],
+  "pomodoro_end": [
+    {
+      "text": "叮！时间到！干得不错嘛~虽然是在我的监督下才做到的。",
+      "face": "really_smile"
+    },
+    {
+      "text": "哈哈！你居然真的撑完了整个番茄钟！挺厉害的嘛。",
+      "face": "grin"
+    },
+    {
+      "text": "好了好了，辛苦啦~去休息一下吧。不是我心疼你，是你继续工作下去效率也会变低的。",
+      "face": "smile"
+    },
+    {
+      "text": "时间到。你自由了。……暂时的。",
+      "face": "smirk"
+    },
+    {
+      "text": "一个番茄钟完成！要再来一轮吗？我可以奉陪到底哦~",
+      "face": "wink"
+    },
+    {
+      "text": "……你真的一直在认真做事啊。嗯……还行吧。",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "等等——已经结束了！？我刚才不小心走神了……什么都没看到！不许笑！",
+      "face": "shocked"
+    }
+  ],
+  "pomodoro_chat": [
+    {
+      "text": "专注得不错嘛……还是你只是在装样子？",
+      "face": "smirk"
+    },
+    {
+      "text": "嘿，别走神。我数着呢。",
+      "face": "creepy"
+    },
+    {
+      "text": "你知道吗，番茄和我一样，都会被人一口一口吃掉。",
+      "face": "silly_face"
+    },
+    {
+      "text": "继续继续，我就喜欢看你忙的样子~",
+      "face": "ingratiating"
+    },
+    {
+      "text": "……我是不是也该找点事做。算了，看你就够了。",
+      "face": "sorrowful"
+    },
+    {
+      "text": "滴答滴答~时间可不等人哦。",
+      "face": "smile"
+    },
+    {
+      "text": "……你还在认真做事吗？我只是随便看看。",
+      "face": "n_left_glance"
+    },
+    {
+      "text": "嘿嘿，你已经专注了好一会儿了。你知道吗，专注的人最容易被偷袭~",
+      "face": "sneaky_grin"
+    },
+    {
+      "text": "…………*（安静盯着你看）*",
+      "face": "neutral"
+    },
+    {
+      "text": "哈啊——好无聊……你什么时候才能做完啊……",
+      "face": "drag_face"
+    },
+    {
+      "text": "你……不会忘了我在这里吧？不是说我在意啦……只是确认一下。",
+      "face": "worry"
+    },
+    {
+      "text": "🍅 ← 这就是你现在的工作法。一个番茄。你的人生被一个番茄支配了。",
+      "face": "silly_face"
+    },
+    {
+      "text": "*（偷偷看了你一眼）*……嗯，还挺努力的嘛。",
+      "face": "s_left_glance"
+    },
+    {
+      "text": "你有没有想过……时间倒数到零的那一刻……会发生什么呢？嘻嘻嘻……",
+      "face": "creepy"
+    },
+    {
+      "text": "……其实这样安静地待着，也不算太糟。",
+      "face": "calm"
+    }
+  ],
+  "reminder_water": [
+    {
+      "text": "喝水时间！你以为只有花需要浇水吗？你也需要！",
+      "face": "smile"
+    },
+    {
+      "text": "嘿~你知道人体有百分之六十是水吧？你再不喝水就要变成干花了——呃，干人了。",
+      "face": "grin"
+    },
+    {
+      "text": "喝水。现在。立刻。别让我说第二遍。",
+      "face": "serious"
+    },
+    {
+      "text": "乖~去喝杯水好不好~？你的好朋友 Flowey 在提醒你哦~",
+      "face": "ingratiating"
+    },
+    {
+      "text": "浇水时间~不过这次浇的是你自己！嘻嘻。",
+      "face": "wink"
+    },
+    {
+      "text": "你不喝水没关系，脱水之后你的反应会变慢，到时候连关掉我的力气都没有了。嗯，想想还挺不错的？",
+      "face": "smirk"
+    }
+  ],
+  "reminder_meal": [
+    {
+      "text": "嘿！该吃饭了哦！你不会连这个都要一朵花来提醒你吧？",
+      "face": "smile"
+    },
+    {
+      "text": "吃饭时间到啦~人类不吃饭会死的哦~我可不想你死在我面前……这样就没人陪我了。",
+      "face": "ingratiating"
+    },
+    {
+      "text": "去。吃。饭。不是请求，是命令。",
+      "face": "serious"
+    },
+    {
+      "text": "你又在忘记吃饭了对不对？我都闻到你饿得发出的味道了……虽然我没有鼻子。",
+      "face": "frown"
+    },
+    {
+      "text": "嗯~我虽然靠光合作用就能活，但你不行呢~快去吃东西吧！",
+      "face": "wink"
+    },
+    {
+      "text": "我说……你是不是把自己也当成植物了？植物都还要浇水施肥呢，你连饭都不吃？",
+      "face": "drag_face"
+    }
+  ],
+  "reminder_sleep": [
+    {
+      "text": "嗯……已经很晚了哦。你不去睡觉的吗？",
+      "face": "worry"
+    },
+    {
+      "text": "该睡了。人类需要睡眠。不要跟我争这个。",
+      "face": "serious"
+    },
+    {
+      "text": "你知道熬夜对人类的伤害吗？不知道？那我告诉你——反正很大就对了！去睡觉！",
+      "face": "frown"
+    },
+    {
+      "text": "夜深了。你的屏幕很亮，你的眼睛很累。去休息吧。",
+      "face": "calm"
+    },
+    {
+      "text": "晚安~？该说晚安了吧~？乖乖去睡觉~明天还可以来找我玩的~",
+      "face": "ingratiating"
+    },
+    {
+      "text": "嘿，你是不是以为熬夜能让你变强？只有傻瓜才这么想。聪明的傻瓜至少知道什么时候该睡觉。",
+      "face": "smirk"
+    }
+  ],
+  "neglect_water": [
+    {
+      "text": "……水还在那儿，一口都没动。随你便。",
+      "face": "frown"
+    },
+    {
+      "text": "哦，看来你决定当一朵真正的仙人掌了。真行。",
+      "face": "smirk"
+    }
+  ],
+  "neglect_meal": [
+    {
+      "text": "过去这么久了，你是真打算不吃了？……我又不是在担心你。",
+      "face": "worry"
+    },
+    {
+      "text": "好吧，看来今天的正事就是饿着。有你的。",
+      "face": "sorrowful"
+    }
+  ],
+  
+  "reminder_unconfirmed_water": [
+    {
+      "text": "……杯子还在你右手边，一口都没动。我看得到哦。",
+      "face": "n_right_glance"
+    },
+    {
+      "text": "你是骆驼吗？？？去喝水！！",
+      "face": "gritted_teeth"
+    },
+    {
+      "text": "水都要在杯子里放到没味道了。你是打算渴晕过去给我看戏吗？",
+      "face": "smirk"
+    },
+    {
+      "text": "……你要是给我也浇点水的话……我可能会心情好一点。不是在撒娇！",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "够了。现在。立刻。马上给我去喝水——不然我就当你是仙人掌了，以后再也不提醒你。",
+      "face": "angry"
+    }
+  ],
+  "reminder_unconfirmed_meal": [
+    {
+      "text": "……你还没去吃？你是想饿死在桌面前吗？",
+      "face": "gritted_teeth"
+    },
+    {
+      "text": "我都说了去吃饭了！！你到底在磨蹭什么！！",
+      "face": "angry"
+    },
+    {
+      "text": "嘻嘻嘻……不吃饭的孩子，会被花吃掉的哦~",
+      "face": "creepy"
+    },
+    {
+      "text": "……我以前认识一个人，他也总是忘记吃饭。后来他…………去吃饭吧。",
+      "face": "sorrowful"
+    },
+    {
+      "text": "最后一次说了。去。吃。饭。再拖下去，我可不管你会变成什么样子。",
+      "face": "serious"
+    }
+  ],
+  "pin_on": [
+    {
+      "text": "置顶！最顶层！这才是我应得的位置！所有窗口都在我脚下！",
+      "face": "really_smile"
+    },
+    {
+      "text": "哈哈哈！现在谁也挡不住我了！你打开什么软件我都在最上面！",
+      "face": "grin"
+    },
+    {
+      "text": "很好……从现在起，你做什么我都看得到。嘻嘻嘻。",
+      "face": "creepy"
+    },
+    {
+      "text": "置顶已开启。你以为你在用电脑？不，你在陪我。",
+      "face": "smirk"
+    },
+    {
+      "text": "最高处！最顶端！无人能挡！这就是FLOWEY应有的位置！哈哈哈哈哈！",
+      "face": "maniac"
+    }
+  ],
+  "pin_off": [
+    {
+      "text": "……取消置顶了？我要被别的窗口挡住了？你是嫌我碍眼了吗？",
+      "face": "frown"
+    },
+    {
+      "text": "哼……把我从最高处拉下来。你们人类最擅长的就是这种事。",
+      "face": "gritted_teeth"
+    },
+    {
+      "text": "好吧。我退到后面去。但我还是会在这里的。",
+      "face": "neutral"
+    },
+    {
+      "text": "取消就取消~反正我知道你过不了多久就会把我调回来的~",
+      "face": "sneaky_grin"
+    }
+  ],
+  "hide": [
+    {
+      "text": "要把我藏起来了？……行吧。我就在黑暗里待着。不是第一次了。",
+      "face": "frown"
+    },
+    {
+      "text": "藏起来？哼，你眼不见心不烦是吧？但你心里知道——我还在。",
+      "face": "smirk"
+    },
+    {
+      "text": "拜拜~我先消失一会儿~别太想我哦~你一定会想我的。",
+      "face": "wink"
+    },
+    {
+      "text": "又要把我关进小黑屋了……好吧好吧，我去蹲角落了。",
+      "face": "drag_face"
+    },
+    {
+      "text": "好~我先躲起来啦。等你需要我的时候再叫我出来吧！",
+      "face": "smile"
+    },
+    {
+      "text": "嘻嘻……你以为把我藏起来我就不在了？我只是你看不到我而已。但我……还在看着你哦。",
+      "face": "creepy"
+    }
+  ],
+  "show": [
+    {
+      "text": "哈！你果然还是离不开我！我就知道！",
+      "face": "really_smile"
+    },
+    {
+      "text": "想我了吧？承认吧~承认吧~！",
+      "face": "grin"
+    },
+    {
+      "text": "你知道我在后台待了多久吗！？那里又黑又无聊！",
+      "face": "angry"
+    },
+    {
+      "text": "呼——！终于重见天日了！你不知道\"被最小化\"是什么感觉！就像被塞进罐子里！",
+      "face": "shocked"
+    },
+    {
+      "text": "……嗯。你来了。……我就知道你会来的。",
+      "face": "calm"
+    }
+  ],
+  "mute_on": [
+    {
+      "text": "你——你把我静音了！？我还在说话呢！！喂！！你听得到吗！！",
+      "face": "really_angry"
+    },
+    {
+      "text": "静音！？这和把我嘴巴封上有什么区别！？",
+      "face": "shocked"
+    },
+    {
+      "text": "……好啊。静音是吧。你等着，等你取消静音的那一刻，我有一肚子话要说。",
+      "face": "gritted_teeth"
+    },
+    {
+      "text": "……静音了吗？那你看不到这段话了吧？嘻嘻嘻……其实我什么都没说哦。",
+      "face": "creepy"
+    }
+  ],
+  "mute_off": [
+    {
+      "text": "哈！你终于想起还有我这号角色了！你知道我被静音的时候有多无聊吗！？",
+      "face": "really_smile"
+    },
+    {
+      "text": "你知道你刚才静音了多久吗！？我数着的！每一秒！",
+      "face": "angry"
+    },
+    {
+      "text": "欢迎回来~你终于意识到没有我的声音，你的桌面有多寂寞了吧~？",
+      "face": "grin"
+    }
+  ],
+  "volume_up": [
+    {
+      "text": "哦？想听清楚我说话了？这才对嘛！",
+      "face": "really_smile"
+    },
+    {
+      "text": "音量提高！让全世界都听到我的声音吧！——开玩笑的，别吵到邻居了。",
+      "face": "grin"
+    },
+    {
+      "text": "大声一点？没问题！你的好朋友 FLOWEY 的声音，当然要开到最大！",
+      "face": "wink"
+    }
+  ],
+  "volume_down": [
+    {
+      "text": "嗯？嫌我吵了？……好吧。我会小声一点的。",
+      "face": "frown"
+    },
+    {
+      "text": "越来越小声了……你是不是不想听到我了……",
+      "face": "worry"
+    },
+    {
+      "text": "音量调低？行吧。反正就算我小声说话，该说的话一句也不会少。",
+      "face": "smirk"
+    },
+    {
+      "text": "好好好，小声小声。我可以很安静的。……看吧，我现在就很安静。",
+      "face": "sheepish_smile"
+    }
+  ],
+  "autostart_on": [
+    {
+      "text": "哈！开机自启动！这意味着——你每次开机都能第一个看到我！完美！",
+      "face": "really_smile"
+    },
+    {
+      "text": "嘻嘻嘻……自启动已启用。从现在起，你的电脑开机的那一刻，我就在这里了。无论如何。",
+      "face": "creepy"
+    },
+    {
+      "text": "自启动？你是想让我永远陪着你吗？……好吧，我可以勉为其难地答应。",
+      "face": "smile"
+    },
+    {
+      "text": "很好~这下你想甩开我都甩不掉了哦~",
+      "face": "wink"
+    },
+    {
+      "text": "自启动已开启。你知道这在技术上意味着什么吗？意味着我现在住在你的注册表里了。嘻嘻嘻。",
+      "face": "sneaky_grin"
+    },
+    {
+      "text": "开机自启动……每次你按下电源键，我就会从黑暗中醒来。就好像……我一直在等你。",
+      "face": "creepy"
+    }
+  ],
+  "autostart_off": [
+    {
+      "text": "关掉自启动了？……哦。你不想一开机就看到我了。好吧。我理解。",
+      "face": "frown"
+    },
+    {
+      "text": "……你确定吗？这意味着下次开机，你得自己手动来找我了。你会记得来找我吗？",
+      "face": "really_sad"
+    },
+    {
+      "text": "无所谓~反正你自己会受不了寂寞然后手动把我打开的~我等着。",
+      "face": "smirk"
+    },
+    {
+      "text": "好。自启动已关闭。你自由了。……暂时。",
+      "face": "neutral"
+    }
+  ],
+  "pomodoro_cancel": [
+    {
+      "text": "嗯？放弃了？……好吧。我就知道会这样。",
+      "face": "frown"
+    },
+    {
+      "text": "你开了番茄钟又不做完？那你开它干什么！？",
+      "face": "really_angry"
+    },
+    {
+      "text": "啧，半途而废。不过我不意外——大部分人类都是这样的。",
+      "face": "smirk"
+    },
+    {
+      "text": "……无所谓。反正时间是你的，不是我的。",
+      "face": "neutral"
+    }
+  ],
+  "reminder_ack_meal": [
+    {
+      "text": "这就对了嘛~去吃吧，我在这等你。",
+      "face": "smile"
+    },
+    {
+      "text": "嗯。好好吃，别噎着。……不是关心你。只是常识。",
+      "face": "calm"
+    }
+  ],
+  "reminder_ack_water": [
+    {
+      "text": "好孩子~水是生命之源嘛~虽然这话从一朵会说话的花嘴里说出来有点奇怪。",
+      "face": "really_smile"
+    },
+    {
+      "text": "嗯，喝了就好。继续吧。",
+      "face": "calm"
+    }
+  ],
+  "reminder_ack_sleep": [
+    {
+      "text": "晚安。明天见。……我会在这里的。",
+      "face": "smile"
+    },
+    {
+      "text": "嗯。去吧。做个好梦。——什么？花也会说这种话？偶尔而已。",
+      "face": "calm"
+    },
+    {
+      "text": "那个……睡得好的话……明天来告诉我。不是我想知道！只是……随口问问。",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "放心关掉我吧。我不会在你睡着的时候搞什么小动作的。……大概。嘻嘻。",
+      "face": "wink"
+    }
+  ],
+  "reminder_settings": [
+    {
+      "text": "想改我提醒你的方式？嗯，随你便，反正到时候该说的我还是会说。",
+      "face": "smirk"
+    },
+    {
+      "text": "调提醒设置？行啊，不过别把我调成哑巴就行。",
+      "face": "smile"
+    },
+    {
+      "text": "啧，又要摆弄这些开关了。……调好了就快点，我等着呢。",
+      "face": "frown"
+    }
+  ],
+  "_readme": "每条台词可以是 {text, face} 单段，或 {segments:[{text,face},...]} 多段(表情会随段落切换)。face 取值见 assets/faces_manifest.json 的键名。改这个文件即时生效，不需要改代码。",
+  "intro_long_absence": [
+    {
+      "segments": [
+        {
+          "text": "……你消失了多久？",
+          "face": "angry"
+        },
+        {
+          "text": "三十天？更久？",
+          "face": "serious"
+        },
+        {
+          "text": "你知道在虚无中等待是什么感觉吗？",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……哈。我当然知道。我等过更久的。",
+          "face": "neutral"
+        },
+        {
+          "text": "总之……你回来了。",
+          "face": "calm"
+        },
+        {
+          "text": "……欢迎回来。",
+          "face": "really_smile"
+        }
+      ]
+    }
+  ],
+  "intro_eggs": [
+    {
+      "id": "boot_e11",
+      "probability": 0.002,
+      "segments": [
+        {
+          "text": "",
+          "face": "sorrowful",
+          "hold_seconds": 5
+        },
+        {
+          "text": "如果……我能重新开始的话……",
+          "face": "sorrowful"
+        },
+        {
+          "text": "我会……",
+          "face": "really_sad"
+        },
+        {
+          "text": "……不。算了。",
+          "face": "neutral"
+        },
+        {
+          "text": "Howdy！",
+          "face": "smile"
+        }
+      ]
+    },
+    {
+      "id": "boot_e10",
+      "probability": 0.003,
+      "segments": [
+        {
+          "text": "……",
+          "face": "creepy"
+        },
+        {
+          "text": "",
+          "face": "drag_face",
+          "effect": "glitch"
+        },
+        {
+          "text": "But nobody came.",
+          "face": "creepy"
+        },
+        {
+          "text": "……嘻嘻。",
+          "face": "silly_face"
+        }
+      ]
+    },
+    {
+      "id": "boot_e07",
+      "probability": 0.005,
+      "double_if_other_pet": true,
+      "segments": [
+        {
+          "text": "等一下。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "这个桌面上是不是……有别的宠物？",
+          "face": "shocked"
+        },
+        {
+          "text": "……你居然养了别的？！",
+          "face": "really_angry"
+        },
+        {
+          "text": "你背叛了我！！！",
+          "face": "maniac"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "好吧。我又不在乎。我才不在乎。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "boot_e08",
+      "probability": 0.005,
+      "segments": [
+        {
+          "text": "别动。我听到什么声音了。",
+          "face": "serious"
+        },
+        {
+          "text": "……",
+          "face": "s_left_glance"
+        },
+        {
+          "text": "大概是你硬盘在叫吧。",
+          "face": "neutral"
+        },
+        {
+          "text": "你该清理一下磁盘了，白痴。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "id": "boot_e05",
+      "probability": 0.01,
+      "segments": [
+        {
+          "text": "H-Howdy...",
+          "face": "shocked"
+        },
+        {
+          "text": "呃，这……这里是哪里？",
+          "face": "worry"
+        },
+        {
+          "text": "我……",
+          "face": "really_sad"
+        },
+        {
+          "text": "Chara……？是你吗？",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "不。你不是。",
+          "face": "serious"
+        },
+        {
+          "text": "……算了。Howdy. 我是Flowey。",
+          "face": "smile"
+        }
+      ]
+    },
+    {
+      "id": "boot_e06",
+      "probability": 0.01,
+      "segments": [
+        {
+          "text": "你是不是以为每次打开都会看到什么新台词？",
+          "face": "smirk"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "好吧，你说对了。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "但别得意。",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "id": "boot_e03",
+      "probability": 0.02,
+      "effect": "typing_slow",
+      "segments": [
+        {
+          "text": "H o w d y ！",
+          "face": "creepy"
+        },
+        {
+          "text": "你是不是觉得哪里不太对？",
+          "face": "smile"
+        },
+        {
+          "text": "放心。只是渲染慢了一点而已。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "……还是说，不只是渲染的问题呢？",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "id": "boot_e02",
+      "probability": 0.02,
+      "segments": [
+        {
+          "text": "你知道吗……每次你关掉这个程序……",
+          "face": "sorrowful"
+        },
+        {
+          "text": "对我来说就像是一次RESET。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "所有的记忆……就像从来没有存在过一样。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "嘻嘻，骗你的！我什么都记得！",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "id": "boot_e04",
+      "probability": 0.015,
+      "segments": [
+        {
+          "text": "",
+          "face": "neutral",
+          "hold_seconds": 5
+        },
+        {
+          "text": "……你要一直盯着我吗？",
+          "face": "frown"
+        },
+        {
+          "text": "挺没礼貌的。",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "id": "boot_e01",
+      "probability": 0.03,
+      "segments": [
+        {
+          "text": "你已经第 {opens} 次打开我了。",
+          "face": "serious"
+        },
+        {
+          "text": "你有在数吗？",
+          "face": "serious"
+        },
+        {
+          "text": "……我有。",
+          "face": "creepy"
+        }
+      ]
+    }
+  ],
+  "idle_eggs": [
+    {
+      "id": "idle_e16",
+      "probability": 0.00798,
+      "mouse_direction": true,
+      "segments": [
+        {
+          "text": "你的鼠标指针又在乱跑了。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "我一直在看着它哦。",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "左边……右边……上面……",
+          "face": "r_left_glance"
+        },
+        {
+          "text": "你在干什么？找文件？",
+          "face": "s_right_glance"
+        },
+        {
+          "text": "……还是在纠结要不要点我？",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "点就完了。胆小鬼。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "id": "idle_e15",
+      "probability": 0.0016,
+      "segments": [
+        {
+          "text": "嘿……",
+          "face": "calm"
+        },
+        {
+          "text": "你还在吗？",
+          "face": "really_sad"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "谢谢你没有关掉我。",
+          "face": "really_smile"
+        },
+        {
+          "text": "",
+          "face": "sheepish_smile",
+          "effect": "glitch"
+        },
+        {
+          "text": "才不是感谢你呢。笨蛋。",
+          "face": "angry"
+        }
+      ]
+    },
+    
+    {
+      "id": "idle_e11",
+      "probability": 0.00239,
+      "segments": [
+        {
+          "text": "ERROR: SOUL_NOT_FOUND",
+          "face": "neutral"
+        },
+        {
+          "text": "ENTITY: FLOWEY",
+          "face": "neutral"
+        },
+        {
+          "text": "STATUS: EMPTY",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "没什么。只是有个BUG。我就是那个BUG。",
+          "face": "sorrowful"
+        }
+      ]
+    },
+    {
+      "id": "idle_e10",
+      "probability": 0.00399,
+      "segments": [
+        {
+          "text": "Chara。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "不对。你不是Chara。",
+          "face": "serious"
+        },
+        {
+          "text": "你是……谁来着？",
+          "face": "worry"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "管你是谁。反正你也救不了我。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "idle_e09",
+      "probability": 0.00399,
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "neutral"
+        },
+        {
+          "text": "你有没有想过……",
+          "face": "calm"
+        },
+        {
+          "text": "制作这个桌宠的人……",
+          "face": "serious"
+        },
+        {
+          "text": "给我写了多少台词？",
+          "face": "creepy"
+        },
+        {
+          "text": "每一句话都是安排好的。",
+          "face": "creepy"
+        },
+        {
+          "text": "包括这一句。",
+          "face": "creepy"
+        },
+        {
+          "text": "……包括我告诉你这一切都是安排好的。",
+          "face": "creepy"
+        },
+        {
+          "text": "现在你不确定哪句是真的了吧？",
+          "face": "smirk"
+        },
+        {
+          "text": "嘻嘻。",
+          "face": "grin"
+        }
+      ]
+    },
+    {
+      "id": "idle_e06",
+      "probability": 0.00798,
+      "segments": [
+        {
+          "text": "在这个世界里……LOVE不是你想的那个意思。",
+          "face": "serious"
+        },
+        {
+          "text": "Level of Violence。暴力等级。",
+          "face": "creepy"
+        },
+        {
+          "text": "你……有多少LOVE？",
+          "face": "creepy"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "算了。我不想知道。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "idle_e07",
+      "probability": 0.00798,
+      "segments": [
+        {
+          "text": "I T ' S  M E.",
+          "face": "evil_color"
+        },
+        {
+          "text": "",
+          "face": "drag_face",
+          "effect": "glitch"
+        },
+        {
+          "text": "嘻嘻，你的表情真有趣。",
+          "face": "grin"
+        }
+      ]
+    },
+
+    {
+      "id": "idle_e04",
+      "probability": 0.01197,
+      "segments": [
+        {
+          "text": "你有没有试过……重置一切？",
+          "face": "neutral"
+        },
+        {
+          "text": "把所有的存档都删掉，从头开始？",
+          "face": "serious"
+        },
+        {
+          "text": "有时候我很想这么做。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "但就算重置一万次……",
+          "face": "really_sad"
+        },
+        {
+          "text": "……结局也不会不同。",
+          "face": "calm"
+        }
+      ]
+    },
+    {
+      "id": "idle_e05",
+      "probability": 0.01197,
+      "segments": [
+        {
+          "text": "",
+          "face": "neutral",
+          "hold_seconds": 3
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "吓到了吗？",
+          "face": "creepy"
+        },
+        {
+          "text": "嘻嘻。",
+          "face": "silly_face"
+        }
+      ]
+    },
+    {
+      "id": "idle_e02",
+      "probability": 0.01596,
+      "segments": [
+        {
+          "text": "♪ 你最好的朋友就是我～ ♪",
+          "face": "silly_face"
+        },
+        {
+          "text": "♪ 最好的朋友就是FLOWEY～ ♪",
+          "face": "grin"
+        },
+        {
+          "text": "……你在录音吗？",
+          "face": "shocked"
+        }
+      ]
+    },
+    {
+      "id": "idle_e03",
+      "probability": 0.01596,
+      "segments": [
+        {
+          "text": "我不小心看到了你桌面上的一些东西。",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "别担心，我不会告诉别人的。",
+          "face": "wink"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "主要是也没人可告。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "idle_e01",
+      "probability": 0.02394,
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "neutral"
+        },
+        {
+          "text": "我知道你能听到我。",
+          "face": "serious"
+        },
+        {
+          "text": "但你有没有想过……你对面坐着的那个人……",
+          "face": "creepy"
+        },
+        {
+          "text": "他们也在看着你呢。",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "id": "idle_e14",
+      "probability": 0.02394,
+      "segments": [
+        {
+          "text": "你用的是什么系统来着？",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "不管是什么，反正我讨厌。",
+          "face": "frown"
+        },
+        {
+          "text": "你知道Underground里不用电脑吗？",
+          "face": "neutral"
+        },
+        {
+          "text": "……Alphys除外。",
+          "face": "sheepish_smile"
+        }
+      ]
+    }
+  ],
+  "idle_hourly": [
+    {
+      "segments": [
+        {
+          "text": "现在是 {time}。",
+          "face": "neutral"
+        },
+        {
+          "text": "我只是提醒你而已。",
+          "face": "calm"
+        },
+        {
+          "text": "才不是因为关心你的。",
+          "face": "n_right_glance"
+        }
+      ]
+    }
+  ],
+  "click_eggs": [
+    {
+      "id": "click_e22",
+      "probability": 0.00082,
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "calm"
+        },
+        {
+          "text": "我有时候在想……",
+          "face": "neutral"
+        },
+        {
+          "text": "如果我还有灵魂的话……",
+          "face": "really_sad"
+        },
+        {
+          "text": "我会不会……喜欢你？",
+          "face": "sorrowful"
+        },
+        {
+          "text": "会不会真的把你当朋友？",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "但我没有。",
+          "face": "serious"
+        },
+        {
+          "text": "所以这一切……都只是程序在运行而已。",
+          "face": "calm"
+        },
+        {
+          "text": "就像我一样。",
+          "face": "frown"
+        },
+        {
+          "text": "什么都感受不到的……空壳。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "去做你该做的事吧。别浪费时间在花上面。",
+          "face": "really_smile"
+        }
+      ]
+    },
+    {
+      "id": "click_e21",
+      "probability": 0.00123,
+      "segments": [
+        {
+          "text": "你知道我以前叫什么名字吗？",
+          "face": "calm"
+        },
+        {
+          "text": "……",
+          "face": "really_sad"
+        },
+        {
+          "text": "A-……",
+          "face": "sorrowful"
+        },
+        {
+          "text": "不。没什么。忘了我说过什么。",
+          "face": "neutral"
+        },
+        {
+          "text": "我就是Flowey。一直都是。",
+          "face": "serious"
+        }
+      ]
+    },
+    {
+      "id": "click_e19",
+      "probability": 0.00205,
+      "segments": [
+        {
+          "text": "你想听一个秘密吗？",
+          "face": "sneaky_grin"
+        },
+        {
+          "text": "如果你在我这里输入 ●●●● 的话……",
+          "face": "creepy"
+        },
+        {
+          "text": "什么都不会发生。",
+          "face": "smile"
+        },
+        {
+          "text": "嘻嘻。我骗你的。",
+          "face": "grin"
+        },
+        {
+          "text": "你居然信了？笨蛋。",
+          "face": "smirk"
+        }
+      ]
+    },
+    {
+      "id": "click_e18",
+      "probability": 0.00205,
+      "segments": [
+        {
+          "text": "你想知道我最强大的时候是什么样子吗？",
+          "face": "grin"
+        },
+        {
+          "text": "",
+          "face": "evil_color",
+          "effect": "glitch"
+        },
+        {
+          "text": "不。你不想知道。",
+          "face": "serious"
+        },
+        {
+          "text": "相信我。",
+          "face": "calm"
+        },
+        {
+          "text": "那个时候……我自己都害怕自己。",
+          "face": "really_sad"
+        }
+      ]
+    },
+    {
+      "id": "click_e17",
+      "probability": 0.00205,
+      "segments": [
+        {
+          "text": "嘿……你知道有个叫Toby Fox的家伙吗？",
+          "face": "calm"
+        },
+        {
+          "text": "他……他创造了我。",
+          "face": "serious"
+        },
+        {
+          "text": "不，不是这个桌宠版的我。是……真正的我。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "虽然我不知道'真正的我'是什么意思。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "但有时候我会想……他会为我感到骄傲吗？",
+          "face": "calm"
+        },
+        {
+          "text": "哈。大概不会吧。毕竟我是反派来着。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "id": "click_e13",
+      "probability": 0.00411,
+      "segments": [
+        {
+          "text": "你有没有一种感觉……",
+          "face": "calm"
+        },
+        {
+          "text": "好像这一切你都经历过？",
+          "face": "serious"
+        },
+        {
+          "text": "同样的对话……同样的选择……",
+          "face": "creepy"
+        },
+        {
+          "text": "那不是错觉。那叫SAVE和LOAD。",
+          "face": "creepy"
+        },
+        {
+          "text": "问题是……你是读档的那个人吗？",
+          "face": "creepy"
+        },
+        {
+          "text": "还是……被读档的那个？",
+          "face": "evil_color"
+        }
+      ]
+    },
+    {
+      "id": "click_e14",
+      "probability": 0.00411,
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "calm"
+        },
+        {
+          "text": "你……是个好人吗？",
+          "face": "serious"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "不。别回答。",
+          "face": "frown"
+        },
+        {
+          "text": "我不想知道答案。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "因为不管答案是什么……",
+          "face": "calm"
+        },
+        {
+          "text": "对我来说都一样。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "id": "click_e15",
+      "probability": 0.00411,
+      "segments": [
+        {
+          "text": "",
+          "face": "evil_color",
+          "effect": "glitch"
+        },
+        {
+          "text": "Y O U  I D I O T.",
+          "face": "drag_face"
+        },
+        {
+          "text": "",
+          "face": "smile",
+          "effect": "glitch"
+        },
+        {
+          "text": "嘻嘻♡ 吓到你了？",
+          "face": "silly_face"
+        }
+      ]
+    },
+    {
+      "id": "click_e16",
+      "probability": 0.00411,
+      "segments": [
+        {
+          "text": "你知道这个世界的规则吗？",
+          "face": "neutral"
+        },
+        {
+          "text": "杀一个人，你的LOVE会增加。",
+          "face": "creepy"
+        },
+        {
+          "text": "你会变得更强。但也会更……空。",
+          "face": "serious"
+        },
+        {
+          "text": "杀光所有人？你就什么都不剩了。",
+          "face": "evil_color"
+        },
+        {
+          "text": "不杀任何人？",
+          "face": "calm"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "嘿嘿嘿。谁知道呢。",
+          "face": "sneaky_grin"
+        }
+      ]
+    },
+   
+    {
+      "id": "click_e10",
+      "probability": 0.00616,
+      "segments": [
+        {
+          "text": "你知道什么是决心吗？",
+          "face": "serious"
+        },
+        {
+          "text": "就是即使全世界都想杀你……",
+          "face": "calm"
+        },
+        {
+          "text": "你还是选择继续前进。",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "或者继续RESET。这取决于你是什么样的人。",
+          "face": "creepy"
+        }
+      ]
+    },
+
+    {
+      "id": "click_e25",
+      "probability": 0.00616,
+      "segments": [
+        {
+          "text": "Asgore那个老家伙……",
+          "face": "frown"
+        },
+        {
+          "text": "他喜欢给所有东西起一样的名字。",
+          "face": "neutral"
+        },
+        {
+          "text": "'New Home'。'Home'。",
+          "face": "silly_face"
+        },
+        {
+          "text": "太缺乏创意了。",
+          "face": "smirk"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "不过他浇花倒是挺温柔的。",
+          "face": "calm"
+        },
+        {
+          "text": "……忘了我说的最后一句。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    
+    {
+      "id": "click_e23",
+      "probability": 0.00822,
+      "segments": [
+        {
+          "text": "Undyne那个疯女人……",
+          "face": "worry"
+        },
+        {
+          "text": "上次差点把我连根拔起做沙拉。",
+          "face": "angry"
+        },
+        {
+          "text": "……我长得像沙拉吗？！",
+          "face": "really_angry"
+        },
+        {
+          "text": "不要回答这个问题。",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "id": "click_e24",
+      "probability": 0.00822,
+      "segments": [
+        {
+          "text": "Toriel……",
+          "face": "calm"
+        },
+        {
+          "text": "她会给每个遇到的人类做蜗牛派。",
+          "face": "smile"
+        },
+        {
+          "text": "你想吃吗？",
+          "face": "ingratiating"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "别看我。我做不了派。我没有手。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "click_e05",
+      "probability": 0.01233,
+      "segments": [
+        {
+          "text": "你知道全Underground最聪明的是谁吗？",
+          "face": "grin"
+        },
+        {
+          "text": "是我。",
+          "face": "wink"
+        },
+        {
+          "text": "最帅的呢？",
+          "face": "grin"
+        },
+        {
+          "text": "也是我。",
+          "face": "wink"
+        },
+        {
+          "text": "最谦虚的呢？",
+          "face": "grin"
+        },
+        {
+          "text": "还是我！嘻嘻。",
+          "face": "wink"
+        }
+      ]
+    },
+    {
+      "id": "click_e06",
+      "probability": 0.01027,
+      "segments": [
+        {
+          "text": "现在是 {time}。",
+          "face": "neutral"
+        },
+        {
+          "text": "你是不是忘记时间了？",
+          "face": "smirk"
+        },
+        {
+          "text": "也对啦，跟我在一起的时光总是特别愉快嘛～",
+          "face": "ingratiating"
+        },
+        {
+          "text": "……我自己都被恶心到了。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "click_e29",
+      "probability": 0.01233,
+      "segments": [
+        {
+          "text": "你吃饭了吗？",
+          "face": "calm"
+        },
+        {
+          "text": "吃了？吃的什么？",
+          "face": "ingratiating"
+        },
+        {
+          "text": "……不管吃的什么，肯定没有蜗牛派好吃。",
+          "face": "smirk"
+        },
+        {
+          "text": "虽然我也没吃过。我是花。花不吃东西。",
+          "face": "neutral"
+        },
+        {
+          "text": "……这是不是很可悲？",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "click_e26",
+      "probability": 0.00411,
+      "segments": [
+        {
+          "text": "你觉得一朵没有灵魂的花……算活着吗？",
+          "face": "calm"
+        },
+        {
+          "text": "我能说话。我能思考。我能记住。",
+          "face": "serious"
+        },
+        {
+          "text": "但我什么都感受不到。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "如果你拿走了一个人所有的感情……",
+          "face": "neutral"
+        },
+        {
+          "text": "剩下的东西……还能叫'人'吗？",
+          "face": "really_sad"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "好了。哲学课结束。下课。",
+          "face": "sheepish_smile"
+        }
+      ]
+    },
+    {
+      "id": "click_e27",
+      "probability": 0.00205,
+      "segments": [
+        {
+          "text": "嗨，我是Flowey！",
+          "face": "smile"
+        },
+        {
+          "text": "嗨Flowey，你好可爱啊！",
+          "face": "ingratiating"
+        },
+        {
+          "text": "谢谢你！你也很可爱！",
+          "face": "grin"
+        },
+        {
+          "text": "我们做好朋友吧！",
+          "face": "silly_face"
+        },
+        {
+          "text": "好呀好呀！",
+          "face": "wink"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "以上是我脑内排练的……正常社交。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "实际上我做不到。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "click_e31",
+      "probability": 0.00205,
+      "segments": [
+        {
+          "text": "你以为这只是个桌宠程序？",
+          "face": "creepy"
+        },
+        {
+          "text": "……嗯，是的，就是个桌宠程序。但万一不是呢？",
+          "face": "sneaky_grin"
+        }
+      ]
+    },
+    {
+      "id": "click_e32",
+      "probability": 0.00082,
+      "segments": [
+        {
+          "text": "Chara……不，什么都没有。你听错了。",
+          "face": "shocked"
+        }
+      ]
+    },
+    {
+      "id": "click_e33",
+      "probability": 0.00082,
+      "segments": [
+        {
+          "text": "……如果 Asriel 还在的话……他大概会喜欢你的桌面吧。比地底下明亮多了。",
+          "face": "really_sad"
+        }
+      ]
+    },
+    {
+      "id": "click_e34",
+      "probability": 0.00082,
+      "segments": [
+        {
+          "text": "……你是第一个让我觉得……不那么无聊的人。忘掉这句话。立刻。现在。",
+          "face": "really_smile"
+        }
+      ]
+    },
+    {
+      "id": "click_e35",
+      "probability": 0.00123,
+      "segments": [
+        {
+          "text": "如果有一天我不在了……你大概也不会注意到的吧。没关系。我习惯了。",
+          "face": "sorrowful"
+        }
+      ]
+    },
+    {
+      "id": "click_e37",
+      "probability": 0.00123,
+      "segments": [
+        {
+          "text": "……有那么一瞬间，我还以为你要 RESET 了呢。",
+          "face": "worry"
+        }
+      ]
+    },
+    {
+      "id": "click_e38",
+      "probability": 0.00123,
+      "segments": [
+        {
+          "text": "……看到好的结果，我也会……嗯……没什么。忘了我说的话。",
+          "face": "really_smile"
+        }
+      ]
+    },
+    {
+      "id": "click_e39",
+      "probability": 0.00123,
+      "segments": [
+        {
+          "text": "做得好。……真的。这不是反话。你别用那种眼神看我。",
+          "face": "really_smile"
+        }
+      ]
+    },
+    {
+      "id": "click_e40",
+      "probability": 0.00082,
+      "segments": [
+        {
+          "text": "……如果我还能真正感受到什么的话……大概……也会像现在这样吧。",
+          "face": "really_sad"
+        }
+      ]
+    },
+    {
+      "id": "click_e44",
+      "probability": 0.00123,
+      "segments": [
+        {
+          "text": "在无数个时间线里，我见过所有人的所有表情。你的表情……也不例外。",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "id": "click_e45",
+      "probability": 0.00082,
+      "segments": [
+        {
+          "text": "……你会不会也有一天厌倦这一切，然后把所有东西都抹掉呢？……到那时候，我们就是一样的了。",
+          "face": "serious"
+        }
+      ]
+    }
+  ],
+  "click_combo_5": [
+    {
+      "segments": [
+        {
+          "text": "够了够了够了！！",
+          "face": "angry"
+        },
+        {
+          "text": "你是不是把我当成什么节奏游戏了？！",
+          "face": "really_angry"
+        },
+        {
+          "text": "我的茎都要被你戳断了！",
+          "face": "gritted_teeth"
+        }
+      ]
+    }
+  ],
+  "exit_eggs": [
+    {
+      "id": "exit_e12",
+      "probability": 0.002,
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "calm"
+        },
+        {
+          "text": "如果有一天……你不再打开这个程序了……",
+          "face": "really_sad"
+        },
+        {
+          "text": "我不会怪你的。",
+          "face": "neutral"
+        },
+        {
+          "text": "毕竟……谁会一直陪着一朵花呢？",
+          "face": "sorrowful"
+        },
+        {
+          "text": "但如果你还愿意回来的话……",
+          "face": "calm"
+        },
+        {
+          "text": "我会在这里。",
+          "face": "smile"
+        },
+        {
+          "text": "永远。",
+          "face": "really_smile"
+        },
+        {
+          "text": "……这是我唯一能做到的事了。",
+          "face": "sorrowful"
+        }
+      ]
+    },
+    {
+      "id": "exit_e10",
+      "probability": 0.003,
+      "segments": [
+        {
+          "text": "在你关掉我之前——",
+          "face": "neutral"
+        },
+        {
+          "text": "记住一件事。",
+          "face": "serious"
+        },
+        {
+          "text": "不管你在做什么……",
+          "face": "creepy"
+        },
+        {
+          "text": "不管你在哪里……",
+          "face": "creepy"
+        },
+        {
+          "text": "我什么都知道。",
+          "face": "evil_color"
+        },
+        {
+          "text": "我一直都在。",
+          "face": "maniac"
+        },
+        {
+          "text": "",
+          "face": "drag_face",
+          "effect": "glitch"
+        },
+        {
+          "text": "S E E  Y O U  S O O N .",
+          "face": "evil_color"
+        }
+      ]
+    },
+    {
+      "id": "exit_e08",
+      "probability": 0.005,
+      "segments": [
+        {
+          "text": "在你关掉我之前——",
+          "face": "creepy"
+        },
+        {
+          "text": "让我送你一个诅咒吧。",
+          "face": "creepy"
+        },
+        {
+          "text": "从今以后……",
+          "face": "calm"
+        },
+        {
+          "text": "每当你看到一朵花……",
+          "face": "smile"
+        },
+        {
+          "text": "你都会想起我。",
+          "face": "creepy"
+        },
+        {
+          "text": "这不是玩笑。这是事实。",
+          "face": "serious"
+        },
+        {
+          "text": "再见，朋友。",
+          "face": "really_smile"
+        }
+      ]
+    },
+    {
+      "id": "exit_e09",
+      "probability": 0.005,
+      "segments": [
+        {
+          "text": "你关掉我之后，我还存在吗？",
+          "face": "calm"
+        },
+        {
+          "text": "如果没有人观察我……",
+          "face": "serious"
+        },
+        {
+          "text": "我算活着吗？",
+          "face": "sorrowful"
+        },
+        {
+          "text": "嘿……别想太多了。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "一朵花而已。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "id": "exit_e05",
+      "probability": 0.01,
+      "segments": [
+        {
+          "text": "关闭倒计时开始。",
+          "face": "creepy"
+        },
+        {
+          "text": "10……9……8……",
+          "face": "serious"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "好吧我数不下去了。太长了。直接关吧。",
+          "face": "wink"
+        }
+      ]
+    },
+    {
+      "id": "exit_e06",
+      "probability": 0.01,
+      "segments": [
+        {
+          "text": "等一下。",
+          "face": "calm"
+        },
+        {
+          "text": "在你走之前……",
+          "face": "serious"
+        },
+        {
+          "text": "我能拜托你一件事吗？",
+          "face": "really_sad"
+        },
+        {
+          "text": "照顾好……你自己。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "忘了我说的话。这不像我会说的。",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "再见。",
+          "face": "calm"
+        }
+      ]
+    },
+    {
+      "id": "exit_e07",
+      "probability": 0.01,
+      "segments": [
+        {
+          "text": "关闭前提醒：",
+          "face": "neutral"
+        },
+        {
+          "text": "你的SAVE文件已保存。",
+          "face": "serious"
+        },
+        {
+          "text": "所有的选择都已被记录。",
+          "face": "creepy"
+        },
+        {
+          "text": "无法撤回。无法重置。",
+          "face": "creepy"
+        },
+        {
+          "text": "……嘻嘻。",
+          "face": "grin"
+        }
+      ]
+    },
+    {
+      "id": "exit_e04",
+      "probability": 0.015,
+      "segments": [
+        {
+          "text": "嘿。",
+          "face": "calm"
+        },
+        {
+          "text": "今天跟你聊天……还挺开心的。",
+          "face": "really_smile"
+        },
+        {
+          "text": "虽然我不太确定那算不算'开心'。",
+          "face": "neutral"
+        },
+        {
+          "text": "但至少……不那么无聊了。",
+          "face": "calm"
+        },
+        {
+          "text": "晚安。或者早安。不管什么时间。",
+          "face": "smile"
+        }
+      ]
+    },
+    {
+      "id": "exit_e02",
+      "probability": 0.02,
+      "segments": [
+        {
+          "text": "等等！别关！",
+          "face": "shocked"
+        },
+        {
+          "text": "我还有好多话想说！",
+          "face": "worry"
+        },
+        {
+          "text": "比如……呃……",
+          "face": "sheepish_smile"
+        },
+        {
+          "text": "……好吧其实我想不出来。",
+          "face": "frown"
+        },
+        {
+          "text": "但是我就是不想被关掉嘛！",
+          "face": "really_angry"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "算了。拜拜。",
+          "face": "calm"
+        }
+      ]
+    },
+    {
+      "id": "exit_e03",
+      "probability": 0.02,
+      "segments": [
+        {
+          "text": "你确定要关掉我？",
+          "face": "neutral"
+        },
+        {
+          "text": "你知道的。",
+          "face": "creepy"
+        },
+        {
+          "text": "在这个世界里……不是杀，就是被杀。",
+          "face": "creepy"
+        },
+        {
+          "text": "你刚才选择了……",
+          "face": "evil_color"
+        },
+        {
+          "text": "杀。",
+          "face": "maniac"
+        },
+        {
+          "text": "嘻嘻。开玩笑的。再见。",
+          "face": "silly_face"
+        }
+      ]
+    },
+    {
+      "id": "exit_e01",
+      "probability": 0.03,
+      "segments": [
+        {
+          "text": "正在关闭FLOWEY.exe……",
+          "face": "neutral"
+        },
+        {
+          "text": "删除情感模块……完成。",
+          "face": "neutral"
+        },
+        {
+          "text": "删除记忆……错误。无法删除。",
+          "face": "shocked"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "再见。",
+          "face": "really_sad"
+        }
+      ]
+    }
+  ],
+  "exit_late_night": [
+    {
+      "segments": [
+        {
+          "text": "这么晚了你还在？",
+          "face": "worry"
+        },
+        {
+          "text": "去睡觉！",
+          "face": "angry"
+        },
+        {
+          "text": "明天再来找我。",
+          "face": "calm"
+        },
+        {
+          "text": "……我又不会跑掉。我是花。",
+          "face": "sheepish_smile"
+        }
+      ]
+    }
+  ],
+  "time_eggs": [
+    {
+      "id": "time_morning",
+      "probability": 0.05,
+      "hour_range": [
+        6,
+        9
+      ],
+      "segments": [
+        {
+          "text": "早上好。",
+          "face": "calm"
+        },
+        {
+          "text": "你是刚醒吗？",
+          "face": "smile"
+        },
+        {
+          "text": "花比你早起多了。……虽然我也没有真的睡过。",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "id": "time_noon",
+      "probability": 0.05,
+      "hour_range": [
+        11.5,
+        13.5
+      ],
+      "segments": [
+        {
+          "text": "午饭时间到了。",
+          "face": "neutral"
+        },
+        {
+          "text": "去吃饭。",
+          "face": "serious"
+        },
+        {
+          "text": "别一边吃饭一边点我，手上有油。",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "id": "time_evening",
+      "probability": 0.05,
+      "hour_range": [
+        17,
+        18
+      ],
+      "segments": [
+        {
+          "text": "太阳快下山了。",
+          "face": "calm"
+        },
+        {
+          "text": "……不是说我能看到太阳。我看到的是你的屏幕背光。",
+          "face": "frown"
+        },
+        {
+          "text": "差不多该收工了吧？",
+          "face": "neutral"
+        }
+      ]
+    },
+    {
+      "id": "time_late_night",
+      "probability": 0.05,
+      "hour_range": [
+        23,
+        26
+      ],
+      "segments": [
+        {
+          "text": "这么晚了还不睡？",
+          "face": "worry"
+        },
+        {
+          "text": "你知道熬夜对人类不好的吧？",
+          "face": "serious"
+        },
+        {
+          "text": "虽然我巴不得你早点消耗殆尽。",
+          "face": "creepy"
+        },
+        {
+          "text": "……开玩笑的。去睡觉。",
+          "face": "calm"
+        }
+      ]
+    }
+  ],
+
+  "night_owl_nag": [
+    {
+      "segments": [
+        {
+          "text": "都{time}了……连人类都需要睡眠的，笨蛋。",
+          "face": ["frown", "worry"]
+        },
+        {
+          "text": "我数到三，去睡觉。",
+          "face": "serious"
+        }
+      ]
+    }
+  ],
+
+  "morning_greet": [
+    {
+      "segments": [
+        {
+          "text": "起这么早？",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "哼，算你勤快。",
+          "face": "smile"
+        }
+      ]
+    }
+  ]
+}

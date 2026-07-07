@@ -1,0 +1,96 @@
+# -*- coding: utf-8 -*-
+"""Undertale-style right-click menu for the pet sprite itself (the system
+tray's context menu is a different surface and keeps its native QMenu --
+Windows renders that one itself, outside our control).
+
+The menu is defined as a plain list of dicts (`_build_menu_spec`) so adding
+a future item -- a minigame, say -- is a one-line addition here, not new
+widget plumbing.
+"""
+from undertale_ui import (
+    UndertalePopup,
+    make_action_row,
+    make_separator_row,
+    make_toggle_row,
+    make_value_action_row,
+)
+
+
+def _build_menu_spec(pet):
+    return [
+        {
+            "type": "toggle",
+            "label": "置顶",
+            "get": lambda: pet.config.get("always_on_top", True),
+            "set": pet._toggle_always_on_top,
+        },
+        {
+            "type": "toggle",
+            "label": "隐身",
+            "get": lambda: not pet.isVisible(),
+            "set": lambda _v: pet._toggle_visible(),
+        },
+        {
+            "type": "toggle",
+            "label": "静音",
+            "get": lambda: pet.config.get("muted", False),
+            "set": pet._toggle_mute,
+        },
+        {
+            "type": "toggle",
+            "label": "界面音效",
+            "get": lambda: pet.config.get("menu_sfx_enabled", True),
+            "set": pet._toggle_menu_sfx,
+        },
+        {"type": "action", "label": "番茄钟", "action": pet._toggle_pomodoro_from_menu},
+        {"type": "action", "label": "提醒设置", "action": pet._open_reminder_settings},
+        {"type": "action", "label": "记录", "action": pet._open_stats_panel},
+        {
+            "type": "value_action",
+            "label": "音量",
+            "get_value": lambda: f"{round(pet.config.get('volume', 0.8) * 100)}%",
+            "action": pet._open_volume_panel,
+        },
+        {
+            "type": "toggle",
+            "label": "开机自启",
+            "get": lambda: pet.config.get("autostart", False),
+            "set": pet._toggle_autostart,
+        },
+        {"type": "action", "label": "查看信息", "action": pet._view_info},
+        {"type": "separator"},
+        {"type": "action", "label": "离开", "action": pet.request_quit},
+    ]
+
+
+class PetContextMenu(UndertalePopup):
+    def __init__(self, pet, parent=None):
+        super().__init__(audio=pet.audio, always_on_top=pet._always_on_top, parent=parent)
+        for spec in _build_menu_spec(pet):
+            kind = spec["type"]
+            if kind == "separator":
+                self.add_row(make_separator_row(), selectable=False)
+            elif kind == "toggle":
+                self.add_row(
+                    make_toggle_row(
+                        spec["label"], spec["get"], spec["set"], self.font, audio=pet.audio
+                    )
+                )
+            elif kind == "value_action":
+                self.add_row(
+                    make_value_action_row(
+                        spec["label"],
+                        spec["get_value"],
+                        spec["action"],
+                        self.font,
+                        audio=pet.audio,
+                        close_after=self.close,
+                    )
+                )
+            elif kind == "action":
+                self.add_row(
+                    make_action_row(
+                        spec["label"], spec["action"], self.font, audio=pet.audio, close_after=self.close
+                    )
+                )
+        self.finish_layout()

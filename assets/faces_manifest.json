@@ -1,0 +1,1283 @@
+{
+  "angry": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "grin": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "crazed": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "smirk": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "creepy": [
+    {
+      "file": "00.png",
+      "offset": [
+        0,
+        3
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        0,
+        2
+      ]
+    }
+  ],
+  "drag_face": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "evil": [
+    {
+      "file": "00.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "06.png",
+      "offset": [
+        0,
+        -1
+      ]
+    },
+    {
+      "file": "07.png",
+      "offset": [
+        0,
+        -2
+      ]
+    }
+  ],
+  "evil_color": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        0,
+        6
+      ]
+    }
+  ],
+  "frown": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "06.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "07.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "08.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "09.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "10.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "11.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "12.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "13.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "14.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "15.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "16.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "17.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "worry": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "06.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "07.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "08.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "09.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "10.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "11.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "12.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "13.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "14.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "15.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "16.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "17.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "gritted_teeth": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "guilty": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "ingratiating": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "lie": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "maniac": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        3
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        3
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        3
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        0,
+        3
+      ]
+    }
+  ],
+  "neutral": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "n_left_glance": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "n_right_glance": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "really_angry": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "really_sad": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "06.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "07.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "08.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "09.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "10.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "11.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "really_smile": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "r_left_glance": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "r_right_glance": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "serious": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "sheepish_smile": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "06.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "shocked": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "silly_face": [
+    {
+      "file": "00.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        0,
+        6
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        0,
+        6
+      ]
+    }
+  ],
+  "smile": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "sneaky_grin": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "sorrowful": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "03.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "04.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "05.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "super_shocked": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "02.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "s_left_glance": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "s_right_glance": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "wink": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ],
+  "calm": [
+    {
+      "file": "00.png",
+      "offset": [
+        -1,
+        4
+      ]
+    },
+    {
+      "file": "01.png",
+      "offset": [
+        -1,
+        4
+      ]
+    }
+  ]
+}
