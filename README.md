@@ -30,11 +30,13 @@ This is a fan project. Flowey and all original character/art concepts belong to 
 ### Features
 
 - **Desktop companion** — drag-and-drop pet window, always-on-top toggle, click reactions, idle animations
+- **Size adjustment** — 4 size tiers (100/85/70/55%) from the right-click menu, pet and dialogue bubble scale together
+- **Flirt system** — a dedicated "调情" interaction with its own hidden easter eggs — go find them yourself
 - **Hundreds of dialogue lines** — intro, idle chat, click reactions, menu flavor text, hidden/rare lines, all editable in `dialogue.json` with no code changes needed
 - **Pomodoro timer** — configurable focus/break lengths, in-pet countdown display
 - **Reminders with follow-up** — water / meal / sleep reminders that actually notice if you dismiss them without responding, with escalating nag stages
-- **Stats panel ("记录")** — days accompanied, click/interaction counts, easter-egg collection progress
-- **Undertale-style UI** — right-click menu, volume panel, and reminder settings panel all built to look like the game's own dialogue boxes
+- **Stats panel ("记录")** — days accompanied, click/interaction/flirt counts, easter-egg collection progress
+- **Undertale-style UI** — right-click menu, volume/size panels, and reminder settings panel all built to look like the game's own dialogue boxes
 - **Quality-of-life** — mute/volume control, autostart with Windows, birthday & streak greetings
 
 ### Screenshots
@@ -54,13 +56,31 @@ This is a fan project. Flowey and all original character/art concepts belong to 
   <sub>Reminder settings panel</sub>
 </p>
 
+<p align="center">
+  <img src="docs/images/showcase_size.png" alt="Size panel" width="380"><br>
+  <sub>Size panel — 4 tiers, new in v2.0</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/showcase_flirt.png" alt="Flirt interaction" width="380"><br>
+  <sub>调情 (flirt) interaction, new in v2.0</sub>
+</p>
+
+> **Note (maintainer TODO):** `showcase_size.png` and `showcase_flirt.png` aren't in `docs/images/` yet — need actual screenshots of the size panel and the flirt interaction before these render.
+
+### System requirements
+
+- Windows 10/11, 64-bit
+- No Python/runtime install needed for the packaged `.exe` — it's a self-contained PyInstaller build (~45MB unpacked)
+- Only needed to *build from source*: Python 3.9+ (see [Run from source](#run-from-source))
+
 ### Download (just want to use it)
 
-1. Grab `FloweyPet.zip` from the [Releases page](../../releases/latest).
+1. Grab the latest `FloweyPet*.zip` (currently `FloweyPet2.0.zip`) from the [Releases page](../../releases/latest).
 2. Extract it anywhere.
 3. Run `FloweyPet.exe`. No Python install required.
 
-Right-click the pet for the menu (show/hide, Pomodoro, reminders, volume, stats, autostart, quit).
+Right-click the pet for the menu (show/hide, Pomodoro, reminders, volume, size, stats, autostart, quit).
 
 ### Run from source
 
@@ -120,11 +140,13 @@ FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传
 ### 功能
 
 - **桌面陪伴** — 可拖拽的桌宠窗口、置顶开关、点击反应、待机动画
+- **大小调节** — 右键菜单可选4档缩放（100/85/70/55%），桌宠本体与对话框一起缩放
+- **调情系统** — 专门的"调情"互动，带隐藏彩蛋——自己去发现吧
 - **数百句台词** — 登场、待机闲聊、点击反应、菜单台词、隐藏/稀有彩蛋台词，全部写在 `dialogue.json` 里，改台词不需要碰代码
 - **番茄钟** — 专注/休息时长可配置，桌宠身上直接显示倒计时
 - **会追讨的提醒** — 喝水/吃饭/睡觉提醒，如果你只是划掉不理它，它会分阶段继续追问
-- **"记录"统计面板** — 陪伴天数、点击/互动次数、彩蛋收集进度
-- **Undertale 风格 UI** — 右键菜单、音量面板、提醒设置面板，都仿照游戏本身的对话框样式做的
+- **"记录"统计面板** — 陪伴天数、点击/互动/调情次数、彩蛋收集进度
+- **Undertale 风格 UI** — 右键菜单、音量/大小面板、提醒设置面板，都仿照游戏本身的对话框样式做的
 - **细节体验** — 静音/音量调节、开机自启、生日与连续陪伴天数祝福
 
 ### 截图
@@ -144,13 +166,31 @@ FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传
   <sub>提醒设置面板</sub>
 </p>
 
+<p align="center">
+  <img src="docs/images/showcase_size.png" alt="大小面板" width="380"><br>
+  <sub>大小面板——4档缩放，v2.0 新增</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/showcase_flirt.png" alt="调情互动" width="380"><br>
+  <sub>调情互动，v2.0 新增</sub>
+</p>
+
+> **（维护者待办）** `showcase_size.png` 和 `showcase_flirt.png` 这两张图目前还没放进 `docs/images/`——需要补充大小面板和调情互动的实际截图,上面两张图才会正常显示。
+
+### 系统要求
+
+- Windows 10/11，64位
+- 打包好的 `.exe` 无需安装 Python/任何运行环境——是自包含的 PyInstaller 构建（解压后约45MB）
+- 只有**从源码构建**时才需要 Python 3.9+（见[从源码运行](#从源码运行)）
+
 ### 直接下载使用
 
-1. 在 [Releases 页面](../../releases/latest)下载 `FloweyPet.zip`。
+1. 在 [Releases 页面](../../releases/latest)下载最新的 `FloweyPet*.zip`（当前版本是 `FloweyPet2.0.zip`）。
 2. 解压到任意位置。
 3. 运行 `FloweyPet.exe`，不需要装 Python。
 
-右键点击桌宠打开菜单（显示/隐藏、番茄钟、提醒设置、音量、记录、开机自启、离开）。
+右键点击桌宠打开菜单（显示/隐藏、番茄钟、提醒设置、音量、大小、记录、开机自启、离开）。
 
 ### 从源码运行
 
