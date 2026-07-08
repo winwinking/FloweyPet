@@ -34,7 +34,7 @@ def main():
         muted=config.get("muted", False),
         menu_sfx_enabled=config.get("menu_sfx_enabled", True),
     )
-    sprites = SpriteBank()
+    sprites = SpriteBank(config.get("pet_scale", 1.0))
     stats = Stats(config)
     dm = DialogueManager(config, save_config, stats)
     pomodoro = Pomodoro(config, save_config, dm, stats)

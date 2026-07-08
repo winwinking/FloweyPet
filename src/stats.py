@@ -23,6 +23,7 @@ DEFAULTS = {
     "reminder_rounds": {"water": 0, "meal": 0, "sleep": 0},
     "reminder_responded": {"water": 0, "meal": 0, "sleep": 0},
     "reminder_perfunctory": {"water": 0, "meal": 0, "sleep": 0},
+    "flirt_count": 0,  # persisted "调情" success counter, drives flirt_response tier selection
     "rare_seen": [],  # ids (see dialogue_manager's rare-entry id) already shown
     "latest_active_score": 0.0,  # see record_activity() for what this encodes
     "latest_active_time": None,  # cached "HH:MM" display string for the score above
@@ -128,6 +129,14 @@ class Stats(QObject):
             return None
         responded = self.data.get("reminder_responded", {}).get(kind, 0)
         return responded / total * 100
+
+    def record_flirt(self):
+        """One successful "调情" trigger (basic click or the confront-confirm
+        branch). Returns the updated count so callers can immediately use it
+        for tier selection without a second read."""
+        self.data["flirt_count"] = self.data.get("flirt_count", 0) + 1
+        self.save()
+        return self.data["flirt_count"]
 
     def mark_rare_seen(self, rare_id):
         seen = self.data.setdefault("rare_seen", [])

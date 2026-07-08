@@ -13,6 +13,11 @@ from paths import CONFIG_PATH
 
 DEFAULTS = {
     "position": None,  # None => PetWindow picks a sensible on-screen default
+    "pet_scale": 1.0,             # current size tier multiplier, see pet_size_tiers
+    "pet_size_tiers": [1.0, 0.85, 0.7, 0.55],  # editable list of size tiers (100% first/max)
+    "ui_follow_ratio": 0.5,       # how much menus/panels shrink relative to the pet (0=not at all, 1=fully)
+    "bubble_min_font_size": 15,   # floor for the dialogue bubble's font size in px (~70% of the 21px default)
+    "ui_min_font_size": 10,       # floor for menu/panel font size in px
     "volume": 0.8,
     "muted": False,
     "menu_sfx_enabled": True,  # independent of "muted": only gates menu move/select blips
@@ -50,11 +55,17 @@ DEFAULTS = {
     "day_boundary_hour": 6,          # 0:00-this hour counts as "still last night" for the stats panel
     "session_gap_minutes": 90,        # activity gaps longer than this start a new session
     "morning_greet_probability": 0.2,  # odds of the "起这么早" line on a genuinely fresh early-morning boot
-    "version": "1.0.0",  # shown in the "查看信息" easter egg via {ver}; edit by hand to bump it
+    "version": "2.0.0",  # shown in the "查看信息" easter egg via {ver}; edit by hand to bump it
     "info_easter_egg": {
         "weights": {"normal_intro": 40, "fourth_wall": 30, "nonsense": 20, "rare": 10},
         "anti_spam_window_seconds": 60,
         "anti_spam_trigger_count": 4,
+    },
+    "flirt": {
+        "hesitate_seconds": 6,      # how long the heart cursor must dwell on 调情 before "抓包" triggers
+        "stall_seconds": 8,         # how much longer, after being caught, before the stall line fires
+        "cooldown_minutes": 5,      # no repeat "抓包" within this many minutes; resets on restart (not persisted)
+        "roast_threshold_count": 20,  # flirt_count needed to unlock the 记录 panel's dedicated flirt roast line
     },
 }
 

@@ -20,7 +20,7 @@ from undertale_ui import (
     make_separator_row,
 )
 
-PANEL_WIDTH = 230
+PANEL_WIDTH_BASE = 230
 
 
 def _fmt_rate(rate):
@@ -34,33 +34,36 @@ def _fmt_egg(seen, total, pct):
 
 
 class StatsPanel(UndertalePopup):
-    def __init__(self, metrics, audio=None, always_on_top=True, parent=None):
-        super().__init__(audio=audio, always_on_top=always_on_top, parent=parent)
-        self.setFixedWidth(PANEL_WIDTH)
+    def __init__(self, metrics, audio=None, always_on_top=True, ui_scale=1.0, min_font_px=None, parent=None):
+        super().__init__(audio=audio, always_on_top=always_on_top, parent=parent, ui_scale=ui_scale, min_font_px=min_font_px)
+        self.setFixedWidth(round(PANEL_WIDTH_BASE * ui_scale))
+        m = self.metrics  # UiMetrics from the base class -- `metrics` param above is the stats dict
 
-        self.add_row(make_info_row("陪伴天数", f"{metrics['days']}天", self.font), selectable=False)
-        self.add_row(make_info_row("陪伴时长", f"{metrics['hours']:.1f}小时", self.font), selectable=False)
-        self.add_row(make_info_row("点击次数", f"{metrics['clicks']}次", self.font), selectable=False)
-        self.add_row(make_info_row("互动次数", f"{metrics['interactions']}次", self.font), selectable=False)
-        self.add_row(make_info_row("番茄钟完成", f"{metrics['pomodoro_count']}次", self.font), selectable=False)
-        self.add_row(make_separator_row(), selectable=False)
+        self.add_row(make_info_row("陪伴天数", f"{metrics['days']}天", self.font, metrics=m), selectable=False)
+        self.add_row(make_info_row("陪伴时长", f"{metrics['hours']:.1f}小时", self.font, metrics=m), selectable=False)
+        self.add_row(make_info_row("点击次数", f"{metrics['clicks']}次", self.font, metrics=m), selectable=False)
+        self.add_row(make_info_row("互动次数", f"{metrics['interactions']}次", self.font, metrics=m), selectable=False)
+        self.add_row(make_info_row("番茄钟完成", f"{metrics['pomodoro_count']}次", self.font, metrics=m), selectable=False)
+        self.add_row(make_info_row("调情次数", f"{metrics['flirt_count']}次", self.font, metrics=m), selectable=False)
+        self.add_row(make_separator_row(metrics=m), selectable=False)
 
-        self.add_row(make_info_row("喝水响应率", _fmt_rate(metrics["water_rate"]), self.font), selectable=False)
-        self.add_row(make_info_row("吃饭响应率", _fmt_rate(metrics["meal_rate"]), self.font), selectable=False)
-        self.add_row(make_separator_row(), selectable=False)
+        self.add_row(make_info_row("喝水响应率", _fmt_rate(metrics["water_rate"]), self.font, metrics=m), selectable=False)
+        self.add_row(make_info_row("吃饭响应率", _fmt_rate(metrics["meal_rate"]), self.font, metrics=m), selectable=False)
+        self.add_row(make_separator_row(metrics=m), selectable=False)
 
         self.add_row(
             make_info_row(
                 "彩蛋收集",
                 _fmt_egg(metrics["egg_seen"], metrics["egg_total"], metrics["egg_pct"]),
                 self.font,
+                metrics=m,
             ),
             selectable=False,
         )
         self.add_row(
-            make_info_row("最晚活跃", metrics["latest_time"] or "暂无", self.font), selectable=False
+            make_info_row("最晚活跃", metrics["latest_time"] or "暂无", self.font, metrics=m), selectable=False
         )
-        self.add_row(make_separator_row(), selectable=False)
+        self.add_row(make_separator_row(metrics=m), selectable=False)
         self.add_row(self._build_button_row())
 
         self.finish_layout()
@@ -71,7 +74,7 @@ class StatsPanel(UndertalePopup):
         self.close()
 
     def _build_button_row(self):
-        row = MenuRow(self.font)
+        row = MenuRow(self.font, metrics=self.metrics)
         ok_btn = HoverButton("确定", self.font)
         ok_btn.clicked.connect(self._confirm_and_close)
         row.row_layout.addStretch(1)

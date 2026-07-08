@@ -35,6 +35,14 @@ class PomodoroDisplay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
 
+        self._text = REFERENCE_TEXT
+        self.reconfigure(pet_width_px)
+
+    # ------------------------------------------------------------- sizing
+    def reconfigure(self, pet_width_px: int):
+        """Recomputes the digit size / box dimensions from the pet's
+        current display width. Called from __init__ and again whenever the
+        pet's size tier changes."""
         size = _fit_pixel_size(pet_width_px)
         self.font = dseg7_font(size)
         metrics = QFontMetrics(self.font)
@@ -43,8 +51,6 @@ class PomodoroDisplay(QWidget):
         self.box_width = text_w + PADDING_X * 2
         self.box_height = text_h + PADDING_Y * 2
         self.setFixedSize(self.box_width, self.box_height)
-
-        self._text = REFERENCE_TEXT
 
     # --------------------------------------------------------------- window
     def _window_flags(self):

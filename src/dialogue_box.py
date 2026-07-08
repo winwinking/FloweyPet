@@ -6,7 +6,7 @@ pet, staying within ~10px of it at all times.
 """
 import random
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QRectF, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QFontMetrics, QPainter, QPen
 from PyQt6.QtWidgets import QPushButton, QWidget
 
@@ -14,7 +14,9 @@ from fonts import pixel_font
 
 WIDTH_MULTIPLIER = 2.75
 MAX_LINES_PER_PAGE = 3
-PADDING = 14
+PADDING_BASE = 14
+BORDER_WIDTH_BASE = 3
+BASE_FONT_PX = 12
 LINE_SPACING_EXTRA = 6
 GAP_ABOVE_PET = 8
 TYPE_INTERVAL_MS = 38
@@ -41,6 +43,8 @@ class DialogueBox(QWidget):
         always_on_top: bool = True,
         confirm_hold_ms: int = DEFAULT_CONFIRM_HOLD_MS,
         test_mode: bool = False,
+        pet_scale: float = 1.0,
+        min_font_px: int = None,
     ):
         self._pin = always_on_top
         self._confirm_hold_ms = confirm_hold_ms
@@ -50,13 +54,7 @@ class DialogueBox(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
 
         self.audio = audio
-        self.box_width = int(pet_width_px * WIDTH_MULTIPLIER)
-        self.font = pixel_font(int(12 * font_scale))
-        self._metrics = QFontMetrics(self.font)
-        line_h = self._metrics.height() + LINE_SPACING_EXTRA
-        self.box_height = PADDING * 2 + line_h * MAX_LINES_PER_PAGE
-        self._line_h = line_h
-        self.setFixedSize(self.box_width, self.box_height)
+        self.reconfigure(pet_width_px, font_scale, pet_scale, min_font_px)
 
         self._segments = []
         self._seg_idx = 0
@@ -107,6 +105,26 @@ class DialogueBox(QWidget):
         if was_visible:
             self.show()
 
+    # --------------------------------------------------------------- sizing
+    def reconfigure(self, pet_width_px: int, font_scale: float, pet_scale: float = 1.0, min_font_px: int = None):
+        """(Re)computes every scale-dependent dimension -- box size, font,
+        border, padding -- from the pet's current display width and size
+        tier. Called once from __init__ and again whenever the pet's size
+        tier changes, so a live bubble picks up the new scale without
+        needing to be torn down and recreated."""
+        self.box_width = round(pet_width_px * WIDTH_MULTIPLIER)
+        font_px = round(BASE_FONT_PX * font_scale * pet_scale)
+        if min_font_px is not None:
+            font_px = max(font_px, min_font_px)
+        self.font = pixel_font(font_px)
+        self._metrics = QFontMetrics(self.font)
+        self._padding = max(1, round(PADDING_BASE * pet_scale))
+        self._border_width = max(1, round(BORDER_WIDTH_BASE * pet_scale))
+        line_h = self._metrics.height() + LINE_SPACING_EXTRA
+        self._line_h = line_h
+        self.box_height = self._padding * 2 + line_h * MAX_LINES_PER_PAGE
+        self.setFixedSize(self.box_width, self.box_height)
+
     # ------------------------------------------------------------- lifecycle
     def start(self, segments, on_segment_face, require_confirm=False):
         self.on_segment_face = on_segment_face
@@ -128,7 +146,7 @@ class DialogueBox(QWidget):
 
     # --------------------------------------------------------------- layout
     def _wrap(self, text):
-        content_w = self.box_width - PADDING * 2
+        content_w = self.box_width - self._padding * 2
         lines = []
         current = ""
         for ch in text:
@@ -269,9 +287,9 @@ class DialogueBox(QWidget):
         self._ack_btn.adjustSize()
         cbw, cbh = self._confirm_btn.width(), self._confirm_btn.height()
         abw, abh = self._ack_btn.width(), self._ack_btn.height()
-        y = self.height() - max(cbh, abh) - PADDING // 2
-        self._confirm_btn.move(self.width() - cbw - PADDING // 2, y)
-        self._ack_btn.move(self.width() - cbw - BUTTON_GAP - abw - PADDING // 2, y)
+        y = self.height() - max(cbh, abh) - self._padding // 2
+        self._confirm_btn.move(self.width() - cbw - self._padding // 2, y)
+        self._ack_btn.move(self.width() - cbw - BUTTON_GAP - abw - self._padding // 2, y)
         self._confirm_btn.show()
         self._ack_btn.show()
         self._confirm_btn.raise_()
@@ -309,15 +327,16 @@ class DialogueBox(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setBrush(QColor(0, 0, 0, 235))
-        painter.setPen(QPen(QColor(255, 255, 255), 3))
-        painter.drawRect(2, 2, self.width() - 4, self.height() - 4)
+        painter.setPen(QPen(QColor(255, 255, 255), self._border_width))
+        half = self._border_width / 2
+        painter.drawRect(QRectF(half, half, self.width() - self._border_width, self.height() - self._border_width))
 
         painter.setFont(self.font)
         painter.setPen(QColor(255, 255, 255))
         shown = self._full_page_text[: self._revealed]
-        y = PADDING
+        y = self._padding
         for line in shown.split("\n"):
-            painter.drawText(PADDING, y + self._metrics.ascent(), line)
+            painter.drawText(self._padding, y + self._metrics.ascent(), line)
             y += self._line_h
 
         if self.test_mode:

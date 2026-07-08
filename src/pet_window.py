@@ -21,8 +21,10 @@ from PyQt6.QtWidgets import (
     QWidgetAction,
 )
 
+import flirt as flirt_dialogue
 from dialogue_box import DialogueBox
 from error_log import log_exception
+from flirt import FlirtController
 from paths import ICON_PATH
 from pomodoro_display import PomodoroDisplay
 from undertale_ui import VOLUME_TIERS, ClickableLabel
@@ -79,6 +81,7 @@ class PetWindow(QWidget):
         self.pomodoro = pomodoro
         self.reminders = reminders
         self.stats = stats
+        self.pet_scale = config.get("pet_scale", 1.0)
 
         pm0 = sprites.appear_frames[0]
         self.setFixedSize(pm0.size())
@@ -99,6 +102,8 @@ class PetWindow(QWidget):
         self._pomodoro_active = False
         self._current_category = None
         self._active_popup = None
+        self._last_face_key = None
+        self._appear_source = "appear"
 
         self.dialogue_box = DialogueBox(
             self.pet_display_width,
@@ -107,9 +112,16 @@ class PetWindow(QWidget):
             self._always_on_top,
             confirm_hold_ms=reminders.confirm_hold_ms(),
             test_mode=reminders.test_mode,
+            pet_scale=self.pet_scale,
+            min_font_px=config.get("bubble_min_font_size", 15),
         )
         self.dialogue_box.finished.connect(self._on_dialogue_finished)
         self.dm.show_requested.connect(self._on_show_requested)
+
+        self.flirt = FlirtController(config, parent=self)
+        self.flirt.on_hesitate = self._on_flirt_hesitate
+        self.flirt.on_escape = self._on_flirt_escape
+        self.flirt.on_stall = self._on_flirt_stall
 
         self.pomodoro_display = PomodoroDisplay(self.pet_display_width, self._always_on_top)
 
@@ -202,6 +214,7 @@ class PetWindow(QWidget):
     # ------------------------------------------------------------- appear
     def _start_appear(self):
         self.state = State.APPEARING
+        self._appear_source = "appear"
         self._appear_frames = self.sprites.appear_frames
         self._appear_on_done = None
         self._appear_idx = 0
@@ -215,6 +228,7 @@ class PetWindow(QWidget):
         hide/show read as the same motion undone instead of two unrelated
         animations."""
         self.state = State.APPEARING
+        self._appear_source = "appear_neutral"
         self._appear_frames = self.sprites.appear_neutral_frames
         self._appear_on_done = on_done
         self._appear_idx = 0
@@ -261,14 +275,16 @@ class PetWindow(QWidget):
             and not self._dragging
             and not self._pomodoro_active
             and not self.reminders.is_awaiting_response()
+            and not self.flirt.is_confronting()
         ):
             self.dm.trigger_idle_random()
         self._schedule_idle_chat()
 
     def _trigger_afk_unless_awaiting(self, level):
-        # A reminder still waiting on a response takes priority over ambient
-        # AFK chatter -- don't talk over it.
-        if not self.reminders.is_awaiting_response():
+        # A reminder still waiting on a response, or an active flirt
+        # confrontation, takes priority over ambient AFK chatter -- don't
+        # talk over either.
+        if not self.reminders.is_awaiting_response() and not self.flirt.is_confronting():
             self.dm.trigger_afk(level)
 
     def _reschedule_afk_timers(self):
@@ -310,6 +326,7 @@ class PetWindow(QWidget):
         self.dialogue_box.start(segments, self._on_segment_face, require_confirm=require_confirm)
 
     def _on_segment_face(self, face_key):
+        self._last_face_key = face_key
         self._set_base_pixmap(self.sprites.get_face(face_key, 0))
 
     def _on_dialogue_finished(self):
@@ -483,7 +500,11 @@ class PetWindow(QWidget):
         from pet_menu import PetContextMenu
         from undertale_ui import position_avoid_pet_and_bubble
 
-        menu = PetContextMenu(self)
+        menu = PetContextMenu(self, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
+        menu.selection_changed.connect(
+            lambda row: self.flirt.on_menu_selection_changed(row is menu.flirt_row)
+        )
+        menu.closed.connect(self.flirt.on_menu_closed)
         position_avoid_pet_and_bubble(menu, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
         self._active_popup = menu
         menu.show()
@@ -549,6 +570,103 @@ class PetWindow(QWidget):
             self._set_volume,
             audio=self.audio,
             always_on_top=self._always_on_top,
+            ui_scale=self._ui_scale(),
+            min_font_px=self.config.get("ui_min_font_size", 10),
+        )
+        position_avoid_pet_and_bubble(panel, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
+        self._active_popup = panel
+        panel.show()
+        panel.setFocus()
+
+    # ------------------------------------------------------------- sizing
+    def _ui_scale(self):
+        """Menus/panels only follow *part* of the way the pet shrinks, so
+        they never become illegibly tiny at the pet's smallest tier."""
+        ratio = self.config.get("ui_follow_ratio", 0.5)
+        return 1 - (1 - self.pet_scale) * ratio
+
+    def _current_frame_for_state(self):
+        """Refetches whatever frame should be on screen right now from
+        self.sprites at its *current* (just-updated) scale -- used right
+        after a tier switch to redraw the pet at the new size without
+        waiting for the next animation tick. self.sprites.set_pet_scale()
+        rebuilds appear_frames/appear_neutral_frames/idle_frames/quit_frames
+        as brand-new list objects, so any list captured earlier (e.g.
+        self._appear_frames, self._exit_frames) is stale and must be
+        re-pulled from self.sprites rather than indexed directly."""
+        if self.state == State.TALKING and self._last_face_key:
+            return self.sprites.get_face(self._last_face_key, 0)
+        if self.state == State.APPEARING:
+            frames = (
+                self.sprites.appear_neutral_frames
+                if self._appear_source == "appear_neutral"
+                else self.sprites.appear_frames
+            )
+            self._appear_frames = frames
+            idx = min(self._appear_idx, len(frames) - 1)
+            return frames[idx]
+        if self.state == State.EXITING:
+            frames = self.sprites.quit_frames or list(reversed(self.sprites.appear_neutral_frames))
+            self._exit_frames = frames
+            idx = min(self._exit_idx, len(frames) - 1)
+            return frames[idx]
+        idx = min(self._idle_idx, len(self.sprites.idle_frames) - 1)
+        return self.sprites.idle_frames[idx]
+
+    def _apply_pet_scale(self, scale):
+        """Switches size tier in place: rescales every sprite, keeps the
+        pet's bottom-center anchored (feet don't move), and cascades the
+        new pet_display_width to the bubble/pomodoro badge so they stay
+        proportioned and correctly positioned. Applies instantly, no
+        restart needed; persists immediately so it survives one."""
+        self.stats.record_interaction()
+        old_bottom = self.y() + self.height()
+        old_center_x = self.x() + self.width() / 2
+
+        self.sprites.set_pet_scale(scale)
+        self.pet_scale = scale
+
+        new_size = self.sprites.appear_frames[0].size()
+        new_w, new_h = new_size.width(), new_size.height()
+        new_x = round(old_center_x - new_w / 2)
+        new_y = old_bottom - new_h
+        self.setFixedSize(new_w, new_h)
+        self.move(new_x, new_y)
+        self.pet_display_width = new_w
+
+        self._set_base_pixmap(self._current_frame_for_state())
+
+        self.dialogue_box.reconfigure(
+            self.pet_display_width,
+            self.config.get("font_scale", 1.75),
+            scale,
+            self.config.get("bubble_min_font_size", 15),
+        )
+        self.pomodoro_display.reconfigure(self.pet_display_width)
+        if self.dialogue_box.isVisible():
+            self._position_dialogue_box()
+        if self.pomodoro_display.isVisible():
+            self._position_pomodoro_display()
+
+        self.config["pet_scale"] = scale
+        self.save_config(self.config)
+        self.update()
+
+    @_guarded_menu_action("大小面板")
+    def _open_size_panel(self):
+        from size_panel import SizePanel
+        from undertale_ui import position_avoid_pet_and_bubble
+
+        self.stats.record_interaction()
+        self._close_active_popup()
+        panel = SizePanel(
+            lambda: self.pet_scale,
+            self._apply_pet_scale,
+            self.config.get("pet_size_tiers", [1.0, 0.85, 0.7, 0.55]),
+            audio=self.audio,
+            always_on_top=self._always_on_top,
+            ui_scale=self._ui_scale(),
+            min_font_px=self.config.get("ui_min_font_size", 10),
         )
         position_avoid_pet_and_bubble(panel, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
         self._active_popup = panel
@@ -578,7 +696,13 @@ class PetWindow(QWidget):
         self.stats.record_interaction()
         self.dm.trigger_menu_flavor("reminder_settings")
         self._close_active_popup()
-        panel = ReminderPanel(self.reminders, audio=self.audio, always_on_top=self._always_on_top)
+        panel = ReminderPanel(
+            self.reminders,
+            audio=self.audio,
+            always_on_top=self._always_on_top,
+            ui_scale=self._ui_scale(),
+            min_font_px=self.config.get("ui_min_font_size", 10),
+        )
         position_avoid_pet_and_bubble(panel, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
         self._active_popup = panel
         panel.show()
@@ -588,6 +712,37 @@ class PetWindow(QWidget):
     def _view_info(self):
         self.stats.record_interaction()
         self.dm.trigger_view_info()
+
+    # ----------------------------------------------------------------- flirt
+    def _on_flirt_hesitate(self):
+        segments = flirt_dialogue.pick_hesitate()
+        if segments:
+            self.dm.speak("flirt_hesitate", segments)
+
+    def _on_flirt_escape(self):
+        segments = flirt_dialogue.pick_escape()
+        if segments:
+            self.dm.speak("flirt_escape", segments)
+
+    def _on_flirt_stall(self):
+        segments = flirt_dialogue.pick_stall()
+        if segments:
+            self.dm.speak("flirt_stall", segments)
+
+    @_guarded_menu_action("调情")
+    def _on_flirt_clicked(self):
+        was_confronting = self.flirt.resolve_click()
+        self.stats.record_interaction()
+        new_count = self.stats.record_flirt()
+        response_segments = flirt_dialogue.pick_response(new_count) or []
+        if was_confronting:
+            segments = (flirt_dialogue.pick_caught_confirm() or []) + response_segments
+            category = "flirt_caught_confirm"
+        else:
+            segments = response_segments
+            category = "flirt_response"
+        if segments:
+            self.dm.speak(category, segments)
 
     def _show_error_flavor(self):
         """Last-resort fallback bubble for _guarded_menu_action: whatever
@@ -644,6 +799,8 @@ class PetWindow(QWidget):
             "egg_pct": egg_pct,
             "latest_time": s.get("latest_active_time"),
             "latest_score": s.get("latest_active_score"),
+            "flirt_count": s.get("flirt_count", 0),
+            "flirt_roast_threshold": self.config.get("flirt", {}).get("roast_threshold_count", 20),
         }
 
     @_guarded_menu_action("记录")
@@ -666,7 +823,13 @@ class PetWindow(QWidget):
         if segments:
             self.dm.speak("stats_panel", segments)
 
-        panel = StatsPanel(metrics, audio=self.audio, always_on_top=self._always_on_top)
+        panel = StatsPanel(
+            metrics,
+            audio=self.audio,
+            always_on_top=self._always_on_top,
+            ui_scale=self._ui_scale(),
+            min_font_px=self.config.get("ui_min_font_size", 10),
+        )
         panel.closed.connect(self._on_stats_panel_closed)
         position_avoid_pet_and_bubble(panel, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
         self._active_popup = panel

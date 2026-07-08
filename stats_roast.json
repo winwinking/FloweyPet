@@ -1,5 +1,5 @@
 {
-  "_readme": "右键菜单 -> 记录 面板用的flavor台词。face 取值见 assets/faces_manifest.json 键名。panel_open/panel_close 是打开/关闭面板时等概率随机选一条。combo 是多指标联合锐评，按数组顺序从上到下第一个满足条件的命中（阈值判断写在 src/roast.py 里，这里只放文案）。其余各分类（companion_days 等）按当前数值落入哪个桶，从该桶的数组里等概率随机选一条；桶内可以自由增删多条台词。default 是任何桶都没有台词时的兜底句。",
+  "_readme": "右键菜单 -> 记录 面板用的flavor台词。face 取值见 assets/faces_manifest.json 键名。panel_open/panel_close 是打开/关闭面板时等概率随机选一条。combo 是多指标联合锐评，按数组顺序从上到下第一个满足条件的命中（阈值判断写在 src/roast.py 里，这里只放文案）。其余各分类（companion_days 等）按当前数值落入哪个桶，从该桶的数组里等概率随机选一条；桶内可以自由增删多条台词。default 是任何桶都没有台词时的兜底句。flirt_count 是预留的调情次数专属锐评条件位：调情次数达到 config.json 里 flirt.roast_threshold_count 配置的阈值后，会尝试从 flirt_count -> reached 里随机选一条，目前是空数组，先不会触发，等台词填进去再生效。",
 
   "panel_open": [
     { "text": "哦？想看看你的数据？来吧，让我告诉你，你在我面前花了多少时间。", "face": "smirk" },
@@ -188,6 +188,10 @@
       { "text": "你的最晚活跃时间是凌晨五点之后！？那你到底有没有睡！？你还是人吗！？回答我！！", "face": "maniac" },
       { "text": "{time}？你不要命了？", "face": "worry" }
     ]
+  },
+
+  "flirt_count": {
+    "reached": []
   },
 
   "default": [

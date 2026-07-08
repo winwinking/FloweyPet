@@ -16,6 +16,9 @@ stats.json
 # Ad-hoc local logs
 *.log
 
+# Pre-edit asset backups (scratch, not release content)
+assets_backup/
+
 # Editor/OS cruft
 .idea/
 .vscode/

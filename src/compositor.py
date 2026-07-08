@@ -7,6 +7,19 @@ Two kinds of frames:
   head pasted on top at a precomputed offset (see assets/faces_manifest.json,
   built by scripts at asset-prep time -- no image math happens at runtime,
   just two drawPixmap calls, so switching expression is cheap and instant).
+
+Scaling: BASE_SCALE is the 100%-tier multiplier (raw sprite px -> on-screen
+px). The pet's size tier (pet_scale, e.g. 0.85) multiplies on top of that,
+so the effective factor is BASE_SCALE * pet_scale. Raw (1x) pixmaps are
+loaded from disk once and cached; only the final upscale is redone when the
+tier changes (set_pet_scale), so switching tiers never touches disk again.
+
+Alignment note: the face/stem composite in get_face() pastes the swappable
+head onto stem_base at its manifest offset while both are still at native
+1x resolution, then scales the *combined* canvas as a single bitmap. That
+means the face-to-stem offset is baked into one bitmap before any scaling
+happens, so every tier stays pixel-aligned automatically -- there's no
+separate "multiply the offset by the tier" step needed anywhere.
 """
 import json
 
@@ -23,47 +36,70 @@ from paths import (
     STEM_BASE_PATH,
 )
 
-SCALE = 4
+BASE_SCALE = 4  # the 100% tier's upscale factor
 
 
 class SpriteBank:
-    def __init__(self):
+    def __init__(self, pet_scale: float = 1.0):
+        self.pet_scale = pet_scale
+        self._factor = BASE_SCALE * pet_scale
+
         self.stem_base = QPixmap(str(STEM_BASE_PATH))
         self.canvas_size = self.stem_base.size()
         with open(FACES_MANIFEST_PATH, "r", encoding="utf-8") as f:
             self.manifest = json.load(f)
         self._face_cache = {}
-        self.appear_frames = self._load_plain(APPEAR_DIR, 9)
-        self.appear_neutral_frames = self._load_plain(APPEAR_NEUTRAL_DIR, 9)
-        self.idle_frames = self._load_plain(IDLE_DIR, 3)
-        self.quit_frames = self._load_existing(QUIT_ANIM_DIR)
 
+        self._raw_appear = self._load_raw(APPEAR_DIR, 9)
+        self._raw_appear_neutral = self._load_raw(APPEAR_NEUTRAL_DIR, 9)
+        self._raw_idle = self._load_raw(IDLE_DIR, 3)
+        self._raw_quit = self._load_raw_existing(QUIT_ANIM_DIR)
+
+        self.appear_frames = []
+        self.appear_neutral_frames = []
+        self.idle_frames = []
+        self.quit_frames = []
+        self._rescale_all()
+
+    # ------------------------------------------------------------- scaling
     def _scale(self, pm: QPixmap) -> QPixmap:
         return pm.scaled(
-            pm.width() * SCALE,
-            pm.height() * SCALE,
+            round(pm.width() * self._factor),
+            round(pm.height() * self._factor),
             Qt.AspectRatioMode.IgnoreAspectRatio,
             Qt.TransformationMode.FastTransformation,
         )
 
-    def _load_plain(self, folder, count):
-        frames = []
-        for i in range(count):
-            pm = QPixmap(str(folder / f"{i:02d}.png"))
-            frames.append(self._scale(pm))
-        return frames
+    def set_pet_scale(self, pet_scale: float):
+        """Switches size tier: rescales every cached raw frame at the new
+        factor and drops the face-composite cache (it's keyed only by
+        expr/frame_idx, not by tier, so stale-scale entries must go)."""
+        self.pet_scale = pet_scale
+        self._factor = BASE_SCALE * pet_scale
+        self._face_cache = {}
+        self._rescale_all()
 
-    def _load_existing(self, folder):
-        """Like _load_plain, but for an optional folder with an unknown
-        number of frames (e.g. a user-supplied quit animation): loads
-        00.png, 01.png, ... for as many as actually exist, or [] if the
-        folder is missing/empty."""
+    def _rescale_all(self):
+        self.appear_frames = [self._scale(pm) for pm in self._raw_appear]
+        self.appear_neutral_frames = [self._scale(pm) for pm in self._raw_appear_neutral]
+        self.idle_frames = [self._scale(pm) for pm in self._raw_idle]
+        self.quit_frames = [self._scale(pm) for pm in self._raw_quit]
+
+    # -------------------------------------------------------------- loading
+    def _load_raw(self, folder, count):
+        return [QPixmap(str(folder / f"{i:02d}.png")) for i in range(count)]
+
+    def _load_raw_existing(self, folder):
+        """Like _load_raw, but for an optional folder with an unknown number
+        of frames (e.g. a user-supplied quit animation): loads 00.png,
+        01.png, ... for as many as actually exist, or [] if the folder is
+        missing/empty."""
         frames = []
         if not folder.exists():
             return frames
         i = 0
         while (folder / f"{i:02d}.png").exists():
-            frames.append(self._scale(QPixmap(str(folder / f"{i:02d}.png"))))
+            frames.append(QPixmap(str(folder / f"{i:02d}.png")))
             i += 1
         return frames
 

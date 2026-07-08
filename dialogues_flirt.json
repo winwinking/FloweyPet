@@ -1,0 +1,106 @@
+{
+  "_readme": "右键菜单 -> 调情 功能用的台词，见 src/flirt.py。entries 内条目结构（lines数组+faces数组）与 dialogues_info.json 完全一致：lines 是句子数组，faces 是长度相同的数组，每个槽位是一个或多个 face-tag 字符串组成的数组（1个=整句用这个表情，2+个=打字过程中依次切换表情）。face 取值须与 assets/faces 下的文件夹名完全一致。\n\nflirt_response：调情按钮的常规回应池，按累计成功次数 flirt_count 分层，每层是 {min,max,entries}，max=-1 表示无上限，flirt_count 落入哪层就从哪层的 entries 里抽（层内不与上一条重复）。分层区间在这里配置，不写死在代码里。\n\nflirt_hesitate：右键菜单里光标在“调情”上停留达到 hesitate_seconds（见 config.json 的 flirt.hesitate_seconds）时，Flowey 主动播放的“抓包”台词。\nflirt_escape：抓包后玩家把光标移开“调情”项或关闭菜单，播放的台词。\nflirt_caught_confirm：抓包后玩家仍然点击/确认“调情”，先播放这一条，播完自动衔接一条 flirt_response。\nflirt_stall：抓包后玩家继续停留在“调情”上又达到 stall_seconds（见 config.json 的 flirt.stall_seconds）时播放，只播一次，不循环。\n\n本文件当前全部是占位测试台词，供机制联调测试用，后续由用户替换为正式文案（结构不要改动）。",
+
+  "flirt_response": [
+    {
+      "min": 1,
+      "max": 1,
+      "entries": [
+        {
+          "lines": ["诶？你、你刚才是不是对我做了什么？我的脸怎么这么烫……"],
+          "faces": [["sheepish_smile"]]
+        },
+        {
+          "lines": ["哦？这是你人生第一次对我调情啊。……我会记住的，别后悔。"],
+          "faces": [["smirk", "wink"]]
+        }
+      ]
+    },
+    {
+      "min": 2,
+      "max": 10,
+      "entries": [
+        {
+          "lines": ["又来撩我？你还挺勤快的嘛。"],
+          "faces": [["sneaky_grin"]]
+        },
+        {
+          "lines": ["喂，你这样一直撩一朵花，不觉得自己有点奇怪吗？……继续。"],
+          "faces": [["grin"]]
+        },
+        {
+          "lines": ["哼，算你有点眼光。"],
+          "faces": [["smirk"]]
+        }
+      ]
+    },
+    {
+      "min": 11,
+      "max": 50,
+      "entries": [
+        {
+          "lines": ["你现在撩我都已经熟练到肌肉记忆了吧。真拿你没办法。"],
+          "faces": [["ingratiating"]]
+        },
+        {
+          "lines": ["说真的……你这么频繁地撩我，是不是已经离不开我了？"],
+          "faces": [["smirk", "smile"]]
+        }
+      ]
+    },
+    {
+      "min": 51,
+      "max": -1,
+      "entries": [
+        {
+          "lines": ["都撩了这么多次了，你我之间还需要点什么台词吗？懂的都懂。"],
+          "faces": [["wink"]]
+        },
+        {
+          "lines": ["这个数字……你自己心里没点数吗？行了行了，算你赢。"],
+          "faces": [["sheepish_smile", "smile"]]
+        }
+      ]
+    }
+  ],
+
+  "flirt_hesitate": [
+    {
+      "lines": ["……你在那个选项上停了好久了。是在犹豫什么呢？"],
+      "faces": [["smirk"]]
+    },
+    {
+      "lines": ["嗯？盯着“调情”不放，是想清楚了再点，还是不敢点？"],
+      "faces": [["sneaky_grin", "wink"]]
+    }
+  ],
+
+  "flirt_escape": [
+    {
+      "lines": ["……跑了？哼，算你识相。"],
+      "faces": [["frown"]]
+    },
+    {
+      "lines": ["怎么，怂了？下次可没这么容易放过你。"],
+      "faces": [["smirk"]]
+    }
+  ],
+
+  "flirt_caught_confirm": [
+    {
+      "lines": ["哦？还真点了。……行，算你有种。"],
+      "faces": [["shocked", "smirk"]]
+    },
+    {
+      "lines": ["被我抓包了还敢点下去？……有点意思。"],
+      "faces": [["guilty", "sneaky_grin"]]
+    }
+  ],
+
+  "flirt_stall": [
+    {
+      "lines": ["……你还杵在那儿干嘛？光看不点，这算什么，观察我吗？"],
+      "faces": [["worry"]]
+    }
+  ]
+}

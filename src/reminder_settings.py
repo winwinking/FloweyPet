@@ -62,11 +62,11 @@ class _HoverButton(ClickableLabel):
         super().leaveEvent(event)
 
 
-def _make_switch_row(label_text, get_value, set_value, font, audio, on_change=None):
+def _make_switch_row(label_text, get_value, set_value, font, audio, on_change=None, metrics=None):
     """Reminder-panel row style: static white label, "[开]"/"[关]" switch at
     the line's end (yellow when on, gray when off) -- distinct from the
     context menu's whole-line-colored toggle rows."""
-    row = MenuRow(font)
+    row = MenuRow(font, metrics=metrics)
     label = _label(label_text, COLOR_TEXT, font)
     switch = ClickableLabel()
     switch.setFont(font)
@@ -95,8 +95,8 @@ def _make_switch_row(label_text, get_value, set_value, font, audio, on_change=No
 
 
 class ReminderPanel(UndertalePopup):
-    def __init__(self, reminders, audio=None, always_on_top=True, parent=None):
-        super().__init__(audio=audio, always_on_top=always_on_top, parent=parent)
+    def __init__(self, reminders, audio=None, always_on_top=True, ui_scale=1.0, min_font_px=None, parent=None):
+        super().__init__(audio=audio, always_on_top=always_on_top, parent=parent, ui_scale=ui_scale, min_font_px=min_font_px)
         self.reminders = reminders
 
         self.add_row(
@@ -106,6 +106,7 @@ class ReminderPanel(UndertalePopup):
                 lambda v: self.reminders.set_enabled("water", v),
                 self.font,
                 audio,
+                metrics=self.metrics,
             )
         )
         self.add_row(
@@ -116,9 +117,10 @@ class ReminderPanel(UndertalePopup):
                 self._water_next,
                 self.font,
                 audio=audio,
+                metrics=self.metrics,
             )
         )
-        self.add_row(make_separator_row(), selectable=False)
+        self.add_row(make_separator_row(metrics=self.metrics), selectable=False)
 
         self.add_row(
             _make_switch_row(
@@ -127,6 +129,7 @@ class ReminderPanel(UndertalePopup):
                 lambda v: self.reminders.set_enabled("meal", v),
                 self.font,
                 audio,
+                metrics=self.metrics,
             )
         )
         self._meal_section = QWidget()
@@ -135,7 +138,7 @@ class ReminderPanel(UndertalePopup):
         self._meal_layout.setSpacing(2)
         self._layout.addWidget(self._meal_section)
         self._rebuild_meal_rows()
-        self.add_row(make_separator_row(), selectable=False)
+        self.add_row(make_separator_row(metrics=self.metrics), selectable=False)
 
         self.add_row(
             _make_switch_row(
@@ -144,6 +147,7 @@ class ReminderPanel(UndertalePopup):
                 lambda v: self.reminders.set_enabled("sleep", v),
                 self.font,
                 audio,
+                metrics=self.metrics,
             )
         )
         self.add_row(
@@ -153,9 +157,10 @@ class ReminderPanel(UndertalePopup):
                 lambda hhmm: self.reminders.set_times("sleep", [hhmm]),
                 self.font,
                 audio=audio,
+                metrics=self.metrics,
             )
         )
-        self.add_row(make_separator_row(), selectable=False)
+        self.add_row(make_separator_row(metrics=self.metrics), selectable=False)
         self.add_row(self._build_button_row())
 
         self.finish_layout()
@@ -183,7 +188,7 @@ class ReminderPanel(UndertalePopup):
             self.register_row(row)
             self._meal_layout.addWidget(row)
 
-        add_row = MenuRow(self.font)
+        add_row = MenuRow(self.font, metrics=self.metrics)
         add_label = ClickableLabel("+ 添加时刻")
         add_label.setFont(self.font)
         add_label.setStyleSheet(f"color: {COLOR_TEXT}; background: transparent;")
@@ -196,7 +201,7 @@ class ReminderPanel(UndertalePopup):
         self.finish_layout()
 
     def _build_meal_time_row(self, hhmm):
-        row = MenuRow(self.font)
+        row = MenuRow(self.font, metrics=self.metrics)
 
         def commit(new_hhmm):
             times = [t for t in self.reminders.get_times("meal") if t != hhmm]
@@ -251,7 +256,7 @@ class ReminderPanel(UndertalePopup):
         self.close()
 
     def _build_button_row(self):
-        row = MenuRow(self.font)
+        row = MenuRow(self.font, metrics=self.metrics)
         ok_btn = _HoverButton("确定", self.font)
         cancel_btn = _HoverButton("取消", self.font)
         ok_btn.clicked.connect(self._confirm_and_close)

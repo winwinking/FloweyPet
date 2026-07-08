@@ -29,6 +29,7 @@ QUIT_ANIM_DIR = ASSETS_DIR / "anim" / "quit"
 
 DIALOGUE_PATH = APP_DIR / "dialogue.json"
 DIALOGUE_INFO_PATH = APP_DIR / "dialogues_info.json"
+DIALOGUE_FLIRT_PATH = APP_DIR / "dialogues_flirt.json"
 STATS_ROAST_PATH = APP_DIR / "stats_roast.json"
 CONFIG_PATH = APP_DIR / "config.json"
 STATS_PATH = APP_DIR / "stats.json"

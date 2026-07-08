@@ -161,6 +161,17 @@ def _egg_bucket(pct):
     return "e_lt20"
 
 
+def _flirt_bucket(count, threshold):
+    """Reserved condition slot for a dedicated flirt-count roast line: only
+    fires once flirt_count has reached the configurable threshold (see
+    config.json's flirt.roast_threshold_count). Wording lives under
+    stats_roast.json's "flirt_count" -> "reached" bucket, left empty until
+    the user writes it."""
+    if threshold and count >= threshold:
+        return "reached"
+    return None
+
+
 def _latest_active_bucket(score):
     if score is None:
         return None
@@ -194,6 +205,7 @@ def pick_roast_line(metrics):
         ("meal_rate", _rate_bucket(metrics.get("meal_rate"))),
         ("egg_collection", _egg_bucket(metrics["egg_pct"])),
         ("latest_active", _latest_active_bucket(metrics.get("latest_score"))),
+        ("flirt_count", _flirt_bucket(metrics.get("flirt_count", 0), metrics.get("flirt_roast_threshold"))),
     ]
     valid = [(pool, bucket) for pool, bucket in categories if bucket]
     random.shuffle(valid)

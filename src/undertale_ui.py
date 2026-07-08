@@ -9,6 +9,15 @@ No image assets are used anywhere here -- the border/background and the
 heart cursor are drawn pixel-by-pixel with QPainter (same technique as
 DialogueBox's border) and everything else is plain QLabel/QWidget styled
 via QSS `color` rules.
+
+UI follow-scale: every panel built on UndertalePopup can shrink slightly
+when the pet shrinks (see pet_window.py's _ui_scale -- menus/panels only
+follow *part* of the way, via ui_follow_ratio, so they never become
+illegibly tiny at the pet's smallest tier). All the base pixel constants
+below (PANEL_WIDTH, ROW_HEIGHT, FONT_PIXEL_SIZE, ...) are the values used
+at ui_scale=1.0; UiMetrics derives the actual on-screen sizes for whatever
+ui_scale a given popup was opened with, with a floor on font size so text
+never becomes unreadable.
 """
 from PyQt6.QtCore import QRect, QRectF, QTime, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPen
@@ -26,7 +35,8 @@ from fonts import pixel_font
 
 # --------------------------------------------------------------------- style
 # All colors / sizes used by the Undertale UI kit live here so they can be
-# tuned in one place.
+# tuned in one place. The pixel-size constants are the ui_scale=1.0 baseline
+# -- see UiMetrics below for how a popup derives its actual sizes.
 COLOR_BG = "#000000"
 COLOR_BORDER = "#FFFFFF"
 COLOR_TEXT = "#FFFFFF"
@@ -40,6 +50,7 @@ PANEL_WIDTH = 180
 ROW_HEIGHT = 28
 FONT_PIXEL_SIZE = 14
 GAP_FROM_PET = 10
+UI_MIN_FONT_PX = 10  # fallback floor when a caller doesn't pass min_font_px
 
 # Undertale's SOUL cursor, hand-authored as a 9x8 bitmap (1 = filled).
 HEART_BITMAP = [
@@ -55,6 +66,7 @@ HEART_BITMAP = [
 HEART_PIXEL_SCALE = 2  # each bitmap cell is drawn this many screen px wide
 GUTTER_MARGIN = 8  # blank space on each side of the heart inside the gutter
 GUTTER_WIDTH = len(HEART_BITMAP[0]) * HEART_PIXEL_SCALE + GUTTER_MARGIN * 2
+SEPARATOR_GAP = 6  # extra height (beyond the line itself) of a separator row
 
 # Value-adjuster tuning: how long a value stays yellow after the last
 # wheel/click interaction, and the step tables used by callers.
@@ -62,6 +74,28 @@ VALUE_FLASH_MS = 500
 WATER_INTERVAL_CHOICES = [15, 30, 45, 60, 90, 120]
 TIME_STEP_MINUTES = 15
 VOLUME_TIERS = [15, 35, 50, 75, 100]
+
+
+class UiMetrics:
+    """Derives every scale-dependent panel dimension from a single
+    ui_scale factor. min_font_px is an explicit floor (typically
+    config["ui_min_font_size"]); if omitted, UI_MIN_FONT_PX is used."""
+
+    def __init__(self, ui_scale: float = 1.0, min_font_px: int = None):
+        self.ui_scale = ui_scale
+        self.row_height = max(1, round(ROW_HEIGHT * ui_scale))
+        font_px = round(FONT_PIXEL_SIZE * ui_scale)
+        floor = min_font_px if min_font_px is not None else UI_MIN_FONT_PX
+        self.font_px = max(font_px, floor)
+        self.border_width = max(1, round(BORDER_WIDTH * ui_scale))
+        self.panel_padding = max(0, round(PANEL_PADDING * ui_scale))
+        self.heart_scale = max(1, round(HEART_PIXEL_SCALE * ui_scale))
+        self.gutter_margin = max(0, round(GUTTER_MARGIN * ui_scale))
+        self.gutter_width = len(HEART_BITMAP[0]) * self.heart_scale + self.gutter_margin * 2
+        self.separator_gap = max(2, round(SEPARATOR_GAP * ui_scale))
+
+
+DEFAULT_METRICS = UiMetrics(1.0)
 
 
 def _label(text, color, font, align=Qt.AlignmentFlag.AlignVCenter):
@@ -112,12 +146,14 @@ class ClickableLabel(QLabel):
 
 class HeartCursor(QWidget):
     """The red SOUL heart, drawn pixel-by-pixel from HEART_BITMAP -- no
-    image asset, no antialiasing, hard 1:1 blocky edges."""
+    image asset, no antialiasing, hard 1:1 blocky edges. pixel_scale lets a
+    shrunk-down panel shrink its cursor to match (see UiMetrics)."""
 
-    def __init__(self):
+    def __init__(self, pixel_scale: int = HEART_PIXEL_SCALE):
         super().__init__()
-        w = len(HEART_BITMAP[0]) * HEART_PIXEL_SCALE
-        h = len(HEART_BITMAP) * HEART_PIXEL_SCALE
+        self._pixel_scale = pixel_scale
+        w = len(HEART_BITMAP[0]) * pixel_scale
+        h = len(HEART_BITMAP) * pixel_scale
         self.setFixedSize(w, h)
 
     def paintEvent(self, event):
@@ -125,7 +161,7 @@ class HeartCursor(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(COLOR_HEART))
-        s = HEART_PIXEL_SCALE
+        s = self._pixel_scale
         for row, bits in enumerate(HEART_BITMAP):
             for col, bit in enumerate(bits):
                 if bit == "1":
@@ -140,11 +176,16 @@ class UndertalePopup(QWidget):
 
     Owns a single "selected row" index shared by mouse hover and keyboard
     Up/Down navigation, so exactly one heart is ever shown. Enter/Z activates
-    the selected row; Esc/X closes the popup."""
+    the selected row; Esc/X closes the popup.
+
+    ui_scale (see UiMetrics) lets a popup opened while the pet is shrunk
+    follow along partway -- self.metrics/self.font reflect the derived
+    sizes and should be threaded into any row this popup builds."""
 
     closed = pyqtSignal()
+    selection_changed = pyqtSignal(object)  # emits the newly-selected row, mouse hover or keyboard alike
 
-    def __init__(self, audio=None, always_on_top=True, parent=None):
+    def __init__(self, audio=None, always_on_top=True, parent=None, ui_scale=1.0, min_font_px=None):
         flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.Popup | Qt.WindowType.Tool
         if always_on_top:
             flags |= Qt.WindowType.WindowStaysOnTopHint
@@ -152,10 +193,12 @@ class UndertalePopup(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.audio = audio
-        self.font = pixel_font(FONT_PIXEL_SIZE)
+        self.ui_scale = ui_scale
+        self.metrics = UiMetrics(ui_scale, min_font_px)
+        self.font = pixel_font(self.metrics.font_px)
 
-        self.setFixedWidth(PANEL_WIDTH)
-        margin = BORDER_WIDTH + PANEL_PADDING
+        self.setFixedWidth(round(PANEL_WIDTH * ui_scale))
+        margin = self.metrics.border_width + self.metrics.panel_padding
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(margin, margin, margin, margin)
         self._layout.setSpacing(2)
@@ -210,6 +253,7 @@ class UndertalePopup(QWidget):
         self._selectable[idx].set_heart(True)
         if self.audio:
             self.audio.play_menu_move()
+        self.selection_changed.emit(self._selectable[idx])
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
@@ -223,9 +267,10 @@ class UndertalePopup(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
         painter.setBrush(QColor(COLOR_BG))
-        painter.setPen(QPen(QColor(COLOR_BORDER), BORDER_WIDTH))
-        half = BORDER_WIDTH / 2
-        painter.drawRect(QRectF(half, half, self.width() - BORDER_WIDTH, self.height() - BORDER_WIDTH))
+        bw = self.metrics.border_width
+        painter.setPen(QPen(QColor(COLOR_BORDER), bw))
+        half = bw / 2
+        painter.drawRect(QRectF(half, half, self.width() - bw, self.height() - bw))
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -249,21 +294,24 @@ class UndertalePopup(QWidget):
 # --------------------------------------------------------------------- rows
 class MenuRow(QWidget):
     """Base row: reserves a fixed-width cursor gutter on the left (heart
-    centered in it, 8px clear on either side), content after it. Subclasses/
-    builders fill in the content widget(s) via `row_layout`."""
+    centered in it, clear margin on either side), content after it.
+    Subclasses/builders fill in the content widget(s) via `row_layout`.
+    `metrics` (a UiMetrics) drives row height / gutter width / heart size;
+    omit it to get the ui_scale=1.0 defaults."""
 
-    def __init__(self, font):
+    def __init__(self, font, metrics: UiMetrics = None):
         super().__init__()
-        self.setFixedHeight(ROW_HEIGHT)
+        self.metrics = metrics or DEFAULT_METRICS
+        self.setFixedHeight(self.metrics.row_height)
         self._hover_cb = None
         self.activate = lambda: None  # builders override with their handler
         self.step = lambda direction: None  # Left/Right; builders override if they have a value to step
 
         self.gutter = QWidget()
-        self.gutter.setFixedWidth(GUTTER_WIDTH)
+        self.gutter.setFixedWidth(self.metrics.gutter_width)
         gutter_layout = QHBoxLayout(self.gutter)
-        gutter_layout.setContentsMargins(GUTTER_MARGIN, 0, GUTTER_MARGIN, 0)
-        self.heart = HeartCursor()
+        gutter_layout.setContentsMargins(self.metrics.gutter_margin, 0, self.metrics.gutter_margin, 0)
+        self.heart = HeartCursor(pixel_scale=self.metrics.heart_scale)
         self.heart.setVisible(False)
         gutter_layout.addWidget(self.heart)
 
@@ -290,13 +338,14 @@ class MenuRow(QWidget):
         super().enterEvent(event)
 
 
-def make_separator_row():
+def make_separator_row(metrics: UiMetrics = None):
+    metrics = metrics or DEFAULT_METRICS
     row = QWidget()
-    row.setFixedHeight(BORDER_WIDTH + 6)
+    row.setFixedHeight(metrics.border_width + metrics.separator_gap)
     layout = QHBoxLayout(row)
-    layout.setContentsMargins(GUTTER_WIDTH, 3, 0, 3)
+    layout.setContentsMargins(metrics.gutter_width, 3, 0, 3)
     line = QWidget()
-    line.setFixedHeight(2)
+    line.setFixedHeight(max(1, round(2 * metrics.ui_scale)))
     line.setStyleSheet(f"background-color: {COLOR_BORDER};")
     layout.addWidget(line)
     row.set_hover_callback = lambda cb: None
@@ -305,9 +354,9 @@ def make_separator_row():
     return row
 
 
-def make_toggle_row(label_text, get_value, set_value, font, audio=None, on_change=None):
+def make_toggle_row(label_text, get_value, set_value, font, audio=None, on_change=None, metrics: UiMetrics = None):
     """Full-row-clickable line whose text is yellow when on, gray when off."""
-    row = MenuRow(font)
+    row = MenuRow(font, metrics=metrics)
     text_label = ClickableLabel(label_text)
     text_label.setFont(font)
 
@@ -331,10 +380,10 @@ def make_toggle_row(label_text, get_value, set_value, font, audio=None, on_chang
     return row
 
 
-def make_info_row(label_text, value_text, font):
+def make_info_row(label_text, value_text, font, metrics: UiMetrics = None):
     """`label   value`-style read-only row -- no click/hover behavior, just
     aligned display, for panels like the stats panel that only show numbers."""
-    row = MenuRow(font)
+    row = MenuRow(font, metrics=metrics)
     label = _label(label_text, COLOR_TEXT, font)
     value = _label(value_text, COLOR_SELECTED, font, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
     row.row_layout.addWidget(label)
@@ -344,8 +393,8 @@ def make_info_row(label_text, value_text, font):
     return row
 
 
-def make_action_row(label_text, on_click, font, audio=None, close_after=None):
-    row = MenuRow(font)
+def make_action_row(label_text, on_click, font, audio=None, close_after=None, metrics: UiMetrics = None):
+    row = MenuRow(font, metrics=metrics)
     text_label = ClickableLabel(label_text)
     text_label.setFont(font)
     text_label.setStyleSheet(f"color: {COLOR_TEXT}; background: transparent;")
@@ -436,9 +485,9 @@ class ValueAdjuster(QWidget):
         event.accept()
 
 
-def make_adjust_row(label_text, get_text, on_prev, on_next, font, audio=None, on_wheel_step=None):
+def make_adjust_row(label_text, get_text, on_prev, on_next, font, audio=None, on_wheel_step=None, metrics: UiMetrics = None):
     """`label   < value >`-style row built on ValueAdjuster."""
-    row = MenuRow(font)
+    row = MenuRow(font, metrics=metrics)
     label = _label(label_text, COLOR_TEXT, font)
     adjuster = ValueAdjuster(get_text, on_prev, on_next, font, audio=audio, on_wheel_step=on_wheel_step)
 
@@ -450,12 +499,12 @@ def make_adjust_row(label_text, get_text, on_prev, on_next, font, audio=None, on
     return row
 
 
-def make_value_action_row(label_text, get_value_text, on_click, font, audio=None, close_after=None):
+def make_value_action_row(label_text, get_value_text, on_click, font, audio=None, close_after=None, metrics: UiMetrics = None):
     """`label ... value`-style row (e.g. "音量   50%") where clicking
     anywhere on the row -- label or value -- opens a related picker instead
     of adjusting anything in place. The value half is always drawn in the
     "selected" yellow so it reads as the current setting at a glance."""
-    row = MenuRow(font)
+    row = MenuRow(font, metrics=metrics)
     label = ClickableLabel(label_text)
     label.setFont(font)
     label.setStyleSheet(f"color: {COLOR_TEXT}; background: transparent;")
@@ -505,10 +554,10 @@ class PixelTimeEdit(QTimeEdit):
             self.audio.play_menu_move()
 
 
-def make_time_row(label_text, get_hhmm, on_change, font, audio=None):
+def make_time_row(label_text, get_hhmm, on_change, font, audio=None, metrics: UiMetrics = None):
     """`label   [HH:mm]`-style row: click a section then type digits or
     scroll the wheel over it -- both routes land on the same QTimeEdit."""
-    row = MenuRow(font)
+    row = MenuRow(font, metrics=metrics)
     editor = PixelTimeEdit(font, audio=audio)
     h, m = map(int, get_hhmm().split(":"))
     editor.blockSignals(True)

@@ -18,7 +18,7 @@ from undertale_ui import (
     _label,
 )
 
-PANEL_WIDTH = 140
+PANEL_WIDTH_BASE = 140
 
 
 class VolumePanel(UndertalePopup):
@@ -26,9 +26,9 @@ class VolumePanel(UndertalePopup):
     pet's context menu already used for volume, so this panel doesn't need
     to know anything about config/audio plumbing itself."""
 
-    def __init__(self, get_value, set_value, audio=None, always_on_top=True, parent=None):
-        super().__init__(audio=audio, always_on_top=always_on_top, parent=parent)
-        self.setFixedWidth(PANEL_WIDTH)
+    def __init__(self, get_value, set_value, audio=None, always_on_top=True, ui_scale=1.0, min_font_px=None, parent=None):
+        super().__init__(audio=audio, always_on_top=always_on_top, parent=parent, ui_scale=ui_scale, min_font_px=min_font_px)
+        self.setFixedWidth(round(PANEL_WIDTH_BASE * ui_scale))
         self._set_value = set_value
 
         title = _label("音量", COLOR_TEXT, self.font, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
@@ -38,7 +38,7 @@ class VolumePanel(UndertalePopup):
         current = get_value()
         nearest = min(range(len(VOLUME_TIERS)), key=lambda i: abs(VOLUME_TIERS[i] - current))
         for pct in VOLUME_TIERS:
-            row = MenuRow(self.font)
+            row = MenuRow(self.font, metrics=self.metrics)
             label = ClickableLabel(f"{pct}%")
             label.setFont(self.font)
             color = COLOR_SELECTED if pct == VOLUME_TIERS[nearest] else COLOR_TEXT

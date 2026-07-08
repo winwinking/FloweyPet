@@ -52,11 +52,18 @@ def _build_menu_spec(pet):
             "action": pet._open_volume_panel,
         },
         {
+            "type": "value_action",
+            "label": "大小",
+            "get_value": lambda: f"{round(pet.pet_scale * 100)}%",
+            "action": pet._open_size_panel,
+        },
+        {
             "type": "toggle",
             "label": "开机自启",
             "get": lambda: pet.config.get("autostart", False),
             "set": pet._toggle_autostart,
         },
+        {"type": "action", "label": "调情", "action": pet._on_flirt_clicked, "key": "flirt"},
         {"type": "action", "label": "查看信息", "action": pet._view_info},
         {"type": "separator"},
         {"type": "action", "label": "离开", "action": pet.request_quit},
@@ -64,16 +71,23 @@ def _build_menu_spec(pet):
 
 
 class PetContextMenu(UndertalePopup):
-    def __init__(self, pet, parent=None):
-        super().__init__(audio=pet.audio, always_on_top=pet._always_on_top, parent=parent)
+    def __init__(self, pet, parent=None, ui_scale=1.0, min_font_px=None):
+        super().__init__(
+            audio=pet.audio,
+            always_on_top=pet._always_on_top,
+            parent=parent,
+            ui_scale=ui_scale,
+            min_font_px=min_font_px,
+        )
+        self.flirt_row = None
         for spec in _build_menu_spec(pet):
             kind = spec["type"]
             if kind == "separator":
-                self.add_row(make_separator_row(), selectable=False)
+                self.add_row(make_separator_row(metrics=self.metrics), selectable=False)
             elif kind == "toggle":
                 self.add_row(
                     make_toggle_row(
-                        spec["label"], spec["get"], spec["set"], self.font, audio=pet.audio
+                        spec["label"], spec["get"], spec["set"], self.font, audio=pet.audio, metrics=self.metrics
                     )
                 )
             elif kind == "value_action":
@@ -85,12 +99,20 @@ class PetContextMenu(UndertalePopup):
                         self.font,
                         audio=pet.audio,
                         close_after=self.close,
+                        metrics=self.metrics,
                     )
                 )
             elif kind == "action":
-                self.add_row(
+                row = self.add_row(
                     make_action_row(
-                        spec["label"], spec["action"], self.font, audio=pet.audio, close_after=self.close
+                        spec["label"],
+                        spec["action"],
+                        self.font,
+                        audio=pet.audio,
+                        close_after=self.close,
+                        metrics=self.metrics,
                     )
                 )
+                if spec.get("key") == "flirt":
+                    self.flirt_row = row
         self.finish_layout()
