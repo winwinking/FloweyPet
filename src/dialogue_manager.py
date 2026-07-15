@@ -18,7 +18,7 @@ from datetime import datetime
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
 from error_log import log_exception, log_message
-from paths import DIALOGUE_INFO_PATH, DIALOGUE_PATH
+from paths import DIALOGUE_INFO_PATH, DIALOGUE_PATH, DIALOGUE_SYSTEM_PATH
 
 PRI_REMINDER = 40
 PRI_POMODORO = 30
@@ -99,6 +99,8 @@ class DialogueManager(QObject):
         self.stats = stats
         with open(DIALOGUE_PATH, "r", encoding="utf-8") as f:
             self.data = json.load(f)
+        self._sanitize_flavor_pools(("lock_on", "lock_off", "lock_hint"))
+        self.data.update(self._load_system_dialogues())
         self.info_data = self._load_info_dialogues()
         self._info_trigger_times = []  # monotonic timestamps, for anti-spam
         self._last_info_pick = None  # (pool_name, index) of the last entry shown
@@ -133,6 +135,63 @@ class DialogueManager(QObject):
     # ---------------------------------------------------------------- pools
     def _pool(self, category):
         return self.data.get(category, [])
+
+    @staticmethod
+    def _validate_flavor_entry(entry):
+        """Same {"text","face"} contract every dialogue.json menu-flavor
+        pool (pin_on/mute_off/...) already uses -- those existing pools are
+        trusted hand-authored content and were never validated at load
+        time, so this is scoped to just the categories passed to
+        _sanitize_flavor_pools (currently only the new lock_on/lock_off/
+        lock_hint pools) rather than changing behavior for the other ~150
+        pools already in the file."""
+        if not isinstance(entry, dict):
+            return False, "entry is not a JSON object"
+        text = entry.get("text")
+        face = entry.get("face")
+        if not isinstance(text, str) or not text:
+            return False, "'text' must be a non-empty string"
+        if isinstance(face, str):
+            if not face:
+                return False, "'face' must be a non-empty string or array of strings"
+        elif isinstance(face, list):
+            if not face or not all(isinstance(f, str) and f for f in face):
+                return False, "'face' array must contain only non-empty strings"
+        else:
+            return False, "'face' must be a string or array of strings"
+        return True, ""
+
+    def _sanitize_flavor_pools(self, categories):
+        for category in categories:
+            pool = self.data.get(category)
+            if not isinstance(pool, list):
+                continue
+            cleaned = []
+            for i, entry in enumerate(pool):
+                ok, reason = self._validate_flavor_entry(entry)
+                if not ok:
+                    log_message(f"dialogue.json: skipping malformed entry {category}[{i}]: {reason}")
+                    continue
+                cleaned.append(entry)
+            self.data[category] = cleaned
+
+    def _load_system_dialogues(self):
+        """App/system-lifecycle lines that live outside dialogue.json's
+        per-character-content sprawl -- e.g. duplicate_launch (see
+        main.py's single-instance guard). Merged straight into self.data so
+        _pool()/_pick() see these categories exactly like any other; a
+        missing or malformed file just means that category has nothing to
+        say, never a crash."""
+        try:
+            with open(DIALOGUE_SYSTEM_PATH, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+        except FileNotFoundError:
+            log_message(f"dialogues_system: {DIALOGUE_SYSTEM_PATH} not found, system-event lines will have nothing to say")
+            return {}
+        except (OSError, json.JSONDecodeError):
+            log_exception(f"dialogues_system: could not load {DIALOGUE_SYSTEM_PATH}")
+            return {}
+        return {k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, list)}
 
     # ---------------------------------------------------------- info easter egg
     def _load_info_dialogues(self):
@@ -241,17 +300,6 @@ class DialogueManager(QObject):
         idx = random.choice(available)
         seen.append(idx)
         self.save_config(self.config)
-        return _normalize(pool[idx])
-
-    def _pick_progressive(self, category, stage_idx):
-        """Unlike _pick(), this never randomizes: the pursuit nag lines are
-        meant to escalate in a fixed order (mild nudge -> angriest), so
-        stage_idx deterministically selects how far into the pool to go,
-        clamped to the last line once stage_idx runs past the pool length."""
-        pool = self._pool(category)
-        if not pool:
-            return None
-        idx = min(stage_idx, len(pool) - 1)
         return _normalize(pool[idx])
 
     def _pick_expression_line(self):
@@ -440,6 +488,32 @@ class DialogueManager(QObject):
         self.show_requested.emit(segments, category)
         if self.stats:
             self.stats.record_dialogue_triggered()
+
+    def cut_off(self):
+        """Immediately silences dm's notion of 'currently showing' (clears
+        the queue, drops busy back to False) with nothing queued to follow
+        -- pairs with PetWindow.force_end_bubble(), which physically hides
+        the dialogue box widget itself (dm doesn't own that widget). Used
+        by DialogueArbiter right before it shows its own reaction, so the
+        old content is fully retired rather than silently resuming later."""
+        self._queue.clear()
+        self.busy = False
+
+    def preempt(self, category, segments):
+        """Immediately cuts off whatever is currently showing/queued and
+        shows `segments` right now -- used by DialogueArbiter for its
+        higher-priority interrupt/spam/rant reactions, which must cut over
+        ongoing speech rather than politely wait in _submit's queue (reg 10:
+        a higher-priority arbiter line discards whatever lower-priority
+        thing was queued, it never queues behind it). Safe to call even
+        when nothing is currently showing -- PetWindow._on_show_requested
+        defensively stops the dialogue box before starting a new one, so
+        there's no stale-timer risk either way."""
+        if segments is None:
+            return False
+        self._queue.clear()
+        self._show(category, segments)
+        return True
 
     def speak(self, category, segments, priority=PRI_CLICK, bypass_interval=True):
         """Generic one-off "say this" entry point for callers outside the
@@ -634,17 +708,19 @@ class DialogueManager(QObject):
         self._submit("pomodoro_chat", self._pick("pomodoro_chat"), PRI_CHAT)
 
     # ------------------------------------------------------------ reminders
-    def trigger_reminder(self, kind):
-        category = f"reminder_{kind}"
-        self._submit(category, self._pick(category), PRI_REMINDER, bypass_interval=True)
+    # Reminder/chase popups no longer route through here: the pools moved
+    # from dialogue.json into dialogues_chase.json and are submitted by
+    # ReminderChaseController via speak() (see reminder_chase.py). Only the
+    # neglect jab below still belongs to this class.
 
-    def trigger_reminder_nag(self, kind, stage_idx):
-        category = f"reminder_unconfirmed_{kind}"
-        self._submit(category, self._pick_progressive(category, stage_idx), PRI_REMINDER, bypass_interval=True)
-
-    def trigger_reminder_ack(self, kind):
-        category = f"reminder_ack_{kind}"
-        self._submit(category, self._pick(category), PRI_REMINDER, bypass_interval=True)
+    # -------------------------------------------------------- single instance
+    def trigger_duplicate_launch(self):
+        """Fired when a second FloweyPet process was launched and handed
+        off (see main.py's single_instance.SingleInstanceGuard) to this,
+        the real, instance. Lines live in dialogues_system.json, not
+        dialogue.json, since this is an app-lifecycle event rather than
+        in-character content."""
+        self._submit("duplicate_launch", self._pick("duplicate_launch"), PRI_CLICK, bypass_interval=True)
 
     # --------------------------------------------------------- menu flavor
     def trigger_menu_flavor(self, category):
@@ -653,6 +729,12 @@ class DialogueManager(QObject):
         silently dropped like a click would be) but queues behind whatever
         is already talking."""
         self._submit(category, self._pick(category), PRI_CHAT, bypass_interval=True)
+
+    def trigger_lock_hint(self):
+        """Nudge line for when the pet is locked (see PetWindow._toggle_lock
+        / _register_locked_click) and the user keeps clicking its body
+        anyway -- easy to mistake "locked" for "broken" without this."""
+        self._submit("lock_hint", self._pick("lock_hint"), PRI_CHAT, bypass_interval=True)
 
     def trigger_neglect(self, kind):
         category = f"neglect_{kind}"

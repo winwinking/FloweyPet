@@ -7,6 +7,7 @@ Flowey's face.
 """
 import functools
 import random
+import time
 
 from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtGui import QCursor, QIcon, QPainter
@@ -21,10 +22,14 @@ from PyQt6.QtWidgets import (
     QWidgetAction,
 )
 
+import app_log
+import dialogue_log
 import flirt as flirt_dialogue
+from dialogue_arbiter import DialogueArbiter
 from dialogue_box import DialogueBox
 from error_log import log_exception
 from flirt import FlirtController
+from game_detector import GameDetector
 from paths import ICON_PATH
 from pomodoro_display import PomodoroDisplay
 from undertale_ui import VOLUME_TIERS, ClickableLabel
@@ -32,10 +37,25 @@ from undertale_ui import VOLUME_TIERS, ClickableLabel
 CLICK_MOVE_THRESHOLD = 4
 IDLE_FRAME_MS = 220
 AFK_THRESHOLDS_MIN = (5, 10, 30, 60)
-REQUIRE_CONFIRM_CATEGORIES = {"reminder_water", "reminder_meal", "reminder_sleep"}
-REQUIRE_CONFIRM_NAG_PREFIX = "reminder_unconfirmed_"
+# Reminder/chase popup categories (submitted by ReminderChaseController)
+# mapped to their Undertale choice-bar buttons. First popups offer
+# [确定][等等], chase-stage popups offer [确定][知道了] (敷衍), the
+# single-shot sleep popup offers [确定][等等] but never chases -- see
+# reminder_chase.py for the full state machine. The dialogue box reports
+# whichever key was clicked (or "timeout") back through
+# _on_dialogue_finished into the controller.
+_FIRST_BUTTONS = (("confirm", "确定"), ("wait", "等等"))
+_STAGE_BUTTONS = (("confirm", "确定"), ("dismiss", "知道了"))
+CHASE_POPUP_BUTTONS = {
+    "chase_popup_first_water": _FIRST_BUTTONS,
+    "chase_popup_first_meal": _FIRST_BUTTONS,
+    "chase_popup_stage_water": _STAGE_BUTTONS,
+    "chase_popup_stage_meal": _STAGE_BUTTONS,
+    "chase_popup_sleep": _FIRST_BUTTONS,
+}
 EXIT_FRAME_MS = 125
 EXIT_FAILSAFE_MS = 15000
+HIDE_FAILSAFE_GRACE_MS = 6000  # generous margin over any realistic escalation-line playback time
 
 
 def _guarded_menu_action(context):
@@ -97,13 +117,20 @@ class PetWindow(QWidget):
         self._drag_moved = False
         self._drag_offset = QPoint()
         self._pending_quit = False
+        self._exit_interrupted = False  # this exit sequence's one-and-only interrupt line already used?
+        self._resume_exit_animation_after_interrupt = False
         self._pending_hide = False
+        self._pending_hide_token = None  # distinguishes this hide request's failsafe from a later one
         self._burrow_on_done = None
         self._pomodoro_active = False
         self._current_category = None
         self._active_popup = None
         self._last_face_key = None
         self._appear_source = "appear"
+        self._last_duplicate_launch_roast = float("-inf")
+        self._locked = config.get("locked", False)
+        self._locked_click_count = 0
+        self._last_lock_hint_time = float("-inf")
 
         self.dialogue_box = DialogueBox(
             self.pet_display_width,
@@ -114,9 +141,13 @@ class PetWindow(QWidget):
             test_mode=reminders.test_mode,
             pet_scale=self.pet_scale,
             min_font_px=config.get("bubble_min_font_size", 15),
+            screen_margin=config.get("bubble_screen_margin", 8),
         )
         self.dialogue_box.finished.connect(self._on_dialogue_finished)
+        self.dialogue_box.hold_started.connect(self._on_dialogue_hold_started)
         self.dm.show_requested.connect(self._on_show_requested)
+        self.arbiter = DialogueArbiter(config, self.dm, self)
+        self.game_detector = GameDetector(config, self.dm, self, self.stats)
 
         self.flirt = FlirtController(config, parent=self)
         self.flirt.on_hesitate = self._on_flirt_hesitate
@@ -169,7 +200,15 @@ class PetWindow(QWidget):
             flags |= Qt.WindowType.WindowStaysOnTopHint
         return flags
 
+    def is_pinned_on_top(self):
+        """Public hook for GameDetector/TopmostGuard: what the 右键菜单"置顶"
+        checkbox currently says -- i.e. what z-order this window should be
+        restored to once a temporary game-egg topmost cycle ends."""
+        return self._always_on_top
+
     def _toggle_always_on_top(self, checked):
+        if not self.arbiter.begin_feature("pin"):
+            return  # inside the 0.5s debounce cooldown: state frozen, ignored
         self.stats.record_interaction()
         self._always_on_top = checked
         self.config["always_on_top"] = checked
@@ -180,7 +219,7 @@ class PetWindow(QWidget):
             self.show()
         self.dialogue_box.set_always_on_top(checked)
         self.pomodoro_display.set_always_on_top(checked)
-        self.dm.trigger_menu_flavor("pin_on" if checked else "pin_off")
+        self.arbiter.finish_feature("pin", lambda: self.dm.trigger_menu_flavor("pin_on" if checked else "pin_off"))
 
     def _resolve_start_position(self, w, h):
         screen = QApplication.primaryScreen().availableGeometry()
@@ -276,15 +315,23 @@ class PetWindow(QWidget):
             and not self._pomodoro_active
             and not self.reminders.is_awaiting_response()
             and not self.flirt.is_confronting()
+            and not self.game_detector.is_any_game_running()
         ):
             self.dm.trigger_idle_random()
         self._schedule_idle_chat()
 
     def _trigger_afk_unless_awaiting(self, level):
-        # A reminder still waiting on a response, or an active flirt
-        # confrontation, takes priority over ambient AFK chatter -- don't
-        # talk over either.
-        if not self.reminders.is_awaiting_response() and not self.flirt.is_confronting():
+        # A reminder still waiting on a response, an active flirt
+        # confrontation, or a tracked game (UNDERTALE/DELTARUNE) currently
+        # running takes priority over ambient AFK chatter -- don't talk
+        # over any of them. Exit lock takes priority over everything.
+        if self._pending_quit:
+            return
+        if (
+            not self.reminders.is_awaiting_response()
+            and not self.flirt.is_confronting()
+            and not self.game_detector.is_any_game_running()
+        ):
             self.dm.trigger_afk(level)
 
     def _reschedule_afk_timers(self):
@@ -315,39 +362,116 @@ class PetWindow(QWidget):
 
     def _position_dialogue_box(self):
         anchor_y = self.pomodoro_display.y() if self.pomodoro_display.isVisible() else self.y()
-        self.dialogue_box.follow(self.x(), anchor_y, self.pet_display_width)
+        pet_bottom = self.y() + self.height()
+        self.dialogue_box.follow(self.x(), anchor_y, self.pet_display_width, pet_bottom)
 
     # ------------------------------------------------------------- dialogue
     def _on_show_requested(self, segments, category):
+        if self._pending_quit:
+            # Exit lock (reg 1/2): any dm-routed request (idle chat, AFK,
+            # menu flavor, reminders, duplicate-launch roast, ...) that
+            # tries to pop a bubble once 退出 has been clicked is silently
+            # swallowed and logged instead of interrupting the goodbye
+            # line/burrow animation. dm.busy is left as-is (stuck True if
+            # this came from dm._show()) -- harmless since the process
+            # exits within EXIT_FAILSAFE_MS regardless.
+            dialogue_log.log_event(f"退出锁定：拦截对话请求 category={category}")
+            return
+        # Defensive: a DialogueArbiter preempt() (or anything else routed
+        # through dm._show() while the box was already mid-typing) needs
+        # the box fully reset first -- stopping an already-idle box is a
+        # safe no-op, so this is unconditional rather than only for the
+        # preempt path.
+        self.dialogue_box.stop_immediately()
         self.state = State.TALKING
         self._current_category = category
         self._position_dialogue_box()
-        require_confirm = category in REQUIRE_CONFIRM_CATEGORIES or category.startswith(REQUIRE_CONFIRM_NAG_PREFIX)
-        self.dialogue_box.start(segments, self._on_segment_face, require_confirm=require_confirm)
+        options = CHASE_POPUP_BUTTONS.get(category)
+        hold_ms = self.reminders.chase.hold_ms_for_category(category) if options else None
+        self.dialogue_box.start(
+            segments, self._on_segment_face, choice_options=options, hold_ms=hold_ms
+        )
 
     def _on_segment_face(self, face_key):
         self._last_face_key = face_key
         self._set_base_pixmap(self.sprites.get_face(face_key, 0))
 
+    def _on_dialogue_hold_started(self):
+        """The popup's lines are fully typed and its button bar is now just
+        sitting there for the 30-60s hold -- put the pet back into the idle
+        bobbing animation instead of leaving it frozen mid-talk-pose. The
+        bubble (with its buttons) stays on screen; only the sprite state
+        changes. Guarded so a hold can never yank the pet out of the exit
+        burrow animation."""
+        if self.state == State.TALKING and not self._dragging:
+            self._enter_idle()
+
     def _on_dialogue_finished(self):
         cat = self._current_category
-        if cat in REQUIRE_CONFIRM_CATEGORIES or (cat and cat.startswith(REQUIRE_CONFIRM_NAG_PREFIX)):
-            outcome = self.dialogue_box.response_outcome
-            if outcome is not None:
-                self.reminders.on_reminder_confirmed(perfunctory=(outcome == "acknowledged"))
+        # Tells the arbiter "whatever was on screen just finished" -- a
+        # no-op unless it was one of its own feature reactions, in which
+        # case a same-feature click that arrived mid-playback (pending)
+        # now gets to schedule the next stage. Must run before anything
+        # below reacts to this same finish.
+        self.arbiter.on_bubble_finished()
+        if cat in CHASE_POPUP_BUTTONS:
+            # Report BEFORE dm.on_finished() so the controller's reaction
+            # line lands in the queue and plays the moment the box frees up.
+            outcome = self.dialogue_box.response_outcome or "timeout"
+            self.reminders.chase.on_popup_outcome(outcome)
+        if cat == "exit_interrupt":
+            # The one-and-only interrupt line for this exit sequence (see
+            # _handle_exit_interrupt) just finished -- resume the paused
+            # burrow animation, or if we were still in the pre-burrow
+            # goodbye phase, skip straight to it. Never resumes the
+            # original farewell text.
+            if self._resume_exit_animation_after_interrupt:
+                self._resume_exit_animation_after_interrupt = False
+                self._exit_timer.start(EXIT_FRAME_MS)
+            else:
+                self._start_burrow_animation(self._quit_now)
+            return
         if self._pending_quit:
             self._start_burrow_animation(self._quit_now)
             return
         self.dm.on_finished()
-        if self._pending_hide and self._current_category == "hide":
+        if self._pending_hide:
             self._pending_hide = False
             self._start_burrow_animation(self._finish_hide)
             return
-        self._enter_idle()
+        # dm.on_finished() may have immediately started the next queued
+        # line (e.g. the chase reaction right after a popup) -- in that case
+        # the box is visible again and the pet is TALKING; stomping it back
+        # to IDLE here would let idle frames overwrite the talking face.
+        if not self.dialogue_box.isVisible():
+            self._enter_idle()
 
     # ---------------------------------------------------------------- mouse
     def mousePressEvent(self, event):
         if event.button() != Qt.MouseButton.LeftButton:
+            return
+        if self._pending_quit:
+            # Exit lock: no dragging, no click-combo/interaction bookkeeping
+            # while quitting -- the only thing a click can do now is the
+            # escalating "被打断" reaction (see _handle_exit_interrupt).
+            self._handle_exit_interrupt()
+            return
+        if self._locked:
+            # Locked: the pet's body ignores clicks for dialogue purposes --
+            # no combo/boredom tracking, no interaction stats. But a click
+            # must still be able to dismiss an already-open menu/panel
+            # (otherwise locking leaves no way to close the right-click
+            # menu without picking an item), and the pet stays draggable by
+            # default so it can still be repositioned while locked --
+            # lock_disable_drag opts out of that if ever wanted.
+            self._register_locked_click()
+            self._close_active_popup()
+            if self.config.get("lock_disable_drag", False):
+                return
+            self._dragging = True
+            self._drag_moved = False
+            self._drag_offset = event.globalPosition().toPoint() - self.pos()
+            self.update()
             return
         self._close_active_popup()
         self._dragging = True
@@ -379,6 +503,13 @@ class PetWindow(QWidget):
         self.update()
         self.config["position"] = {"x": self.x(), "y": self.y()}
         self.save_config(self.config)
+        if self._locked:
+            # Reachable whenever lock_disable_drag is False (the default,
+            # see mousePressEvent) -- position is saved above like any
+            # drag, but locked clicks never trigger click dialogue/easter
+            # eggs regardless of whether this was a real drag or a
+            # stationary click-then-release.
+            return
         if self._drag_moved:
             screen = self.screen().geometry()
             self.dm.check_position_easter_egg(
@@ -390,8 +521,31 @@ class PetWindow(QWidget):
     def _handle_click(self):
         if self.dm.busy:
             return
+        if self.arbiter.note_body_click():
+            # Spam-clicking the pet's own body: the arbiter already showed
+            # the "厌倦" reaction directly (higher priority than ordinary
+            # click chat, reg 7) -- don't also fire the normal click line.
+            self.stats.record_interaction()
+            return
         self.dm.trigger_click()
         self.stats.record_interaction()
+
+    def _register_locked_click(self):
+        """Counts clicks landed on the locked pet's body -- purely to fire
+        an occasional out-of-character reminder that lock is a deliberate
+        toggle, not the app being broken (see dialogue.json's lock_hint
+        pool). Never triggers any in-character reaction."""
+        self._locked_click_count += 1
+        threshold = self.config.get("lock_hint_click_threshold", 10)
+        if self._locked_click_count < threshold:
+            return
+        self._locked_click_count = 0
+        cooldown = self.config.get("lock_hint_cooldown_seconds", 300)
+        now = time.monotonic()
+        if now - self._last_lock_hint_time < cooldown:
+            return
+        self._last_lock_hint_time = now
+        self.dm.trigger_lock_hint()
 
     # ----------------------------------------------------------------- menu
     def _build_menu(self):
@@ -489,6 +643,9 @@ class PetWindow(QWidget):
         return action
 
     def contextMenuEvent(self, event):
+        if self._pending_quit:
+            dialogue_log.log_event("退出锁定：右键菜单请求已拦截")
+            return
         self._close_active_popup()
         # Deferred to the next event-loop tick: showing a Qt.Popup
         # synchronously inside the mouse event that spawned it can make the
@@ -505,7 +662,15 @@ class PetWindow(QWidget):
             lambda row: self.flirt.on_menu_selection_changed(row is menu.flirt_row)
         )
         menu.closed.connect(self.flirt.on_menu_closed)
-        position_avoid_pet_and_bubble(menu, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
+        position_avoid_pet_and_bubble(
+            menu,
+            self.x(),
+            self.y(),
+            self.width(),
+            self.height(),
+            self.dialogue_box,
+            margin=self.config.get("panel_screen_margin", 8),
+        )
         self._active_popup = menu
         menu.show()
         menu.setFocus()
@@ -523,23 +688,72 @@ class PetWindow(QWidget):
     def _toggle_visible(self):
         # Hiding makes the pet disappear, which would otherwise strand any
         # open context menu / reminder panel floating with nothing beside it.
+        if not self.arbiter.begin_feature("hide"):
+            return  # inside the 0.5s debounce cooldown: state frozen, ignored
         self.stats.record_interaction()
         self._close_active_popup()
         if self.isVisible():
             self._hide_with_flavor()
         else:
-            self._start_emerge(lambda: self.dm.trigger_menu_flavor("show"))
+            self._start_emerge(lambda: self.arbiter.finish_feature("hide", lambda: self.dm.trigger_menu_flavor("show")))
 
     def _hide_with_flavor(self):
+        # Burrowing (actually hiding) is triggered from _on_dialogue_finished
+        # once the "hide" line finishes -- but the arbiter may end up
+        # speaking NOTHING at all for this click (silence stage / a
+        # reminder popup suppressing it), in which case dialogue_box.finished
+        # would never fire and the pet would be stuck stranded, still
+        # visible, forever. This failsafe (same pattern as reminder_chase's
+        # popup failsafe) forces the burrow anyway if nothing resolved it
+        # within a generous margin. The token guards against a stale
+        # failsafe from an earlier hide click firing after a newer one.
         self._pending_hide = True
-        self.dm.trigger_menu_flavor("hide")
+        token = object()
+        self._pending_hide_token = token
+        self.arbiter.finish_feature("hide", lambda: self.dm.trigger_menu_flavor("hide"))
+        QTimer.singleShot(
+            int(self.arbiter.feature_debounce_seconds * 1000) + HIDE_FAILSAFE_GRACE_MS,
+            lambda: self._hide_failsafe(token),
+        )
+
+    def _hide_failsafe(self, token):
+        if self._pending_hide and self._pending_hide_token is token:
+            dialogue_log.log_event("隐身失效保护：本次台词被抑制/沉默，强制执行钻土动画")
+            self._pending_hide = False
+            self._start_burrow_animation(self._finish_hide)
+
+    # ------------------------------------------------------- single instance
+    def on_duplicate_launch_activation(self):
+        """Called (via SingleInstanceGuard.on_activate_requested, see
+        main.py) whenever a second FloweyPet.exe is launched while this one
+        is already running. Cancels hide unconditionally; the roast line
+        itself is separately cooldown- and busy-gated."""
+        if self.isVisible():
+            self._maybe_roast_duplicate_launch()
+        else:
+            self._start_emerge(self._maybe_roast_duplicate_launch)
+
+    def _maybe_roast_duplicate_launch(self):
+        if self.dm.busy:
+            app_log.log_event("重复启动吐槽已跳过（正在播放对话/追讨弹窗）")
+            return  # the unhide (if any) already happened; just skip the roast
+        cooldown = self.config.get("duplicate_launch_cooldown_seconds", 10)
+        now = time.monotonic()
+        if now - self._last_duplicate_launch_roast < cooldown:
+            app_log.log_event("重复启动吐槽已跳过（冷却中）")
+            return
+        self._last_duplicate_launch_roast = now
+        app_log.log_event("重复启动吐槽已播放")
+        self.dm.trigger_duplicate_launch()
 
     def _toggle_mute(self, checked):
+        if not self.arbiter.begin_feature("mute"):
+            return  # inside the 0.5s debounce cooldown: state frozen, ignored
         self.stats.record_interaction()
         self.config["muted"] = checked
         self.save_config(self.config)
         self.audio.set_muted(checked)
-        self.dm.trigger_menu_flavor("mute_on" if checked else "mute_off")
+        self.arbiter.finish_feature("mute", lambda: self.dm.trigger_menu_flavor("mute_on" if checked else "mute_off"))
 
     def _toggle_menu_sfx(self, checked):
         self.stats.record_interaction()
@@ -547,16 +761,47 @@ class PetWindow(QWidget):
         self.save_config(self.config)
         self.audio.set_menu_sfx_enabled(checked)
 
+    def _toggle_lock(self, checked):
+        # Routed through DialogueArbiter same as pin/mute/hide/autostart,
+        # but lock has its own dedicated 3-tier toggle-count escalation
+        # (无语/不耐烦/爆发) instead of the generic per-feature ladder --
+        # see dialogue_arbiter.py's _wrap_lock_provider. The tantrum check
+        # happens BEFORE begin_feature's debounce gate: during that window
+        # the toggle is a complete no-op (no state change, no dialogue),
+        # not just a debounce-cooldown skip.
+        if self.arbiter.is_lock_tantrum_active():
+            dialogue_log.log_event("锁定：闹脾气冷区内，切换请求被忽略（功能未生效）")
+            return
+        if not self.arbiter.begin_feature("lock"):
+            return  # inside the 0.5s debounce cooldown: state frozen, ignored
+        self.stats.record_interaction()
+        self._locked = checked
+        self.config["locked"] = checked
+        self.save_config(self.config)
+        if not checked:
+            self._locked_click_count = 0
+        self.arbiter.finish_feature("lock", lambda: self.dm.trigger_menu_flavor("lock_on" if checked else "lock_off"))
+
     def _set_volume(self, pct):
+        # Continuous-style feature (reg 4): every call really applies the
+        # new volume right away, no debounce gate on that. Only the
+        # dialogue collapses to the trailing edge -- each call restarts
+        # the arbiter's timer and replaces the pending reaction, so a burst
+        # of rapid adjustments stays silent until it settles and then
+        # speaks once, for whichever single before/after pair was last.
         self.stats.record_interaction()
         old_pct = round(self.config.get("volume", 0.8) * 100)
         self.config["volume"] = pct / 100
         self.save_config(self.config)
         self.audio.set_volume(pct / 100)
-        if pct > old_pct:
-            self.dm.trigger_menu_flavor("volume_up")
-        elif pct < old_pct:
-            self.dm.trigger_menu_flavor("volume_down")
+
+        def _speak(old=old_pct, new=pct):
+            if new > old:
+                self.dm.trigger_menu_flavor("volume_up")
+            elif new < old:
+                self.dm.trigger_menu_flavor("volume_down")
+
+        self.arbiter.finish_feature("volume", _speak)
 
     @_guarded_menu_action("音量面板")
     def _open_volume_panel(self):
@@ -573,7 +818,15 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(panel, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
+        position_avoid_pet_and_bubble(
+            panel,
+            self.x(),
+            self.y(),
+            self.width(),
+            self.height(),
+            self.dialogue_box,
+            margin=self.config.get("panel_screen_margin", 8),
+        )
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -668,7 +921,15 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(panel, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
+        position_avoid_pet_and_bubble(
+            panel,
+            self.x(),
+            self.y(),
+            self.width(),
+            self.height(),
+            self.dialogue_box,
+            margin=self.config.get("panel_screen_margin", 8),
+        )
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -682,11 +943,15 @@ class PetWindow(QWidget):
     def _toggle_autostart(self, checked):
         from config import set_autostart
 
+        if not self.arbiter.begin_feature("autostart"):
+            return  # inside the 0.5s debounce cooldown: state frozen, ignored
         self.stats.record_interaction()
         self.config["autostart"] = checked
         self.save_config(self.config)
         set_autostart(checked)
-        self.dm.trigger_menu_flavor("autostart_on" if checked else "autostart_off")
+        self.arbiter.finish_feature(
+            "autostart", lambda: self.dm.trigger_menu_flavor("autostart_on" if checked else "autostart_off")
+        )
 
     @_guarded_menu_action("提醒设置")
     def _open_reminder_settings(self):
@@ -694,7 +959,9 @@ class PetWindow(QWidget):
         from undertale_ui import position_avoid_pet_and_bubble
 
         self.stats.record_interaction()
-        self.dm.trigger_menu_flavor("reminder_settings")
+        # Opening the panel always works (it's a view, not a persistent
+        # toggle) -- only the flavor line is debounced/escalated.
+        self.arbiter.finish_feature("reminder_settings", lambda: self.dm.trigger_menu_flavor("reminder_settings"))
         self._close_active_popup()
         panel = ReminderPanel(
             self.reminders,
@@ -703,7 +970,15 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(panel, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
+        position_avoid_pet_and_bubble(
+            panel,
+            self.x(),
+            self.y(),
+            self.width(),
+            self.height(),
+            self.dialogue_box,
+            margin=self.config.get("panel_screen_margin", 8),
+        )
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -711,7 +986,7 @@ class PetWindow(QWidget):
     @_guarded_menu_action("查看信息")
     def _view_info(self):
         self.stats.record_interaction()
-        self.dm.trigger_view_info()
+        self.arbiter.finish_feature("view_info", self.dm.trigger_view_info)
 
     # ----------------------------------------------------------------- flirt
     def _on_flirt_hesitate(self):
@@ -760,13 +1035,23 @@ class PetWindow(QWidget):
             log_exception("_show_error_flavor itself failed")
 
     def _start_default_pomodoro(self):
+        # Pomodoro's own "start"/"end" status lines (Pomodoro.start()'s
+        # trigger_pomodoro_status("start")) are a separate, higher-priority
+        # mechanism and untouched here -- the arbiter only tracks repeated
+        # start/cancel/start menu clicks for the 番茄钟 escalation ladder,
+        # with no normal-tier line of its own to speak (provider=None).
+        if not self.arbiter.begin_feature("pomodoro"):
+            return
         self.stats.record_interaction()
         self.pomodoro.start()
+        self.arbiter.finish_feature("pomodoro")
 
     def _cancel_pomodoro_from_menu(self):
+        if not self.arbiter.begin_feature("pomodoro"):
+            return
         self.stats.record_interaction()
-        self.dm.trigger_menu_flavor("pomodoro_cancel")
         self.pomodoro.cancel()
+        self.arbiter.finish_feature("pomodoro", lambda: self.dm.trigger_menu_flavor("pomodoro_cancel"))
 
     def _custom_pomodoro(self):
         focus, ok = QInputDialog.getInt(self, "番茄钟", "专注时长(分钟):", 25, 1, 180)
@@ -775,11 +1060,14 @@ class PetWindow(QWidget):
         rest, ok = QInputDialog.getInt(self, "番茄钟", "休息时长(分钟):", 5, 1, 60)
         if not ok:
             return
+        if not self.arbiter.begin_feature("pomodoro"):
+            return
         self.stats.record_interaction()
         self.config["pomodoro"]["focus_minutes"] = focus
         self.config["pomodoro"]["break_minutes"] = rest
         self.save_config(self.config)
         self.pomodoro.start(focus, rest)
+        self.arbiter.finish_feature("pomodoro")
 
     # ----------------------------------------------------------------- stats
     def _collect_stats_metrics(self):
@@ -791,9 +1079,12 @@ class PetWindow(QWidget):
             "hours": self.stats.companion_hours(),
             "clicks": self.config.get("total_clicks", 0),
             "interactions": s.get("interaction_count", 0),
+            "dialogues": s.get("dialogue_trigger_count", 0),
             "pomodoro_count": s.get("pomodoro_completed", 0),
             "water_rate": self.stats.response_rate("water"),
             "meal_rate": self.stats.response_rate("meal"),
+            "water_dismissed": self.stats.dismissed_count("water"),
+            "meal_dismissed": self.stats.dismissed_count("meal"),
             "egg_seen": seen,
             "egg_total": total,
             "egg_pct": egg_pct,
@@ -813,15 +1104,21 @@ class PetWindow(QWidget):
         self._close_active_popup()
 
         metrics = self._collect_stats_metrics()
-        segments = []
-        open_text, open_face = roast.open_line()
-        if open_text:
-            segments.append({"text": open_text, "face": open_face})
-        roast_text, roast_face = roast.pick_roast_line(metrics)
-        if roast_text:
-            segments.append({"text": roast_text, "face": roast_face})
-        if segments:
-            self.dm.speak("stats_panel", segments)
+
+        def _speak_roast():
+            segments = []
+            open_text, open_face = roast.open_line()
+            if open_text:
+                segments.append({"text": open_text, "face": open_face})
+            roast_segments = roast.pick_roast_line(metrics)
+            if roast_segments:
+                segments.extend(roast_segments)
+            if segments:
+                self.dm.speak("stats_panel", segments)
+
+        # Opening the panel always works (it's a view, not a persistent
+        # toggle) -- only the roast line is debounced/escalated ("记录").
+        self.arbiter.finish_feature("stats", _speak_roast)
 
         panel = StatsPanel(
             metrics,
@@ -831,7 +1128,15 @@ class PetWindow(QWidget):
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
         panel.closed.connect(self._on_stats_panel_closed)
-        position_avoid_pet_and_bubble(panel, self.x(), self.y(), self.width(), self.height(), self.dialogue_box)
+        position_avoid_pet_and_bubble(
+            panel,
+            self.x(),
+            self.y(),
+            self.width(),
+            self.height(),
+            self.dialogue_box,
+            margin=self.config.get("panel_screen_margin", 8),
+        )
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -847,7 +1152,19 @@ class PetWindow(QWidget):
     def request_quit(self):
         if self._pending_quit:
             return
+        # Exit lock (reg 1): from this instant on, the right-click menu
+        # won't open (contextMenuEvent), idle/AFK ambient chatter can't
+        # speak (_trigger_afk_unless_awaiting / dm busy-lock via
+        # _on_show_requested), and any reminder/chase round in progress is
+        # voided immediately and silently -- only the goodbye line +
+        # burrow animation play from here on, and clicking Flowey during
+        # either only gets the escalating "被打断" reaction (see
+        # _handle_exit_interrupt), never a real interactive dialogue.
         self._pending_quit = True
+        self._exit_interrupted = False
+        self._resume_exit_animation_after_interrupt = False
+        self._close_active_popup()
+        self.reminders.chase.lock_for_exit()
         QTimer.singleShot(EXIT_FAILSAFE_MS, self._quit_now)
 
         segments = self.dm.pick_exit_segments()
@@ -858,6 +1175,64 @@ class PetWindow(QWidget):
         self._current_category = "exit"
         self.setVisible(True)
         self._position_dialogue_box()
+        self.dialogue_box.start(segments, self._on_segment_face)
+
+    def is_exiting(self):
+        """Public hook for DialogueArbiter: True from the instant 退出 is
+        clicked until the process actually terminates."""
+        return self._pending_quit
+
+    def is_reminder_popup_active(self):
+        """Public hook for DialogueArbiter: True only while an actual
+        reminder/chase popup is on screen (not merely CHASING/waiting
+        between stages) -- that's the one thing that outranks every
+        arbiter-driven reaction (reg 10)."""
+        return self._current_category in CHASE_POPUP_BUTTONS and self.dialogue_box.isVisible()
+
+    def force_end_bubble(self):
+        """Public hook for DialogueArbiter: immediately silences whatever
+        bubble is currently on screen, with no follow-up line of its own --
+        called right before the arbiter shows its own (debounced) feature
+        reaction, so a feature click always cuts Flowey off rather than
+        waiting for her to finish (reg 3). Returns True iff Flowey was
+        actually mid-speech, which the arbiter treats as a real
+        "talked over" interruption (reg 5/6)."""
+        was_talking = self.dialogue_box.isVisible()
+        if not was_talking:
+            return False
+        self.dialogue_box.stop_immediately()
+        self.dm.cut_off()
+        if self.state == State.TALKING:
+            self._enter_idle()
+        return True
+
+    def _handle_exit_interrupt(self):
+        """Clicking Flowey while the exit goodbye line or burrow animation
+        is playing: per the confirmed design, this plays exactly ONE
+        randomly-picked "被打断" line for the whole exit sequence, no
+        matter how many times (or how many separate moments) Flowey gets
+        clicked while quitting -- not one line per click. The first click
+        (whenever it happens) triggers it; every click after that,
+        including more clicks while that one line is still playing, is a
+        pure no-op (does not cut it short, does not trigger another one).
+        Once it finishes, continue straight to the burrow animation --
+        never resume the original farewell text."""
+        if self._exit_interrupted:
+            return
+        self._exit_interrupted = True
+        was_animating = self._exit_timer.isActive()
+        if was_animating:
+            self._exit_timer.stop()
+        self.dialogue_box.stop_immediately()
+        segments = self.arbiter.pick_exit_interrupt_segments()
+        if not segments:
+            # No lines available (pool missing) -- just resume/continue
+            # silently rather than leaving the animation stuck paused.
+            if was_animating:
+                self._exit_timer.start(EXIT_FRAME_MS)
+            return
+        self._resume_exit_animation_after_interrupt = was_animating
+        self._current_category = "exit_interrupt"
         self.dialogue_box.start(segments, self._on_segment_face)
 
     def _start_burrow_animation(self, on_done):

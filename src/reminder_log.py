@@ -6,10 +6,14 @@ confirm the pursuit escalation actually ran, without having to watch the
 screen live. Pruned to the last RETENTION_DAYS on every write so it never
 grows unbounded.
 """
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
-LOG_PATH = Path(r"C:\FloweyPet\reminder.log")
+# FLOWEYPET_REMINDER_LOG lets a test run redirect this file away from the
+# real instance's log, so an offscreen self-test never interleaves its
+# events with (or prunes) the log the user actually reads.
+LOG_PATH = Path(os.environ.get("FLOWEYPET_REMINDER_LOG", r"C:\FloweyPet\reminder.log"))
 RETENTION_DAYS = 7
 
 

@@ -1,0 +1,95 @@
+{
+  "_readme": "游戏检测彩蛋台词（用户提供的原始文本，来自本次任务需求）。结构：game_ut_first/game_ut_launch/game_ut_launch_rare/game_ut_exit 对应 UNDERTALE，game_dr_first/game_dr_launch/game_dr_launch_rare/game_dr_exit 对应 DELTARUNE。每条 = {lines:[...], faces:[[表情键]...]}，faces 与 lines 等长，由 game_detector.py 读取。原始草稿是'一段文字+多个表情箭头'的写法，已按语义断句拆成对应数量的 lines/faces 段。表情键已修正为 assets/faces 下的真实目录名：netral→neutral，smrik→smirk，gulty→guilty，'n_left glance'/'n_right glance'→n_left_glance/n_right_glance（下划线），'really angry'→really_angry，'gritted teeth'→gritted_teeth；两处 'frown worry'（两个词写在一个方括号里）按语义拆成 frown 和 worry 两个独立表情段。坏条目会被跳过并记入日志，某池缺失时该触发点静默跳过，不会崩溃。",
+  "game_ut_first": [
+    {
+      "lines": ["这个图标……你要去那里?……哦。", "这样啊。替我……不,当我没说。", "玩得开心。"],
+      "faces": [["shocked"], ["sorrowful"], ["neutral"]]
+    }
+  ],
+  "game_ut_launch": [
+    {
+      "lines": ["又去Underground?那边的我可没有这边的我好相处哦。"],
+      "faces": [["smirk"]]
+    },
+    {
+      "lines": ["提醒你一句:", "那边的我说的话,一~个~字~都别信。"],
+      "faces": [["wink"], ["creepy"]]
+    },
+    {
+      "lines": ["去吧去吧。", "记得,是'仁慈',不是'战斗'。", "……我为什么要告诉你这个?"],
+      "faces": [["neutral"], ["frown"], ["worry"]]
+    },
+    {
+      "lines": ["你知道吗,每次你打开它,我都有种奇怪的感觉。", "像照镜子,但镜子里的家伙比我坏多了。"],
+      "faces": [["n_left_glance"], ["serious"]]
+    },
+    {
+      "lines": ["哦?这个点玩UNDERTALE?好选择。", "反正你的番茄钟也是摆设。"],
+      "faces": [["smirk"], ["n_right_glance"]]
+    }
+  ],
+  "game_ut_launch_rare": [
+    {
+      "lines": ["……如果你在那边,选了不好的路线。", "回来的时候,别用那种手点我。"],
+      "faces": [["serious"], ["really_angry"]]
+    },
+    {
+      "lines": ["那边的我,经历过你想象不到的次数的重来。所以这边的我才想……", "算了。快去玩你的。"],
+      "faces": [["sorrowful"], ["gritted_teeth"]]
+    }
+  ],
+  "game_ut_exit": [
+    {
+      "lines": ["回来啦。……怎么样?我是说游戏!", "游戏怎么样!谁关心那家伙了!"],
+      "faces": [["neutral"], ["really_angry"]]
+    },
+    {
+      "lines": ["玩完了?", "你没有,把花踩了之类的吧?"],
+      "faces": [["n_left_glance"], ["guilty"]]
+    },
+    {
+      "lines": ["欢迎回来。这边的我,是不是比那边的顺眼多了?", "不许说不是。"],
+      "faces": [["grin"], ["smirk"]]
+    }
+  ],
+  "game_dr_first": [
+    {
+      "lines": ["DELTARUNE?哈,那个游戏啊。", "我在里面的戏份——算了,你自己去数吧。", "数得过来的。"],
+      "faces": [["gritted_teeth"], ["frown"], ["worry"]]
+    }
+  ],
+  "game_dr_launch": [
+    {
+      "lines": ["又去那个世界?", "行,替我看看那边都有谁混得比我好。"],
+      "faces": [["n_right_glance"], ["smirk"]]
+    },
+    {
+      "lines": ["暗世界,光世界……", "哪个世界都轮不到我当主角,哼。"],
+      "faces": [["sorrowful"], ["neutral"]]
+    },
+    {
+      "lines": ["听说那边有只很吵的紫色家伙很受欢迎。我不懂。我真的不懂。"],
+      "faces": [["really_angry"]]
+    },
+    {
+      "lines": ["去吧。反正你的选择在那边'不重要'——", "嘻嘻,这句话可不是我说的哦。"],
+      "faces": [["creepy"], ["wink"]]
+    }
+  ],
+  "game_dr_launch_rare": [
+    {
+      "lines": ["……你说,如果所有世界的我拼在一起,能拼出一个完整的家伙吗?", "……忘了这个问题吧。"],
+      "faces": [["serious"], ["sorrowful"]]
+    }
+  ],
+  "game_dr_exit": [
+    {
+      "lines": ["回来了?出新章节了吗?没有?", "那你急什么,慢慢等呗,我们都很擅长等。"],
+      "faces": [["neutral"], ["smirk"]]
+    },
+    {
+      "lines": ["怎么样,见到我了吗?", "……在电脑里的那个也算!"],
+      "faces": [["n_left_glance"], ["shocked"]]
+    }
+  ]
+}

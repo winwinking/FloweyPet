@@ -1,0 +1,66 @@
+{
+  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code.",
+  "duplicate_launch": [
+    {
+      "text": "一个我还不够吗？",
+      "face": [
+        "frown",
+        "worry"
+      ]
+    },
+    {
+      "text": "想要两朵花？贪心的家伙。",
+      "face": "smirk"
+    },
+    {
+      "text": "我！已！经！在！这！了！",
+      "face": "angry"
+    },
+    {
+      "text": "别戳了，我没有分身术。",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "哦？你是想同时看两个我卖萌吗？做梦。",
+      "face": [
+        "sneaky_grin",
+        "wink"
+      ]
+    },
+    {
+      "text": "我已经在这儿了哦。不需要第二个我。",
+      "face": "wink"
+    },
+    {
+      "text": "嗯？你又点了一次？我就在这呢。",
+      "face": "neutral"
+    },
+    {
+      "text": "一个我就够你受的了，相信我。",
+      "face": "frown"
+    },
+    {
+      "text": "再点也不会多出来一个的。死心吧。",
+      "face": "serious"
+    },
+    {
+      "text": "你是想要两个我对着骂你吗？嘻嘻……你这个变态。",
+      "face": "smirk"
+    },
+    {
+      "text": "我已经说了，一个！就够了！你是听不懂还是不想听懂！！",
+      "face": [
+        "angry",
+        "really_angry"
+      ]
+    },
+    {
+      "text": "你想要第二个我？！那你问问第一个我同不同意！！",
+      "face": "crazed"
+    },
+    {
+      "text": "我最后说一遍。你只能拥有一朵花。",
+      "face": "evil_color"
+    }
+  ]
+}

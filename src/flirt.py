@@ -171,9 +171,19 @@ class FlirtController(QObject):
 
     def on_menu_closed(self):
         self._hover_timer.stop()
-        if self.state == FlirtState.CONFRONT:
+        was_confronting = self.state == FlirtState.CONFRONT
+        if was_confronting:
             self._stall_timer.stop()
         self.state = FlirtState.IDLE
+        if was_confronting:
+            # Branch (a) covers BOTH "moved the cursor away" and "closed
+            # the menu" while confronting (e.g. Escape key, or a click
+            # outside the popup) -- both end the confrontation with the
+            # same escape line. A confirm-click resolves the state via
+            # resolve_click() before the menu's close_after() fires, so
+            # this is never reached for that path (state is already IDLE
+            # by then) and can't double-fire an escape after a confirm.
+            self.on_escape()
 
     def is_confronting(self):
         return self.state == FlirtState.CONFRONT

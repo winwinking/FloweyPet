@@ -29,7 +29,11 @@ QUIT_ANIM_DIR = ASSETS_DIR / "anim" / "quit"
 
 DIALOGUE_PATH = APP_DIR / "dialogue.json"
 DIALOGUE_INFO_PATH = APP_DIR / "dialogues_info.json"
+DIALOGUE_SYSTEM_PATH = APP_DIR / "dialogues_system.json"  # app/system-lifecycle lines, e.g. duplicate_launch
 DIALOGUE_FLIRT_PATH = APP_DIR / "dialogues_flirt.json"
+DIALOGUE_CHASE_PATH = APP_DIR / "dialogues_chase.json"  # reminder-chase (追讨) line pools, see reminder_chase.py
+DIALOGUE_SPAM_PATH = APP_DIR / "dialogues_spam.json"  # anti-spam escalation line pools, see dialogue_arbiter.py
+DIALOGUE_GAME_PATH = APP_DIR / "dialogues_game.json"  # UNDERTALE/DELTARUNE launch-detect egg lines, see game_detector.py
 STATS_ROAST_PATH = APP_DIR / "stats_roast.json"
 CONFIG_PATH = APP_DIR / "config.json"
 STATS_PATH = APP_DIR / "stats.json"

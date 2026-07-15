@@ -22,7 +22,12 @@ DEFAULTS = {
     "pomodoro_minutes": 0,
     "reminder_rounds": {"water": 0, "meal": 0, "sleep": 0},
     "reminder_responded": {"water": 0, "meal": 0, "sleep": 0},
-    "reminder_perfunctory": {"water": 0, "meal": 0, "sleep": 0},
+    "reminder_perfunctory": {"water": 0, "meal": 0, "sleep": 0},  # 已敷衍 (点了知道了)
+    # Bookkeeping version for the reminder counters. Schema 2 = 敷衍 no
+    # longer counts as responded (see record_reminder_round / the one-time
+    # migration in __init__). Default 1 so an old stats.json (which lacks
+    # the key entirely) is recognized as pre-migration data.
+    "reminder_stats_schema": 1,
     "flirt_count": 0,  # persisted "调情" success counter, drives flirt_response tier selection
     "rare_seen": [],  # ids (see dialogue_manager's rare-entry id) already shown
     "latest_active_score": 0.0,  # see record_activity() for what this encodes
@@ -31,6 +36,9 @@ DEFAULTS = {
     "session_start_at": None,  # epoch seconds where the current unbroken activity chain began
     "night_owl_notified_date": None,  # logical-day date already given the once-per-night nag
     "morning_greeted_date": None,  # logical-day date already rolled for the fresh-morning greet
+    "ut_first_seen": False,  # UNDERTALE launch-egg "first ever" line already shown, see game_detector.py
+    "dr_first_seen": False,  # DELTARUNE launch-egg "first ever" line already shown, see game_detector.py
+    "game_egg_trigger_count": 0,  # total game launch/exit egg lines triggered (not shown-count -- see game_detector._trigger)
 }
 
 
@@ -60,6 +68,7 @@ class Stats(QObject):
         self.config = config
         self.data = _load()
         self._migrate_bogus_latest_active()
+        self._migrate_reminder_schema()
         # _load()'s _deep_merge() already backfills any field missing from
         # an old/partial stats.json in memory; write it straight back out so
         # the file itself stops being incomplete instead of relying on some
@@ -103,23 +112,23 @@ class Stats(QObject):
     def record_pomodoro_minutes(self, minutes_used):
         self.data["pomodoro_minutes"] += minutes_used
 
-    def record_reminder_round(self, kind, responded, perfunctory=False):
-        """responded covers both response buttons ("确定" and "知道了") for
-        the purposes of response_rate; perfunctory separately marks the
-        "知道了" (acknowledged-but-not-really-responded) outcome so it can be
-        told apart from a genuine "确定" later."""
+    def record_reminder_round(self, kind, outcome):
+        """One finished reminder round. outcome: "responded" (点确定),
+        "dismissed" (点知道了 -> 已敷衍: counts toward rounds but NOT toward
+        responded), or "unresponded" (超时走完追讨 / 被新一轮作废). 响应率 =
+        responded / rounds, per kind."""
         rounds = self.data.setdefault("reminder_rounds", {"water": 0, "meal": 0, "sleep": 0})
         rounds[kind] = rounds.get(kind, 0) + 1
-        if responded:
+        if outcome == "responded":
             responded_map = self.data.setdefault(
                 "reminder_responded", {"water": 0, "meal": 0, "sleep": 0}
             )
             responded_map[kind] = responded_map.get(kind, 0) + 1
-            if perfunctory:
-                perfunctory_map = self.data.setdefault(
-                    "reminder_perfunctory", {"water": 0, "meal": 0, "sleep": 0}
-                )
-                perfunctory_map[kind] = perfunctory_map.get(kind, 0) + 1
+        elif outcome == "dismissed":
+            perfunctory_map = self.data.setdefault(
+                "reminder_perfunctory", {"water": 0, "meal": 0, "sleep": 0}
+            )
+            perfunctory_map[kind] = perfunctory_map.get(kind, 0) + 1
         self.save()
 
     def response_rate(self, kind):
@@ -129,6 +138,25 @@ class Stats(QObject):
             return None
         responded = self.data.get("reminder_responded", {}).get(kind, 0)
         return responded / total * 100
+
+    def dismissed_count(self, kind):
+        return self.data.get("reminder_perfunctory", {}).get(kind, 0)
+
+    def _migrate_reminder_schema(self):
+        """Schema 1 counted a 敷衍 ("知道了") click inside reminder_responded
+        as well; schema 2 keeps the two disjoint. Subtract once so old data
+        matches the new 口径, then stamp the version -- missing keys were
+        already backfilled by _deep_merge, so the stats panel can never see
+        an absent field either way."""
+        if self.data.get("reminder_stats_schema", 1) >= 2:
+            return
+        responded = self.data.setdefault("reminder_responded", {"water": 0, "meal": 0, "sleep": 0})
+        perfunctory = self.data.get("reminder_perfunctory", {})
+        for kind, dismissed in perfunctory.items():
+            if kind in responded:
+                responded[kind] = max(0, responded.get(kind, 0) - dismissed)
+        self.data["reminder_stats_schema"] = 2
+        self.save()
 
     def record_flirt(self):
         """One successful "调情" trigger (basic click or the confront-confirm
@@ -148,6 +176,19 @@ class Stats(QObject):
         seen_count = min(len(self.data.get("rare_seen", [])), total_count)
         pct = (seen_count / total_count * 100) if total_count else 0.0
         return seen_count, total_count, pct
+
+    def is_game_first_seen(self, key):
+        return self.data.get(f"{key}_first_seen", False)
+
+    def mark_game_first_seen(self, key):
+        field = f"{key}_first_seen"
+        if not self.data.get(field, False):
+            self.data[field] = True
+            self.save()
+
+    def record_game_egg_trigger(self):
+        self.data["game_egg_trigger_count"] = self.data.get("game_egg_trigger_count", 0) + 1
+        self.save()
 
     def _migrate_bogus_latest_active(self):
         """One-time cleanup for data written by the old (pre-day-boundary)

@@ -32,6 +32,12 @@ def _build_menu_spec(pet):
         },
         {
             "type": "toggle",
+            "label": "锁定",
+            "get": lambda: pet.config.get("locked", False),
+            "set": pet._toggle_lock,
+        },
+        {
+            "type": "toggle",
             "label": "静音",
             "get": lambda: pet.config.get("muted", False),
             "set": pet._toggle_mute,
@@ -115,4 +121,11 @@ class PetContextMenu(UndertalePopup):
                 )
                 if spec.get("key") == "flirt":
                     self.flirt_row = row
+                    # The heart-selection system only reports a *new*
+                    # selection (enterEvent on some other row) -- it never
+                    # reports "the cursor left 调情 into blank/separator
+                    # space, or off the popup entirely". Without this, the
+                    # hover-hesitate state machine never learns the cursor
+                    # moved away unless it happens to land on another row.
+                    row.on_leave = lambda: pet.flirt.on_menu_selection_changed(False)
         self.finish_layout()

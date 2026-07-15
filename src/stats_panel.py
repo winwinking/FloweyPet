@@ -16,6 +16,7 @@ from undertale_ui import (
     HoverButton,
     MenuRow,
     UndertalePopup,
+    fit_panel_width,
     make_info_row,
     make_separator_row,
 )
@@ -36,33 +37,42 @@ def _fmt_egg(seen, total, pct):
 class StatsPanel(UndertalePopup):
     def __init__(self, metrics, audio=None, always_on_top=True, ui_scale=1.0, min_font_px=None, parent=None):
         super().__init__(audio=audio, always_on_top=always_on_top, parent=parent, ui_scale=ui_scale, min_font_px=min_font_px)
-        self.setFixedWidth(round(PANEL_WIDTH_BASE * ui_scale))
         m = self.metrics  # UiMetrics from the base class -- `metrics` param above is the stats dict
 
-        self.add_row(make_info_row("陪伴天数", f"{metrics['days']}天", self.font, metrics=m), selectable=False)
-        self.add_row(make_info_row("陪伴时长", f"{metrics['hours']:.1f}小时", self.font, metrics=m), selectable=False)
-        self.add_row(make_info_row("点击次数", f"{metrics['clicks']}次", self.font, metrics=m), selectable=False)
-        self.add_row(make_info_row("互动次数", f"{metrics['interactions']}次", self.font, metrics=m), selectable=False)
-        self.add_row(make_info_row("番茄钟完成", f"{metrics['pomodoro_count']}次", self.font, metrics=m), selectable=False)
-        self.add_row(make_info_row("调情次数", f"{metrics['flirt_count']}次", self.font, metrics=m), selectable=False)
-        self.add_row(make_separator_row(metrics=m), selectable=False)
-
-        self.add_row(make_info_row("喝水响应率", _fmt_rate(metrics["water_rate"]), self.font, metrics=m), selectable=False)
-        self.add_row(make_info_row("吃饭响应率", _fmt_rate(metrics["meal_rate"]), self.font, metrics=m), selectable=False)
-        self.add_row(make_separator_row(metrics=m), selectable=False)
-
-        self.add_row(
-            make_info_row(
-                "彩蛋收集",
-                _fmt_egg(metrics["egg_seen"], metrics["egg_total"], metrics["egg_pct"]),
-                self.font,
-                metrics=m,
+        rows = [
+            ("陪伴天数", f"{metrics['days']}天"),
+            ("陪伴时长", f"{metrics['hours']:.1f}小时"),
+            ("点击次数", f"{metrics['clicks']}次"),
+            ("互动次数", f"{metrics['interactions']}次"),
+            ("番茄钟完成", f"{metrics['pomodoro_count']}次"),
+            ("调情次数", f"{metrics['flirt_count']}次"),
+            ("喝水响应率", _fmt_rate(metrics["water_rate"])),
+            ("吃饭响应率", _fmt_rate(metrics["meal_rate"])),
+            # .get() with defaults: an old caller/metrics dict without the
+            # dismissed counts must render as 0次, never KeyError-crash the panel
+            (
+                "敷衍次数(水/饭)",
+                f"{metrics.get('water_dismissed', 0)}/{metrics.get('meal_dismissed', 0)}次",
             ),
-            selectable=False,
-        )
-        self.add_row(
-            make_info_row("最晚活跃", metrics["latest_time"] or "暂无", self.font, metrics=m), selectable=False
-        )
+            ("彩蛋收集", _fmt_egg(metrics["egg_seen"], metrics["egg_total"], metrics["egg_pct"])),
+            ("最晚活跃", metrics["latest_time"] or "暂无"),
+        ]
+        # Width is derived from the actual rendered font/scale for these
+        # exact strings -- never a hardcoded guess -- so a value that grows
+        # (e.g. total_clicks crossing 999 -> 10000) or a shrunk ui_scale
+        # tier both stay fully visible instead of getting clipped.
+        self.setFixedWidth(fit_panel_width(m, self.font, rows, base_width=PANEL_WIDTH_BASE))
+
+        for label, value in rows[:6]:
+            self.add_row(make_info_row(label, value, self.font, metrics=m), selectable=False)
+        self.add_row(make_separator_row(metrics=m), selectable=False)
+
+        for label, value in rows[6:9]:
+            self.add_row(make_info_row(label, value, self.font, metrics=m), selectable=False)
+        self.add_row(make_separator_row(metrics=m), selectable=False)
+
+        for label, value in rows[9:11]:
+            self.add_row(make_info_row(label, value, self.font, metrics=m), selectable=False)
         self.add_row(make_separator_row(metrics=m), selectable=False)
         self.add_row(self._build_button_row())
 

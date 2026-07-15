@@ -22,6 +22,7 @@ from undertale_ui import (
     PixelTimeEdit,
     UndertalePopup,
     _label,
+    fit_panel_width,
     make_adjust_row,
     make_separator_row,
     make_time_row,
@@ -98,6 +99,17 @@ class ReminderPanel(UndertalePopup):
     def __init__(self, reminders, audio=None, always_on_top=True, ui_scale=1.0, min_font_px=None, parent=None):
         super().__init__(audio=audio, always_on_top=always_on_top, parent=parent, ui_scale=ui_scale, min_font_px=min_font_px)
         self.reminders = reminders
+
+        # Same shared measurement tool as the stats panel: guards the
+        # switch rows ("喝水提醒"/"吃饭提醒"/"睡觉提醒" + "[开]"/"[关]") and
+        # the water-interval adjuster row against clipping at any ui_scale.
+        row_specs = [
+            ("喝水提醒", "[关]"),
+            ("", f"{max(WATER_INTERVAL_CHOICES)}分钟", "<", ">"),
+            ("吃饭提醒", "[关]"),
+            ("睡觉提醒", "[关]"),
+        ]
+        self.setFixedWidth(fit_panel_width(self.metrics, self.font, row_specs))
 
         self.add_row(
             _make_switch_row(

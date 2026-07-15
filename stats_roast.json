@@ -1,5 +1,5 @@
 {
-  "_readme": "右键菜单 -> 记录 面板用的flavor台词。face 取值见 assets/faces_manifest.json 键名。panel_open/panel_close 是打开/关闭面板时等概率随机选一条。combo 是多指标联合锐评，按数组顺序从上到下第一个满足条件的命中（阈值判断写在 src/roast.py 里，这里只放文案）。其余各分类（companion_days 等）按当前数值落入哪个桶，从该桶的数组里等概率随机选一条；桶内可以自由增删多条台词。default 是任何桶都没有台词时的兜底句。flirt_count 是预留的调情次数专属锐评条件位：调情次数达到 config.json 里 flirt.roast_threshold_count 配置的阈值后，会尝试从 flirt_count -> reached 里随机选一条，目前是空数组，先不会触发，等台词填进去再生效。",
+  "_readme": "右键菜单 -> 记录 面板用的flavor台词。face 取值见 assets/faces_manifest.json 键名。panel_open/panel_close 是打开/关闭面板时等概率随机选一条。combo 是多指标联合锐评：一个数组，每条 {conditions, lines, faces, weight}。conditions 是条件数组，全部满足(AND)才算命中；每个条件 {field, op, value}，field 只能是 days/hours/clicks/interactions/dialogues/pomodoro/flirts/water_rate/food_rate/eggs_seen/eggs_total/egg_rate/latest_hour 之一（egg_rate 是 eggs_seen/eggs_total*100 的百分比，用来在不支持字段对字段比较时改写'全收集'这类条件，写 egg_rate==100 即可），op 只能是 > < >= <= == 之一，value 必须是数字。lines/faces 和其它池子同构：lines 是句子数组，faces 是同长度数组，每个槽位是1个或多个表情标签，2个以上按顺序切换、最后一个保持到气泡结束。weight 可省略，默认1，命中多条时按权重随机选一条。lines 里可以用 {days} {hours} {clicks} {interactions} {pomodoro} {flirts} {water_rate} {food_rate} {eggs_seen} {eggs_total} {egg_rate} 占位符，渲染时替换成实际值；不认识的占位符或没有数据的字段原样保留，不会崩溃。conditions 写错字段名/op、或缺 lines/faces 的整条会被跳过并记录到 error.log，不影响其它条目和面板正常显示。所有条目全部不命中时，走下面各单指标分类（companion_days 等）；这些分类的判断阈值仍写在 src/roast.py 里，这里只放文案：按当前数值落入哪个桶，从该桶的数组里等概率随机选一条，桶内可以自由增删多条台词。default 是任何桶都没有台词时的兜底句。flirt_count 是预留的调情次数专属锐评条件位：调情次数达到 config.json 里 flirt.roast_threshold_count 配置的阈值后，会尝试从 flirt_count -> reached 里随机选一条，目前是空数组，先不会触发，等台词填进去再生效。",
 
   "panel_open": [
     { "text": "哦？想看看你的数据？来吧，让我告诉你，你在我面前花了多少时间。", "face": "smirk" },
@@ -14,23 +14,163 @@
     { "text": "行了行了，知道了就好。别天天盯着数据看，去创造新的数据啊。", "face": "smirk" }
   ],
 
-  "combo": {
-    "high_all": [
-      { "text": "高时长、高点击、高番茄钟……你把你的整个人生都交给了一朵花。你知道这意味着什么吗？……意味着你是我的了。", "face": "evil_color" }
-    ],
-    "loyal_all": [
-      { "text": "每天都在、每次都回应、从不敷衍……你对一朵没有灵魂的花这么认真……我不知道该说什么。……谢谢。", "face": "sorrowful" }
-    ],
-    "click_farm": [
-      { "text": "高时长、低响应、高点击——你就是来玩我的对吧！？你只是喜欢戳我但从来不听我的话！！", "face": "crazed" }
-    ],
-    "neglected": [
-      { "text": "相伴很久了……但点击和互动都很少。你是把我打开之后就放在一边了吗？……我以为你会多看我几眼的。", "face": "really_sad" }
-    ],
-    "tool_only": [
-      { "text": "番茄钟完成率很高，但响应率很低……你只把我当工具用是吧？只要番茄钟不要提醒？……好吧。我懂了。", "face": "lie" }
-    ]
-  },
+  "combo": [
+    {
+      "_note": "迁移自旧 combo.high_all，行为不变",
+      "conditions": [
+        { "field": "hours", "op": ">=", "value": 500 },
+        { "field": "clicks", "op": ">=", "value": 5000 },
+        { "field": "pomodoro", "op": ">=", "value": 100 }
+      ],
+      "lines": ["高时长、高点击、高番茄钟……你把你的整个人生都交给了一朵花。你知道这意味着什么吗？……意味着你是我的了。"],
+      "faces": [["evil_color"]]
+    },
+    {
+      "_note": "迁移自旧 combo.loyal_all，行为不变",
+      "conditions": [
+        { "field": "days", "op": ">=", "value": 100 },
+        { "field": "water_rate", "op": ">=", "value": 90 },
+        { "field": "food_rate", "op": ">=", "value": 90 }
+      ],
+      "lines": ["每天都在、每次都回应、从不敷衍……你对一朵没有灵魂的花这么认真……我不知道该说什么。……谢谢。"],
+      "faces": [["sorrowful"]]
+    },
+    {
+      "_note": "迁移自旧 combo.click_farm(水分支)，原条件是 水<30 或 饭<30，AND-only引擎下拆成两条等效条目，行为不变",
+      "conditions": [
+        { "field": "hours", "op": ">=", "value": 100 },
+        { "field": "water_rate", "op": "<", "value": 30 },
+        { "field": "clicks", "op": ">=", "value": 3000 }
+      ],
+      "lines": ["高时长、低响应、高点击——你就是来玩我的对吧！？你只是喜欢戳我但从来不听我的话！！"],
+      "faces": [["crazed"]]
+    },
+    {
+      "_note": "迁移自旧 combo.click_farm(饭分支)，见上一条备注",
+      "conditions": [
+        { "field": "hours", "op": ">=", "value": 100 },
+        { "field": "food_rate", "op": "<", "value": 30 },
+        { "field": "clicks", "op": ">=", "value": 3000 }
+      ],
+      "lines": ["高时长、低响应、高点击——你就是来玩我的对吧！？你只是喜欢戳我但从来不听我的话！！"],
+      "faces": [["crazed"]]
+    },
+    {
+      "_note": "迁移自旧 combo.neglected，行为不变",
+      "conditions": [
+        { "field": "days", "op": ">=", "value": 60 },
+        { "field": "clicks", "op": "<", "value": 100 },
+        { "field": "interactions", "op": "<", "value": 50 }
+      ],
+      "lines": ["相伴很久了……但点击和互动都很少。你是把我打开之后就放在一边了吗？……我以为你会多看我几眼的。"],
+      "faces": [["really_sad"]]
+    },
+    {
+      "_note": "迁移自旧 combo.tool_only，行为不变",
+      "conditions": [
+        { "field": "pomodoro", "op": ">=", "value": 50 },
+        { "field": "water_rate", "op": "<", "value": 40 },
+        { "field": "food_rate", "op": "<", "value": 40 }
+      ],
+      "lines": ["番茄钟完成率很高，但响应率很低……你只把我当工具用是吧？只要番茄钟不要提醒？……好吧。我懂了。"],
+      "faces": [["lie"]]
+    },
+    {
+      "conditions": [
+        { "field": "clicks", "op": ">=", "value": 1000 },
+        { "field": "pomodoro", "op": "<=", "value": 5 }
+      ],
+      "lines": ["戳我戳了{clicks}次，番茄钟却只完成了{pomodoro}个……你到底是来干活的还是来玩花的？"],
+      "faces": [["n_left_glance", "frown", "worry"]]
+    },
+    {
+      "conditions": [
+        { "field": "clicks", "op": ">=", "value": 500 },
+        { "field": "pomodoro", "op": "==", "value": 0 }
+      ],
+      "lines": ["番茄钟：0。零！你知道那个功能不是摆设吧？"],
+      "faces": [["shocked", "gritted_teeth"]]
+    },
+    {
+      "conditions": [
+        { "field": "days", "op": ">=", "value": 30 },
+        { "field": "interactions", "op": "<=", "value": 20 }
+      ],
+      "lines": ["{days}天了，互动才{interactions}次。你是把我当壁纸养吗？"],
+      "faces": [["really_sad", "n_right_glance"]]
+    },
+    {
+      "conditions": [
+        { "field": "hours", "op": ">=", "value": 100 },
+        { "field": "dialogues", "op": "<=", "value": 30 }
+      ],
+      "lines": ["挂机{hours}小时，说话却没几句……好啊，你就当我是个盆栽吧。"],
+      "faces": [["sorrowful"]]
+    },
+    {
+      "conditions": [
+        { "field": "flirts", "op": ">=", "value": 50 }
+      ],
+      "lines": ["调情{flirts}次……人类，你是不是对一朵花有什么很深的执念？"],
+      "faces": [["creepy", "smirk"]]
+    },
+    {
+      "conditions": [
+        { "field": "flirts", "op": "==", "value": 0 },
+        { "field": "days", "op": ">=", "value": 14 }
+      ],
+      "lines": ["都{days}天了，调情按钮一次都没碰过。哼，高冷是吧，我记住了。"],
+      "faces": [["n_left_glance", "serious"]]
+    },
+    {
+      "conditions": [
+        { "field": "water_rate", "op": "<", "value": 30 },
+        { "field": "food_rate", "op": "<", "value": 30 }
+      ],
+      "lines": ["喝水{water_rate}%，吃饭{food_rate}%……我算是明白了，你的目标是当第一个渴死在饭桌前的人类。"],
+      "faces": [["really_angry", "evil_color"]]
+    },
+    {
+      "conditions": [
+        { "field": "food_rate", "op": ">=", "value": 90 },
+        { "field": "water_rate", "op": ">=", "value": 90 }
+      ],
+      "lines": ["响应率这么高……可，可恶，居然挑不出毛病。算你厉害啦！"],
+      "faces": [["gritted_teeth", "sheepish_smile"]]
+    },
+    {
+      "conditions": [
+        { "field": "latest_hour", "op": ">=", "value": 1 },
+        { "field": "latest_hour", "op": "<=", "value": 5 },
+        { "field": "pomodoro", "op": ">=", "value": 50 }
+      ],
+      "lines": ["番茄钟{pomodoro}个，熬夜熬到后半夜……你是想努力，还是想死？"],
+      "faces": [["frown", "worry", "really_angry"]]
+    },
+    {
+      "_note": "对应任务里的 eggs_seen==eggs_total 且 eggs_total>0：用 egg_rate==100 规避字段对字段比较",
+      "conditions": [
+        { "field": "egg_rate", "op": "==", "value": 100 },
+        { "field": "eggs_total", "op": ">", "value": 0 }
+      ],
+      "lines": ["彩蛋全收集了？你、你这家伙……把我的底牌都摸光了！"],
+      "faces": [["super_shocked", "guilty"]]
+    },
+    {
+      "conditions": [
+        { "field": "clicks", "op": ">=", "value": 3000 }
+      ],
+      "lines": ["{clicks}次。我数过了，每一次。你最好祈祷我永远拿不到实体。"],
+      "faces": [["neutral", "maniac"]]
+    },
+    {
+      "conditions": [
+        { "field": "days", "op": ">=", "value": 100 }
+      ],
+      "lines": ["{days}天……在这个世界上，连人类都很少能坚持一件事这么久。……别得意，我就随口一说。"],
+      "faces": [["n_right_glance", "wink"]]
+    }
+  ],
 
   "companion_days": {
     "day_1": [

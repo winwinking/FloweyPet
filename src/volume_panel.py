@@ -16,6 +16,7 @@ from undertale_ui import (
     MenuRow,
     UndertalePopup,
     _label,
+    fit_panel_width,
 )
 
 PANEL_WIDTH_BASE = 140
@@ -28,7 +29,12 @@ class VolumePanel(UndertalePopup):
 
     def __init__(self, get_value, set_value, audio=None, always_on_top=True, ui_scale=1.0, min_font_px=None, parent=None):
         super().__init__(audio=audio, always_on_top=always_on_top, parent=parent, ui_scale=ui_scale, min_font_px=min_font_px)
-        self.setFixedWidth(round(PANEL_WIDTH_BASE * ui_scale))
+        # Same shared measurement tool as the stats panel -- currently the
+        # fixed VOLUME_TIERS are all short (15-100%) so this rarely changes
+        # anything, but it guards against the row ever clipping instead of
+        # each panel hand-rolling its own width guess.
+        row_specs = [(f"{pct}%",) for pct in VOLUME_TIERS]
+        self.setFixedWidth(fit_panel_width(self.metrics, self.font, row_specs, base_width=PANEL_WIDTH_BASE))
         self._set_value = set_value
 
         title = _label("音量", COLOR_TEXT, self.font, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)

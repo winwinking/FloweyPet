@@ -15,6 +15,7 @@ from undertale_ui import (
     MenuRow,
     UndertalePopup,
     _label,
+    fit_panel_width,
 )
 
 PANEL_WIDTH_BASE = 140
@@ -27,7 +28,6 @@ class SizePanel(UndertalePopup):
 
     def __init__(self, get_value, set_value, tiers, audio=None, always_on_top=True, ui_scale=1.0, min_font_px=None, parent=None):
         super().__init__(audio=audio, always_on_top=always_on_top, parent=parent, ui_scale=ui_scale, min_font_px=min_font_px)
-        self.setFixedWidth(round(PANEL_WIDTH_BASE * ui_scale))
         self._set_value = set_value
 
         title = _label("大小", COLOR_TEXT, self.font, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
@@ -36,6 +36,11 @@ class SizePanel(UndertalePopup):
 
         current = get_value()
         nearest = min(range(len(tiers)), key=lambda i: abs(tiers[i] - current))
+        # tiers is an editable config list (pet_size_tiers) -- a hand-edited
+        # tier like "1000%" shouldn't clip just because the panel assumed a
+        # fixed 3-digit-percent width, so measure the real strings instead.
+        row_specs = [(f"{round(scale * 100)}%",) for scale in tiers]
+        self.setFixedWidth(fit_panel_width(self.metrics, self.font, row_specs, base_width=PANEL_WIDTH_BASE))
         for scale in tiers:
             row = MenuRow(self.font, metrics=self.metrics)
             label = ClickableLabel(f"{round(scale * 100)}%")

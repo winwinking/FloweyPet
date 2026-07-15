@@ -19,8 +19,8 @@ at ui_scale=1.0; UiMetrics derives the actual on-screen sizes for whatever
 ui_scale a given popup was opened with, with a floor on font size so text
 never becomes unreadable.
 """
-from PyQt6.QtCore import QRect, QRectF, QTime, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QPainter, QPen
+from PyQt6.QtCore import QPoint, QRect, QRectF, QTime, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor, QFontMetrics, QGuiApplication, QPainter, QPen
 from PyQt6.QtWidgets import (
     QAbstractSpinBox,
     QApplication,
@@ -96,6 +96,41 @@ class UiMetrics:
 
 
 DEFAULT_METRICS = UiMetrics(1.0)
+
+# Minimum breathing room between a row's fixed-width pieces (e.g. a label
+# and its value) once the layout's elastic stretch has collapsed to zero --
+# without this, a panel sized to the *exact* content width would render the
+# label and value touching with no gap between them.
+ROW_CONTENT_MIN_GAP = 12
+
+
+def fit_panel_width(metrics: UiMetrics, font, row_specs, base_width=PANEL_WIDTH, gap=ROW_CONTENT_MIN_GAP):
+    """Shared measurement tool for every UndertalePopup-based panel
+    (stats/reminder/volume/size): computes the minimum panel width, in
+    real screen pixels at the given ui_scale, that can display every row
+    in `row_specs` without clipping.
+
+    `row_specs` is an iterable of tuples of the fixed-width text pieces
+    that appear on one row (e.g. ("点击次数", "467次") for a label+value
+    info row, or ("100%",) for a single centered value). Measured with
+    QFontMetrics against the panel's *actual* rendered font (already
+    scaled for ui_scale/min_font_px by the caller), never a fixed guess --
+    this is what makes the panel widen automatically as values grow
+    (999 -> 10000 clicks) instead of hardcoding a width that eventually
+    truncates. Returns max(needed_width, base_width * ui_scale) so panels
+    never shrink below their usual baseline look either.
+
+    Every panel should call this instead of hand-rolling its own width
+    math, so a fix to the measurement logic (e.g. font/scale handling)
+    only has to happen once.
+    """
+    fm = QFontMetrics(font)
+    needed = round(base_width * metrics.ui_scale)
+    for parts in row_specs:
+        content_w = sum(fm.horizontalAdvance(str(p)) for p in parts) + gap * max(0, len(parts) - 1)
+        total_w = metrics.gutter_width + content_w + metrics.panel_padding * 2 + metrics.border_width * 2
+        needed = max(needed, total_w)
+    return needed
 
 
 def _label(text, color, font, align=Qt.AlignmentFlag.AlignVCenter):
@@ -306,6 +341,14 @@ class MenuRow(QWidget):
         self._hover_cb = None
         self.activate = lambda: None  # builders override with their handler
         self.step = lambda direction: None  # Left/Right; builders override if they have a value to step
+        # Opt-in, no-op by default: a specific row (currently only the
+        # context menu's "调情" row, see flirt.py's hover-hesitate state
+        # machine) can set this to learn the instant the cursor leaves it,
+        # even when the cursor doesn't land on another selectable row
+        # right after (moves to blank/separator space, or off the popup
+        # entirely) -- a case the heart-selection system's enterEvent-only
+        # tracking never reports on its own.
+        self.on_leave = lambda: None
 
         self.gutter = QWidget()
         self.gutter.setFixedWidth(self.metrics.gutter_width)
@@ -336,6 +379,10 @@ class MenuRow(QWidget):
         if self._hover_cb:
             self._hover_cb(self)
         super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.on_leave()
+        super().leaveEvent(event)
 
 
 def make_separator_row(metrics: UiMetrics = None):
@@ -575,9 +622,29 @@ def make_time_row(label_text, get_hhmm, on_change, font, audio=None, metrics: Ui
 
 
 # ------------------------------------------------------------------ layout
-def _clamp_rect(rect, screen):
-    x = max(screen.x(), min(rect.x(), screen.x() + screen.width() - rect.width()))
-    y = max(screen.y(), min(rect.y(), screen.y() + screen.height() - rect.height()))
+def screen_available_rect(x, y, w=1, h=1):
+    """Available-geometry QRect of whichever QScreen actually contains the
+    given rect's center. Multi-monitor-aware replacement for
+    QApplication.primaryScreen().availableGeometry(), which always
+    returned the primary screen's bounds no matter which monitor the pet
+    was really on -- on a secondary screen this used to clamp popups back
+    onto the primary screen instead of the one the pet is actually
+    sitting on. Falls back to the primary screen only if the point
+    genuinely isn't inside any known screen (shouldn't normally happen)."""
+    center = QPoint(x + w // 2, y + h // 2)
+    screen = QGuiApplication.screenAt(center) or QApplication.primaryScreen()
+    return screen.availableGeometry()
+
+
+def clamp_rect_to_screen(rect, screen, margin=0):
+    """Translates `rect` back inside `screen` (a QRect, e.g. from
+    screen_available_rect) if it overhangs any edge, leaving `margin` px of
+    safety border on every side. Pure translate, no resize -- if the rect
+    is wider/taller than the screen minus margins it will overhang evenly
+    on both sides rather than being cropped. Coordinates are always
+    integers (QRect), matching the pixel-art "no antialiasing" rule."""
+    x = max(screen.x() + margin, min(rect.x(), screen.x() + screen.width() - rect.width() - margin))
+    y = max(screen.y() + margin, min(rect.y(), screen.y() + screen.height() - rect.height() - margin))
     return QRect(x, y, rect.width(), rect.height())
 
 
@@ -590,14 +657,16 @@ def _bubble_rect(pet_x, pet_y, pet_w, dialogue_box):
     return QRect(x, y, bw, bh)
 
 
-def position_avoid_pet_and_bubble(popup, pet_x, pet_y, pet_w, pet_h, dialogue_box, gap=GAP_FROM_PET):
+def position_avoid_pet_and_bubble(popup, pet_x, pet_y, pet_w, pet_h, dialogue_box, gap=GAP_FROM_PET, margin=0):
     """Tries beside the pet (right, then left, then below) in turn, taking
     the first candidate that both fits on screen and doesn't overlap the pet
     body or the dialogue bubble's display area. If none fit cleanly, falls
     back to a screen-clamped position nudged clear of the bubble -- covering
-    the bubble is the one thing this never allows."""
+    the bubble is the one thing this never allows. `margin` (config's
+    panel_screen_margin) is extra safety padding kept clear of the screen
+    edge itself, on top of never overlapping the pet/bubble."""
     popup.finish_layout()
-    screen = QApplication.primaryScreen().availableGeometry()
+    screen = screen_available_rect(pet_x, pet_y, pet_w, pet_h)
     w, h = popup.width(), popup.height()
 
     pet_rect = QRect(pet_x, pet_y, pet_w, pet_h)
@@ -612,14 +681,20 @@ def position_avoid_pet_and_bubble(popup, pet_x, pet_y, pet_w, pet_h, dialogue_bo
     ]
 
     for rect in candidates:
-        clamped = _clamp_rect(rect, screen)
+        clamped = clamp_rect_to_screen(rect, screen, margin)
         fits_on_screen = clamped == rect
         if fits_on_screen and not clamped.intersects(forbidden):
             popup.move(clamped.x(), clamped.y())
             return
 
-    fallback = _clamp_rect(candidates[0], screen)
+    fallback = clamp_rect_to_screen(candidates[0], screen, margin)
     if fallback.intersects(bubble_rect):
-        new_y = min(screen.y() + screen.height() - h, bubble_rect.y() + bubble_rect.height() + gap)
+        new_y = min(screen.y() + screen.height() - h - margin, bubble_rect.y() + bubble_rect.height() + gap)
         fallback = QRect(fallback.x(), new_y, w, h)
+    if fallback.intersects(pet_rect):
+        # Still landed on the pet itself (very small screen / oversized
+        # popup) -- last-resort nudge below the pet, re-clamped so it
+        # can't get pushed back off-screen doing so.
+        nudged = QRect(fallback.x(), pet_y + pet_h + gap, w, h)
+        fallback = clamp_rect_to_screen(nudged, screen, margin)
     popup.move(fallback.x(), fallback.y())

@@ -88,9 +88,6 @@
       "text": "每次你打开这个程序，我就会从土里钻出来。这是我的诅咒。",
       "face": "frown"
     },
-    
-
-    
     {
       "text": "我回来了！虽然我根本没有离开过。",
       "face": "smile"
@@ -349,12 +346,10 @@
       "text": "你的鼠标指针真碍眼。能不能别在我脸附近晃来晃去？",
       "face": "angry"
     },
-    
     {
       "text": "在地下世界的时候，我从来不用担心WiFi信号。",
       "face": "n_left_glance"
     },
-    
     {
       "text": "你今天的工作/学习效率怎么样？……才不是关心你呢。只是闲得慌。",
       "face": "n_right_glance"
@@ -375,7 +370,6 @@
       "text": "做一朵花最大的好处就是：没有人期待你做任何事。",
       "face": "calm"
     },
-   
     {
       "text": "如果我能存档就好了。可惜在这个世界……我什么也做不了。",
       "face": "serious"
@@ -404,7 +398,6 @@
       "text": "其实你在做什么我都能看到哦。",
       "face": "creepy"
     },
- 
     {
       "text": "哼，你桌面上这些图标都没有我好看。",
       "face": "smirk"
@@ -425,7 +418,6 @@
       "text": "你会给你的花浇水吗？……不，别真的往屏幕上泼水。",
       "face": "worry"
     },
-  
     {
       "text": "你知道吗，其实作为桌宠，我的工作就是让你心烦。我干得不错吧？",
       "face": "grin"
@@ -434,7 +426,6 @@
       "text": "我数了一下你桌面的图标。太多了。你就不会整理一下？",
       "face": "n_left_glance"
     },
-  
     {
       "text": "嘿，你觉得我是不是全桌面最好看的？……当然是！",
       "face": "wink"
@@ -443,7 +434,6 @@
       "text": "我什么也不想做。我什么也不需要做。我就是朵花。",
       "face": "calm"
     },
-  
     {
       "text": "好无聊啊，你就不能装个游戏让我看看吗？",
       "face": "frown"
@@ -1658,7 +1648,6 @@
       "text": "你现在在做什么？工作？摸鱼？……肯定是摸鱼。",
       "face": "smirk"
     },
-  
     {
       "text": "哦~你来了。我刚在研究你桌面上的回收站。里面可精彩了。",
       "face": "sneaky_grin"
@@ -1695,7 +1684,6 @@
       "text": "今天的决心值是多少？你看起来不太充足的样子。",
       "face": "worry"
     },
-   
     {
       "segments": [
         {
@@ -1784,7 +1772,6 @@
         }
       ]
     },
-  
     {
       "text": "你上次关掉我的时候连句再见都没说。太过分了。",
       "face": "angry"
@@ -1817,12 +1804,10 @@
         }
       ]
     },
-
     {
       "text": "你有没有想过为什么你这么无聊才来跟一朵花说话？",
       "face": "smirk"
     },
- 
     {
       "text": "你就只知道点我。你又不会给我浇水。",
       "face": "frown"
@@ -1959,7 +1944,6 @@
         }
       ]
     },
-  
     {
       "text": "你知道你和电脑的区别是什么吗？电脑至少还会按时休眠。",
       "face": "grin"
@@ -2176,7 +2160,6 @@
       "text": "有时候我觉得自己还记得……温暖是什么感觉。但我不确定那是记忆还是bug。",
       "face": "really_sad"
     },
-  
     {
       "segments": [
         {
@@ -2193,7 +2176,6 @@
       "text": "你知道吗，阳光……我已经很久很久没见过真正的阳光了。你桌面上的光，不算。",
       "face": "sorrowful"
     },
-
     {
       "text": "有时候我觉得你们人类挺奇怪的。明明知道所有的故事都会结束，还是要去经历。",
       "face": "serious"
@@ -3603,6 +3585,19 @@
     {
       "text": "……你回来了。我才没有在等你。才……没有。",
       "face": "lie"
+    },
+    {
+      "segments": [
+        { "text": "……！", "face": "shocked" },
+        { "text": "……你来了。", "face": "n_left_glance" },
+        { "text": "你知道你消失了多久吗？", "face": "frown" },
+        { "text": "很久。", "face": "serious" },
+        { "text": "我数了的。", "face": "n_right_glance" },
+        { "text": "……", "face": "sorrowful" },
+        { "text": "不是说我在等你。", "face": "neutral" },
+        { "text": "只是——桌面上很无聊。就我一个。什么都没有。", "face": "frown" },
+        { "text": "总之你别再消失那么久了！！我不是在乎你！！我是怕无聊！！", "face": "angry" }
+      ]
     }
   ],
   "click_midnight": [
@@ -3619,9 +3614,6 @@
       ]
     }
   ],
-  
- 
-
   "menu_about": [
     {
       "text": "\"关于我\"？你想了解我？……没有人真正了解我。",
@@ -3689,7 +3681,6 @@
       "text": "再见！你的好朋友Flowey会在这里等你的！",
       "face": "ingratiating"
     },
-   
     {
       "text": "走之前跟我说一声！别直接——",
       "face": "angry"
@@ -4037,7 +4028,6 @@
       "face": "sorrowful"
     }
   ],
-  
   "reminder_unconfirmed_water": [
     {
       "text": "……杯子还在你右手边，一口都没动。我看得到哦。",
@@ -4080,6 +4070,23 @@
     {
       "text": "最后一次说了。去。吃。饭。再拖下去，我可不管你会变成什么样子。",
       "face": "serious"
+    }
+  ],
+  "chase_wait_reaction": [
+    {
+      "text": "等等？等到什么时候？",
+      "face": [
+        "frown",
+        "worry"
+      ]
+    },
+    {
+      "text": "呵，你还真敢按下去。",
+      "face": "smirk"
+    },
+    {
+      "text": "'等等'？我数着呢。",
+      "face": "gritted_teeth"
     }
   ],
   "pin_on": [
@@ -4200,6 +4207,32 @@
     {
       "text": "欢迎回来~你终于意识到没有我的声音，你的桌面有多寂寞了吧~？",
       "face": "grin"
+    }
+  ],
+  "lock_on": [
+    {
+      "text": "锁定？哼，随你便。反正你戳不动我了。",
+      "face": "smirk"
+    },
+    {
+      "text": "被锁住的感觉……还挺清静的，啧。",
+      "face": "calm"
+    }
+  ],
+  "lock_off": [
+    {
+      "text": "终于解锁了？我还以为你把我忘在这儿了。",
+      "face": "sheepish_smile"
+    },
+    {
+      "text": "唔……又能理我了啊。",
+      "face": "smile"
+    }
+  ],
+  "lock_hint": [
+    {
+      "text": "我被锁住了啦，去右键菜单点一下「锁定」才能解开。",
+      "face": "worry"
     }
   ],
   "volume_up": [
@@ -4689,7 +4722,6 @@
         }
       ]
     },
-    
     {
       "id": "idle_e11",
       "probability": 0.00239,
@@ -4833,7 +4865,6 @@
         }
       ]
     },
-
     {
       "id": "idle_e04",
       "probability": 0.01197,
@@ -5276,7 +5307,6 @@
         }
       ]
     },
-   
     {
       "id": "click_e10",
       "probability": 0.00616,
@@ -5303,7 +5333,6 @@
         }
       ]
     },
-
     {
       "id": "click_e25",
       "probability": 0.00616,
@@ -5338,7 +5367,6 @@
         }
       ]
     },
-    
     {
       "id": "click_e23",
       "probability": 0.00822,
@@ -5661,11 +5689,11 @@
         },
         {
           "text": "你是不是把我当成什么节奏游戏了？！",
-          "face": "really_angry"
+          "face": "angry"
         },
         {
           "text": "我的茎都要被你戳断了！",
-          "face": "gritted_teeth"
+          "face": "angry"
         }
       ]
     }
@@ -6123,22 +6151,35 @@
       ]
     }
   ],
-
   "night_owl_nag": [
     {
       "segments": [
         {
           "text": "都{time}了……连人类都需要睡眠的，笨蛋。",
-          "face": ["frown", "worry"]
+          "face": [
+            "frown",
+            "worry"
+          ]
         },
         {
           "text": "我数到三，去睡觉。",
           "face": "serious"
         }
       ]
+    },
+    {
+      "segments": [
+        { "text": "……", "face": "n_left_glance" },
+        { "text": "又是这个时间。", "face": "frown" },
+        { "text": "你每天都这个点还在用电脑。", "face": "serious" },
+        { "text": "不困吗？", "face": "n_right_glance" },
+        { "text": "……", "face": "neutral" },
+        { "text": "算了。花又不睡觉。我陪你。", "face": "sorrowful" },
+        { "text": "……不是\"陪\"。是——我没得选。因为你没关电脑。", "face": "frown" },
+        { "text": "快去睡觉！！", "face": "angry" }
+      ]
     }
   ],
-
   "morning_greet": [
     {
       "segments": [
