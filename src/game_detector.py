@@ -129,6 +129,10 @@ class GameDetector(QObject):
             self._timer.start(poll_seconds * 1000)
 
     # ------------------------------------------------------------- pools
+    _EXPECTED_POOLS = tuple(
+        f"game_{key}_{suffix}" for key in GAME_KEYS for suffix in ("first", "launch", "launch_rare", "exit")
+    )
+
     def _load_pools(self):
         try:
             with open(DIALOGUE_GAME_PATH, "r", encoding="utf-8") as f:
@@ -138,16 +142,20 @@ class GameDetector(QObject):
                 f"dialogues_game: {DIALOGUE_GAME_PATH} 不存在，游戏彩蛋台词将没有内容可播（进程检测仍会正常运行）"
             )
             return {}
-        except (OSError, json.JSONDecodeError):
-            log_exception(f"dialogues_game: 无法加载 {DIALOGUE_GAME_PATH}")
+        except (OSError, json.JSONDecodeError) as e:
+            log_exception(f"dialogues_game: 无法加载 {DIALOGUE_GAME_PATH}（整个文件解析失败，所有彩蛋池将为空）: {e}")
             return {}
         if not isinstance(raw, dict):
-            log_message("dialogues_game: 顶层必须是JSON对象")
+            log_message(f"dialogues_game: 顶层必须是JSON对象，实际是 {type(raw).__name__}，所有彩蛋池将为空")
             return {}
 
         pools = {}
         for pool_name, entries in raw.items():
-            if pool_name.startswith("_") or not isinstance(entries, list):
+            if pool_name.startswith("_"):
+                continue
+            if not isinstance(entries, list):
+                log_message(f"dialogues_game: 池 {pool_name} 不是数组（实际是 {type(entries).__name__}），已跳过整池")
+                pools[pool_name] = []
                 continue
             cleaned = []
             for i, entry in enumerate(entries):
@@ -156,7 +164,21 @@ class GameDetector(QObject):
                     log_message(f"dialogues_game: skipping malformed entry {pool_name}[{i}]: {reason}")
                     continue
                 cleaned.append(entry)
+            if len(cleaned) != len(entries):
+                log_message(
+                    f"dialogues_game: 池 {pool_name} 共 {len(entries)} 条，{len(entries) - len(cleaned)} 条因格式错误被跳过，实际可用 {len(cleaned)} 条"
+                )
             pools[pool_name] = cleaned
+
+        # Startup accounting -- exactly what investigation step 1 asks for:
+        # confirm every expected pool actually loaded with entries, and call
+        # out anything that's missing/empty loudly instead of only ever
+        # discovering it later via a silent "pool empty, skip" at trigger time.
+        for pool_name in self._EXPECTED_POOLS:
+            if pool_name not in pools:
+                log_message(f"dialogues_game: 池 {pool_name} 在json里完全不存在（键缺失），该触发点将永远静默跳过")
+            else:
+                log_message(f"dialogues_game: 池 {pool_name} 加载完成，可用条目数={len(pools[pool_name])}")
         return pools
 
     # ------------------------------------------------------------- polling
@@ -197,8 +219,13 @@ class GameDetector(QObject):
 
     # ------------------------------------------------------------ triggers
     def _on_launch(self, key):
-        if not self.stats.is_game_first_seen(key):
+        already_seen = self.stats.is_game_first_seen(key)
+        dialogue_log.log_event(f"游戏彩蛋：[{key}] 启动检测到，{key}_first_seen(启动时读到的值)={already_seen}")
+        if not already_seen:
             self.stats.mark_game_first_seen(key)
+            dialogue_log.log_event(
+                f"游戏彩蛋：[{key}] 首次触发，已标记 {key}_first_seen=True 并落盘（落盘后复读校验={self.stats.is_game_first_seen(key)}）"
+            )
             tier, pool_name = "first", f"game_{key}_first"
         elif random.random() * 100 < self._rare_weight:
             tier, pool_name = "rare", f"game_{key}_launch_rare"
@@ -212,12 +239,18 @@ class GameDetector(QObject):
     def _trigger(self, key, event, tier, pool_name):
         pool = self._pools.get(pool_name)
         if not pool:
-            dialogue_log.log_event(f"游戏彩蛋：[{key}] {event}/{tier} 台词池为空，静默跳过")
+            dialogue_log.log_event(
+                f"游戏彩蛋警告：[{key}] {event}/{tier} 池 {pool_name} 为空（键缺失或全部条目校验失败，见启动日志），本次跳过不播"
+            )
             return
-        entry = random.choice(pool)
+        index = random.randrange(len(pool))
+        entry = pool[index]
         segments = _entry_to_segments(entry)
         self.stats.record_game_egg_trigger()
-        dialogue_log.log_event(f"游戏彩蛋触发：[{key}] {event}/{tier} 显示模式={self._display_mode}")
+        preview = entry["lines"][0][:20]
+        dialogue_log.log_event(
+            f"游戏彩蛋触发：[{key}] {event}/{tier} 池={pool_name} 池大小={len(pool)} 抽中索引={index} 内容摘要=\"{preview}\" 显示模式={self._display_mode}"
+        )
 
         if self._display_mode == "deferred" and event == "launch":
             self._pending_deferred[key] = {"pool_name": pool_name, "segments": segments}

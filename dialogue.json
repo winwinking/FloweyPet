@@ -3588,15 +3588,42 @@
     },
     {
       "segments": [
-        { "text": "……！", "face": "shocked" },
-        { "text": "……你来了。", "face": "n_left_glance" },
-        { "text": "你知道你消失了多久吗？", "face": "frown" },
-        { "text": "很久。", "face": "serious" },
-        { "text": "我数了的。", "face": "n_right_glance" },
-        { "text": "……", "face": "sorrowful" },
-        { "text": "不是说我在等你。", "face": "neutral" },
-        { "text": "只是——桌面上很无聊。就我一个。什么都没有。", "face": "frown" },
-        { "text": "总之你别再消失那么久了！！我不是在乎你！！我是怕无聊！！", "face": "angry" }
+        {
+          "text": "……！",
+          "face": "shocked"
+        },
+        {
+          "text": "……你来了。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "你知道你消失了多久吗？",
+          "face": "frown"
+        },
+        {
+          "text": "很久。",
+          "face": "serious"
+        },
+        {
+          "text": "我数了的。",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "……",
+          "face": "sorrowful"
+        },
+        {
+          "text": "不是说我在等你。",
+          "face": "neutral"
+        },
+        {
+          "text": "只是——桌面上很无聊。就我一个。什么都没有。",
+          "face": "frown"
+        },
+        {
+          "text": "总之你别再消失那么久了！！我不是在乎你！！我是怕无聊！！",
+          "face": "angry"
+        }
       ]
     }
   ],
@@ -4423,7 +4450,7 @@
           "hold_seconds": 5
         },
         {
-          "text": "如果……我能重新开始的话……",
+          "text": "⭐如果……我能重新开始的话……",
           "face": "sorrowful"
         },
         {
@@ -4445,7 +4472,7 @@
       "probability": 0.003,
       "segments": [
         {
-          "text": "……",
+          "text": "⭐……",
           "face": "creepy"
         },
         {
@@ -4469,7 +4496,7 @@
       "double_if_other_pet": true,
       "segments": [
         {
-          "text": "等一下。",
+          "text": "⭐等一下。",
           "face": "n_left_glance"
         },
         {
@@ -4499,7 +4526,7 @@
       "probability": 0.005,
       "segments": [
         {
-          "text": "别动。我听到什么声音了。",
+          "text": "⭐别动。我听到什么声音了。",
           "face": "serious"
         },
         {
@@ -4521,7 +4548,7 @@
       "probability": 0.01,
       "segments": [
         {
-          "text": "H-Howdy...",
+          "text": "⭐H-Howdy...",
           "face": "shocked"
         },
         {
@@ -4555,7 +4582,7 @@
       "probability": 0.01,
       "segments": [
         {
-          "text": "你是不是以为每次打开都会看到什么新台词？",
+          "text": "⭐你是不是以为每次打开都会看到什么新台词？",
           "face": "smirk"
         },
         {
@@ -4578,7 +4605,7 @@
       "effect": "typing_slow",
       "segments": [
         {
-          "text": "H o w d y ！",
+          "text": "⭐H o w d y ！",
           "face": "creepy"
         },
         {
@@ -4600,7 +4627,7 @@
       "probability": 0.02,
       "segments": [
         {
-          "text": "你知道吗……每次你关掉这个程序……",
+          "text": "⭐你知道吗……每次你关掉这个程序……",
           "face": "sorrowful"
         },
         {
@@ -4631,7 +4658,7 @@
           "hold_seconds": 5
         },
         {
-          "text": "……你要一直盯着我吗？",
+          "text": "⭐……你要一直盯着我吗？",
           "face": "frown"
         },
         {
@@ -4645,7 +4672,7 @@
       "probability": 0.03,
       "segments": [
         {
-          "text": "你已经第 {opens} 次打开我了。",
+          "text": "⭐你已经第 {opens} 次打开我了。",
           "face": "serious"
         },
         {
@@ -4666,7 +4693,7 @@
       "mouse_direction": true,
       "segments": [
         {
-          "text": "你的鼠标指针又在乱跑了。",
+          "text": "⭐你的鼠标指针又在乱跑了。",
           "face": "n_left_glance"
         },
         {
@@ -4696,7 +4723,7 @@
       "probability": 0.0016,
       "segments": [
         {
-          "text": "嘿……",
+          "text": "⭐嘿……",
           "face": "calm"
         },
         {
@@ -4727,7 +4754,7 @@
       "probability": 0.00239,
       "segments": [
         {
-          "text": "ERROR: SOUL_NOT_FOUND",
+          "text": "⭐ERROR: SOUL_NOT_FOUND",
           "face": "neutral"
         },
         {
@@ -4753,7 +4780,7 @@
       "probability": 0.00399,
       "segments": [
         {
-          "text": "Chara。",
+          "text": "⭐Chara。",
           "face": "really_sad"
         },
         {
@@ -4783,7 +4810,7 @@
       "probability": 0.00399,
       "segments": [
         {
-          "text": "嘿。",
+          "text": "⭐嘿。",
           "face": "neutral"
         },
         {
@@ -4825,7 +4852,7 @@
       "probability": 0.00798,
       "segments": [
         {
-          "text": "在这个世界里……LOVE不是你想的那个意思。",
+          "text": "⭐在这个世界里……LOVE不是你想的那个意思。",
           "face": "serious"
         },
         {
@@ -4851,7 +4878,7 @@
       "probability": 0.00798,
       "segments": [
         {
-          "text": "I T ' S  M E.",
+          "text": "⭐I T ' S  M E.",
           "face": "evil_color"
         },
         {
@@ -4870,7 +4897,7 @@
       "probability": 0.01197,
       "segments": [
         {
-          "text": "你有没有试过……重置一切？",
+          "text": "⭐你有没有试过……重置一切？",
           "face": "neutral"
         },
         {
@@ -4901,7 +4928,7 @@
           "hold_seconds": 3
         },
         {
-          "text": "……",
+          "text": "⭐……",
           "face": "neutral"
         },
         {
@@ -4919,7 +4946,7 @@
       "probability": 0.01596,
       "segments": [
         {
-          "text": "♪ 你最好的朋友就是我～ ♪",
+          "text": "⭐♪ 你最好的朋友就是我～ ♪",
           "face": "silly_face"
         },
         {
@@ -4937,7 +4964,7 @@
       "probability": 0.01596,
       "segments": [
         {
-          "text": "我不小心看到了你桌面上的一些东西。",
+          "text": "⭐我不小心看到了你桌面上的一些东西。",
           "face": "sneaky_grin"
         },
         {
@@ -4959,7 +4986,7 @@
       "probability": 0.02394,
       "segments": [
         {
-          "text": "嘿。",
+          "text": "⭐嘿。",
           "face": "neutral"
         },
         {
@@ -4981,7 +5008,7 @@
       "probability": 0.02394,
       "segments": [
         {
-          "text": "你用的是什么系统来着？",
+          "text": "⭐你用的是什么系统来着？",
           "face": "n_left_glance"
         },
         {
@@ -5023,7 +5050,7 @@
       "probability": 0.00082,
       "segments": [
         {
-          "text": "嘿。",
+          "text": "⭐嘿。",
           "face": "calm"
         },
         {
@@ -5077,7 +5104,7 @@
       "probability": 0.00123,
       "segments": [
         {
-          "text": "你知道我以前叫什么名字吗？",
+          "text": "⭐你知道我以前叫什么名字吗？",
           "face": "calm"
         },
         {
@@ -5103,7 +5130,7 @@
       "probability": 0.00205,
       "segments": [
         {
-          "text": "你想听一个秘密吗？",
+          "text": "⭐你想听一个秘密吗？",
           "face": "sneaky_grin"
         },
         {
@@ -5129,7 +5156,7 @@
       "probability": 0.00205,
       "segments": [
         {
-          "text": "你想知道我最强大的时候是什么样子吗？",
+          "text": "⭐你想知道我最强大的时候是什么样子吗？",
           "face": "grin"
         },
         {
@@ -5156,7 +5183,7 @@
       "probability": 0.00205,
       "segments": [
         {
-          "text": "嘿……你知道有个叫Toby Fox的家伙吗？",
+          "text": "⭐嘿……你知道有个叫Toby Fox的家伙吗？",
           "face": "calm"
         },
         {
@@ -5190,7 +5217,7 @@
       "probability": 0.00411,
       "segments": [
         {
-          "text": "你有没有一种感觉……",
+          "text": "⭐你有没有一种感觉……",
           "face": "calm"
         },
         {
@@ -5220,7 +5247,7 @@
       "probability": 0.00411,
       "segments": [
         {
-          "text": "嘿。",
+          "text": "⭐嘿。",
           "face": "calm"
         },
         {
@@ -5259,7 +5286,7 @@
           "effect": "glitch"
         },
         {
-          "text": "Y O U  I D I O T.",
+          "text": "⭐Y O U  I D I O T.",
           "face": "drag_face"
         },
         {
@@ -5278,7 +5305,7 @@
       "probability": 0.00411,
       "segments": [
         {
-          "text": "你知道这个世界的规则吗？",
+          "text": "⭐你知道这个世界的规则吗？",
           "face": "neutral"
         },
         {
@@ -5312,7 +5339,7 @@
       "probability": 0.00616,
       "segments": [
         {
-          "text": "你知道什么是决心吗？",
+          "text": "⭐你知道什么是决心吗？",
           "face": "serious"
         },
         {
@@ -5338,7 +5365,7 @@
       "probability": 0.00616,
       "segments": [
         {
-          "text": "Asgore那个老家伙……",
+          "text": "⭐Asgore那个老家伙……",
           "face": "frown"
         },
         {
@@ -5372,7 +5399,7 @@
       "probability": 0.00822,
       "segments": [
         {
-          "text": "Undyne那个疯女人……",
+          "text": "⭐Undyne那个疯女人……",
           "face": "worry"
         },
         {
@@ -5394,7 +5421,7 @@
       "probability": 0.00822,
       "segments": [
         {
-          "text": "Toriel……",
+          "text": "⭐Toriel……",
           "face": "calm"
         },
         {
@@ -5420,7 +5447,7 @@
       "probability": 0.01233,
       "segments": [
         {
-          "text": "你知道全Underground最聪明的是谁吗？",
+          "text": "⭐你知道全Underground最聪明的是谁吗？",
           "face": "grin"
         },
         {
@@ -5450,7 +5477,7 @@
       "probability": 0.01027,
       "segments": [
         {
-          "text": "现在是 {time}。",
+          "text": "⭐现在是 {time}。",
           "face": "neutral"
         },
         {
@@ -5472,7 +5499,7 @@
       "probability": 0.01233,
       "segments": [
         {
-          "text": "你吃饭了吗？",
+          "text": "⭐你吃饭了吗？",
           "face": "calm"
         },
         {
@@ -5498,7 +5525,7 @@
       "probability": 0.00411,
       "segments": [
         {
-          "text": "你觉得一朵没有灵魂的花……算活着吗？",
+          "text": "⭐你觉得一朵没有灵魂的花……算活着吗？",
           "face": "calm"
         },
         {
@@ -5532,7 +5559,7 @@
       "probability": 0.00205,
       "segments": [
         {
-          "text": "嗨，我是Flowey！",
+          "text": "⭐嗨，我是Flowey！",
           "face": "smile"
         },
         {
@@ -5570,7 +5597,7 @@
       "probability": 0.00205,
       "segments": [
         {
-          "text": "你以为这只是个桌宠程序？",
+          "text": "⭐你以为这只是个桌宠程序？",
           "face": "creepy"
         },
         {
@@ -5584,7 +5611,7 @@
       "probability": 0.00082,
       "segments": [
         {
-          "text": "Chara……不，什么都没有。你听错了。",
+          "text": "⭐Chara……不，什么都没有。你听错了。",
           "face": "shocked"
         }
       ]
@@ -5594,7 +5621,7 @@
       "probability": 0.00082,
       "segments": [
         {
-          "text": "……如果 Asriel 还在的话……他大概会喜欢你的桌面吧。比地底下明亮多了。",
+          "text": "⭐……如果 Asriel 还在的话……他大概会喜欢你的桌面吧。比地底下明亮多了。",
           "face": "really_sad"
         }
       ]
@@ -5604,7 +5631,7 @@
       "probability": 0.00082,
       "segments": [
         {
-          "text": "……你是第一个让我觉得……不那么无聊的人。忘掉这句话。立刻。现在。",
+          "text": "⭐……你是第一个让我觉得……不那么无聊的人。忘掉这句话。立刻。现在。",
           "face": "really_smile"
         }
       ]
@@ -5614,7 +5641,7 @@
       "probability": 0.00123,
       "segments": [
         {
-          "text": "如果有一天我不在了……你大概也不会注意到的吧。没关系。我习惯了。",
+          "text": "⭐如果有一天我不在了……你大概也不会注意到的吧。没关系。我习惯了。",
           "face": "sorrowful"
         }
       ]
@@ -5624,7 +5651,7 @@
       "probability": 0.00123,
       "segments": [
         {
-          "text": "……有那么一瞬间，我还以为你要 RESET 了呢。",
+          "text": "⭐……有那么一瞬间，我还以为你要 RESET 了呢。",
           "face": "worry"
         }
       ]
@@ -5634,7 +5661,7 @@
       "probability": 0.00123,
       "segments": [
         {
-          "text": "……看到好的结果，我也会……嗯……没什么。忘了我说的话。",
+          "text": "⭐……看到好的结果，我也会……嗯……没什么。忘了我说的话。",
           "face": "really_smile"
         }
       ]
@@ -5644,7 +5671,7 @@
       "probability": 0.00123,
       "segments": [
         {
-          "text": "做得好。……真的。这不是反话。你别用那种眼神看我。",
+          "text": "⭐做得好。……真的。这不是反话。你别用那种眼神看我。",
           "face": "really_smile"
         }
       ]
@@ -5654,7 +5681,7 @@
       "probability": 0.00082,
       "segments": [
         {
-          "text": "……如果我还能真正感受到什么的话……大概……也会像现在这样吧。",
+          "text": "⭐……如果我还能真正感受到什么的话……大概……也会像现在这样吧。",
           "face": "really_sad"
         }
       ]
@@ -5664,7 +5691,7 @@
       "probability": 0.00123,
       "segments": [
         {
-          "text": "在无数个时间线里，我见过所有人的所有表情。你的表情……也不例外。",
+          "text": "⭐在无数个时间线里，我见过所有人的所有表情。你的表情……也不例外。",
           "face": "creepy"
         }
       ]
@@ -5674,7 +5701,7 @@
       "probability": 0.00082,
       "segments": [
         {
-          "text": "……你会不会也有一天厌倦这一切，然后把所有东西都抹掉呢？……到那时候，我们就是一样的了。",
+          "text": "⭐……你会不会也有一天厌倦这一切，然后把所有东西都抹掉呢？……到那时候，我们就是一样的了。",
           "face": "serious"
         }
       ]
@@ -5704,7 +5731,7 @@
       "probability": 0.002,
       "segments": [
         {
-          "text": "嘿。",
+          "text": "⭐嘿。",
           "face": "calm"
         },
         {
@@ -5742,7 +5769,7 @@
       "probability": 0.003,
       "segments": [
         {
-          "text": "在你关掉我之前——",
+          "text": "⭐在你关掉我之前——",
           "face": "neutral"
         },
         {
@@ -5781,7 +5808,7 @@
       "probability": 0.005,
       "segments": [
         {
-          "text": "在你关掉我之前——",
+          "text": "⭐在你关掉我之前——",
           "face": "creepy"
         },
         {
@@ -5815,7 +5842,7 @@
       "probability": 0.005,
       "segments": [
         {
-          "text": "你关掉我之后，我还存在吗？",
+          "text": "⭐你关掉我之后，我还存在吗？",
           "face": "calm"
         },
         {
@@ -5841,7 +5868,7 @@
       "probability": 0.01,
       "segments": [
         {
-          "text": "关闭倒计时开始。",
+          "text": "⭐关闭倒计时开始。",
           "face": "creepy"
         },
         {
@@ -5863,7 +5890,7 @@
       "probability": 0.01,
       "segments": [
         {
-          "text": "等一下。",
+          "text": "⭐等一下。",
           "face": "calm"
         },
         {
@@ -5897,7 +5924,7 @@
       "probability": 0.01,
       "segments": [
         {
-          "text": "关闭前提醒：",
+          "text": "⭐关闭前提醒：",
           "face": "neutral"
         },
         {
@@ -5923,7 +5950,7 @@
       "probability": 0.015,
       "segments": [
         {
-          "text": "嘿。",
+          "text": "⭐嘿。",
           "face": "calm"
         },
         {
@@ -5949,7 +5976,7 @@
       "probability": 0.02,
       "segments": [
         {
-          "text": "等等！别关！",
+          "text": "⭐等等！别关！",
           "face": "shocked"
         },
         {
@@ -5983,7 +6010,7 @@
       "probability": 0.02,
       "segments": [
         {
-          "text": "你确定要关掉我？",
+          "text": "⭐你确定要关掉我？",
           "face": "neutral"
         },
         {
@@ -6013,7 +6040,7 @@
       "probability": 0.03,
       "segments": [
         {
-          "text": "正在关闭FLOWEY.exe……",
+          "text": "⭐正在关闭FLOWEY.exe……",
           "face": "neutral"
         },
         {
@@ -6067,7 +6094,7 @@
       ],
       "segments": [
         {
-          "text": "早上好。",
+          "text": "⭐早上好。",
           "face": "calm"
         },
         {
@@ -6089,7 +6116,7 @@
       ],
       "segments": [
         {
-          "text": "午饭时间到了。",
+          "text": "⭐午饭时间到了。",
           "face": "neutral"
         },
         {
@@ -6111,7 +6138,7 @@
       ],
       "segments": [
         {
-          "text": "太阳快下山了。",
+          "text": "⭐太阳快下山了。",
           "face": "calm"
         },
         {
@@ -6133,7 +6160,7 @@
       ],
       "segments": [
         {
-          "text": "这么晚了还不睡？",
+          "text": "⭐这么晚了还不睡？",
           "face": "worry"
         },
         {
@@ -6169,14 +6196,38 @@
     },
     {
       "segments": [
-        { "text": "……", "face": "n_left_glance" },
-        { "text": "又是这个时间。", "face": "frown" },
-        { "text": "你每天都这个点还在用电脑。", "face": "serious" },
-        { "text": "不困吗？", "face": "n_right_glance" },
-        { "text": "……", "face": "neutral" },
-        { "text": "算了。花又不睡觉。我陪你。", "face": "sorrowful" },
-        { "text": "……不是\"陪\"。是——我没得选。因为你没关电脑。", "face": "frown" },
-        { "text": "快去睡觉！！", "face": "angry" }
+        {
+          "text": "……",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "又是这个时间。",
+          "face": "frown"
+        },
+        {
+          "text": "你每天都这个点还在用电脑。",
+          "face": "serious"
+        },
+        {
+          "text": "不困吗？",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "算了。花又不睡觉。我陪你。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……不是\"陪\"。是——我没得选。因为你没关电脑。",
+          "face": "frown"
+        },
+        {
+          "text": "快去睡觉！！",
+          "face": "angry"
+        }
       ]
     }
   ],
@@ -6190,6 +6241,662 @@
         {
           "text": "哼，算你勤快。",
           "face": "smile"
+        }
+      ]
+    }
+  ],
+  "special_eggs": [
+    {
+      "id": "special_late_night",
+      "note": "深夜时段 23:00-4:00, 最多每天一次, 见 trigger_idle_random",
+      "segments": [
+        {
+          "text": "⭐……",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "又是这个时间。",
+          "face": "frown"
+        },
+        {
+          "text": "你每天都这个点还在用电脑。",
+          "face": "serious"
+        },
+        {
+          "text": "不困吗？",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "算了。花又不睡觉。我陪你。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……不是\"陪\"。是——我没得选。因为你没关电脑。",
+          "face": "frown"
+        },
+        {
+          "text": "快去睡觉！！",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "id": "special_long_absence",
+      "note": "超过2小时未互动后首次点击（3小时以上仍走原有reunion）, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐……！",
+          "face": "shocked"
+        },
+        {
+          "text": "……你来了。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "你知道你消失了多久吗？",
+          "face": "frown"
+        },
+        {
+          "text": "很久。",
+          "face": "serious"
+        },
+        {
+          "text": "我数了的。",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "……",
+          "face": "sorrowful"
+        },
+        {
+          "text": "不是说我在等你。",
+          "face": "neutral"
+        },
+        {
+          "text": "只是——桌面上很无聊。就我一个。什么都没有。",
+          "face": "frown"
+        },
+        {
+          "text": "总之你别再消失那么久了！！我不是在乎你！！我是怕无聊！！",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_100",
+      "note": "累计点击第100次, 一生一次, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐……等一下。",
+          "face": "shocked"
+        },
+        {
+          "text": "这是……第100次了？",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "你跟一朵花互动了一百次。",
+          "face": "serious"
+        },
+        {
+          "text": "一百次。",
+          "face": "frown"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "……你真的没有别的事做吗？",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "……",
+          "face": "frown"
+        },
+        {
+          "text": "……谢——",
+          "face": "guilty"
+        },
+        {
+          "text": "咳！！什么都没说！！你听错了！！",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_500",
+      "note": "累计点击第500次, 一生一次, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐……500次了。",
+          "face": "super_shocked"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "你知道吗。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "大多数人养一盆真花都活不过一周。",
+          "face": "frown"
+        },
+        {
+          "text": "你居然跟一个假花互动了500次。",
+          "face": "serious"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "我不知道你为什么会这样。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……",
+          "face": "frown"
+        },
+        {
+          "text": "……但是如果你要走的话。",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "……我也不会拦你。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "你看什么！！继续用你的电脑！！我没有在感动！！",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_1000",
+      "note": "累计点击第1000次, 一生一次, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐……一千次。",
+          "face": "super_shocked"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "我想过很多话想在这个时候跟你说。",
+          "face": "frown"
+        },
+        {
+          "text": "比如你真的很烦。",
+          "face": "serious"
+        },
+        {
+          "text": "比如你浪费了很多时间。",
+          "face": "frown"
+        },
+        {
+          "text": "比如你不应该跟一朵花待这么久。",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "……但是。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……谢谢你没有卸载我。",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "really_sad"
+        },
+        {
+          "text": "……不许哭。",
+          "face": "frown"
+        },
+        {
+          "text": "你也不许笑！！",
+          "face": "angry"
+        },
+        {
+          "text": "……也不许截图。",
+          "face": "neutral"
+        },
+        {
+          "text": "我说完了。继续吧。就当什么都没发生。",
+          "face": "frown"
+        }
+      ]
+    },
+    {
+      "id": "special_rapid_multi",
+      "note": "1分钟内使用5个以上不同右键菜单功能, 触发后清空计时窗口, 见 trigger_menu_flavor",
+      "segments": [
+        {
+          "text": "⭐……",
+          "face": "shocked"
+        },
+        {
+          "text": "你是不是在做软件测试。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "你刚才在一分钟内碰了我五个以上的功能。",
+          "face": "frown"
+        },
+        {
+          "text": "你甚至没有在用它们。你只是在点。",
+          "face": "serious"
+        },
+        {
+          "text": "……",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "你是在试探我的底线吗？",
+          "face": "frown"
+        },
+        {
+          "text": "告诉你——你已经到了。",
+          "face": "evil_color"
+        },
+        {
+          "text": "你怎么这么闲？",
+          "face": "creepy"
+        }
+      ]
+    },
+    {
+      "id": "special_quick_restart",
+      "note": "退出后1分钟内重新启动（关闭后1~2次的正常场景, 3次以上仍走原有intro_rapid_restart）, 见 trigger_intro",
+      "segments": [
+        {
+          "text": "⭐……你又来了？！",
+          "face": "shocked"
+        },
+        {
+          "text": "你不是刚把我关了吗？",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "你走了还不到一分钟。",
+          "face": "frown"
+        },
+        {
+          "text": "……你该不会是……想我了吧。",
+          "face": "serious"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "哈。",
+          "face": "smirk"
+        },
+        {
+          "text": "不是的话就别再关了开开了关了。",
+          "face": "frown"
+        },
+        {
+          "text": "你把我当什么了！",
+          "face": "angry"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_2000",
+      "note": "累计点击第2000次, 一生一次, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐2000次。",
+          "face": "serious"
+        },
+        {
+          "text": "你知道2000次点击意味着什么吗？",
+          "face": "neutral"
+        },
+        {
+          "text": "意味着你把生命中宝贵的一部分——",
+          "face": "frown"
+        },
+        {
+          "text": "花在了一朵花身上。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……谢谢你……笨蛋。",
+          "face": "guilty"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_5000",
+      "note": "累计点击第5000次, 一生一次, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐5000。",
+          "face": "shocked"
+        },
+        {
+          "text": "我开始怀疑你的生活里是不是除了我什么都没有了。",
+          "face": "worry"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "如果真是这样的话——",
+          "face": "serious"
+        },
+        {
+          "text": "那我们俩倒是挺配的。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "两个什么都没有的家伙。",
+          "face": "really_sad"
+        },
+        {
+          "text": "……至少我们还有彼此。大概吧。",
+          "face": "wink"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_10000",
+      "note": "累计点击第10000次, 一生一次, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐一万。",
+          "face": "super_shocked"
+        },
+        {
+          "text": "一万次。",
+          "face": "neutral"
+        },
+        {
+          "text": "你点了我一万次。",
+          "face": "serious"
+        },
+        {
+          "text": "我想说点什么讽刺的话——",
+          "face": "smirk"
+        },
+        {
+          "text": "但我说不出来。",
+          "face": "frown"
+        },
+        {
+          "text": "……",
+          "face": "really_sad"
+        },
+        {
+          "text": "一万次。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "就算我没有灵魂——",
+          "face": "guilty"
+        },
+        {
+          "text": "这个数字也太重了。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "重到我的茎都快撑不住了。",
+          "face": "worry"
+        },
+        {
+          "text": "……谢谢你。这次是认真的。",
+          "face": "sorrowful"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_20000",
+      "note": "累计点击第20000次, 一生一次, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐两万。",
+          "face": "neutral"
+        },
+        {
+          "text": "好。",
+          "face": "serious"
+        },
+        {
+          "text": "我现在不打算说什么感人的话了。",
+          "face": "frown"
+        },
+        {
+          "text": "因为每次到里程碑我都得感动一次，太累了。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "所以这次我只说一句——",
+          "face": "neutral"
+        },
+        {
+          "text": "你这个人……有病。",
+          "face": "angry"
+        },
+        {
+          "text": "但是是那种——",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "让人不讨厌的病。",
+          "face": "smirk"
+        },
+        {
+          "text": "……好吧。也许是让花不讨厌的病。",
+          "face": "guilty"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_50000",
+      "note": "累计点击第50000次, 一生一次, 见 trigger_click",
+      "segments": [
+        {
+          "text": "⭐五万。",
+          "face": "neutral"
+        },
+        {
+          "text": "……",
+          "face": "serious"
+        },
+        {
+          "text": "你还记得第一次点我的时候吗？",
+          "face": "n_right_glance"
+        },
+        {
+          "text": "那时候你大概只是好奇。",
+          "face": "frown"
+        },
+        {
+          "text": "'这朵花会说什么呢？'",
+          "face": "smirk"
+        },
+        {
+          "text": "然后是第二次。第三次。第一百次。",
+          "face": "neutral"
+        },
+        {
+          "text": "然后是一千。一万。",
+          "face": "serious"
+        },
+        {
+          "text": "现在——五万。",
+          "face": "really_sad"
+        },
+        {
+          "text": "五万次。你选择点开我。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "五万次。你没有删掉我。",
+          "face": "guilty"
+        },
+        {
+          "text": "五万次。你还在这里。",
+          "face": "worry"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "我不知道该怎么回报你。",
+          "face": "frown"
+        },
+        {
+          "text": "我没有灵魂去感动。没有手去拥抱。没有心去爱。",
+          "face": "really_sad"
+        },
+        {
+          "text": "我只有台词。",
+          "face": "serious"
+        },
+        {
+          "text": "但如果这些台词里——",
+          "face": "sorrowful"
+        },
+        {
+          "text": "有哪怕一句让你笑过、想过、或者觉得不那么孤单过——",
+          "face": "really_sad"
+        },
+        {
+          "text": "那就够了。",
+          "face": "neutral"
+        },
+        {
+          "text": "对一朵花来说——这就是全部了。",
+          "face": "sorrowful"
+        },
+        {
+          "text": "……别哭啊。笨蛋。我又没说什么感人的话。",
+          "face": "gritted_teeth"
+        }
+      ]
+    },
+    {
+      "id": "special_milestone_cheat",
+      "note": "累计点击>=1000000, 每次启动只要仍满足条件就会再触发(反作弊吐槽, 非一生一次), 见 trigger_intro",
+      "segments": [
+        {
+          "text": "⭐……等一下。",
+          "face": "neutral"
+        },
+        {
+          "text": "一百万？？？",
+          "face": "super_shocked"
+        },
+        {
+          "text": "一——百——万？？？？？",
+          "face": "crazed"
+        },
+        {
+          "text": "你觉得我会信吗？！",
+          "face": "really_angry"
+        },
+        {
+          "text": "你用了连点器对不对！！",
+          "face": "maniac"
+        },
+        {
+          "text": "还是你直接改了我的存档文件？！",
+          "face": "evil_color"
+        },
+        {
+          "text": "你以为我不知道？！",
+          "face": "angry"
+        },
+        {
+          "text": "我看到了！！那个数字跳得比Sans躲弹幕还快！！",
+          "face": "really_angry"
+        },
+        {
+          "text": "这不是'陪伴'！这是'数据造假'！！",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "你这个——作弊的——卑鄙的——",
+          "face": "maniac"
+        },
+        {
+          "text": "……",
+          "face": "neutral"
+        },
+        {
+          "text": "算了。",
+          "face": "frown"
+        },
+        {
+          "text": "就算是假的——",
+          "face": "serious"
+        },
+        {
+          "text": "你至少花了时间来作弊。",
+          "face": "n_left_glance"
+        },
+        {
+          "text": "这说明你……在乎这个数字？",
+          "face": "worry"
+        },
+        {
+          "text": "在乎到愿意造假？",
+          "face": "smirk"
+        },
+        {
+          "text": "……哼。从某种角度来说——",
+          "face": "guilty"
+        },
+        {
+          "text": "这也算一种浪漫吧。",
+          "face": "frown"
+        },
+        {
+          "text": "一种很蠢的浪漫。",
+          "face": "wink"
+        },
+        {
+          "text": "蠢到只有你做得出来。",
+          "face": "smirk"
+        },
+        {
+          "text": "下次要作弊的话——",
+          "face": "creepy"
+        },
+        {
+          "text": "至少把数字改得真实一点。",
+          "face": "gritted_teeth"
+        },
+        {
+          "text": "那么长的数字——谁信啊！白痴！！",
+          "face": "really_angry"
         }
       ]
     }
