@@ -34,6 +34,7 @@ DIALOGUE_FLIRT_PATH = APP_DIR / "dialogues_flirt.json"
 DIALOGUE_CHASE_PATH = APP_DIR / "dialogues_chase.json"  # reminder-chase (追讨) line pools, see reminder_chase.py
 DIALOGUE_SPAM_PATH = APP_DIR / "dialogues_spam.json"  # anti-spam escalation line pools, see dialogue_arbiter.py
 DIALOGUE_GAME_PATH = APP_DIR / "dialogues_game.json"  # UNDERTALE/DELTARUNE launch-detect egg lines, see game_detector.py
+DIALOGUE_ANTICHEAT_PATH = APP_DIR / "dialogues_anticheat.json"  # auto-clicker + save-tamper line pools, see anticheat.py
 STATS_ROAST_PATH = APP_DIR / "stats_roast.json"
 CONFIG_PATH = APP_DIR / "config.json"
 STATS_PATH = APP_DIR / "stats.json"

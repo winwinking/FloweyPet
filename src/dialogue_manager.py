@@ -17,8 +17,10 @@ from datetime import datetime
 
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
+import anticheat
+from config import read_shadow_clicks, write_shadow_clicks
 from error_log import log_exception, log_message
-from paths import DIALOGUE_INFO_PATH, DIALOGUE_PATH, DIALOGUE_SYSTEM_PATH
+from paths import DIALOGUE_ANTICHEAT_PATH, DIALOGUE_INFO_PATH, DIALOGUE_PATH, DIALOGUE_SYSTEM_PATH
 
 PRI_REMINDER = 40
 PRI_POMODORO = 30
@@ -105,10 +107,16 @@ class DialogueManager(QObject):
         self._info_trigger_times = []  # monotonic timestamps, for anti-spam
         self._last_info_pick = None  # (pool_name, index) of the last entry shown
 
+        self._anticheat_pools = self._load_anticheat_pools()
+        self.tamper_guard = anticheat.SaveTamperGuard(read_shadow_clicks, write_shadow_clicks)
+        self._anticheat_placeholders = {}  # transient, set right before _submit(), read by _substitute()
+
         self.busy = False
         self._queue = []  # list of (priority, category, segments)
         self.last_auto_speak_end = 0.0
         self.last_interaction_time = time.monotonic()
+        self._gap_before_reset = 0.0  # see record_interaction()
+        self._feature_window = []  # (monotonic_ts, feature_key) for special_rapid_multi
 
         self.combo_count = 0
         self._combo_timer = QTimer(self)
@@ -218,6 +226,120 @@ class DialogueManager(QObject):
                 cleaned.append(entry)
             pools[pool_name] = cleaned
         return pools
+
+    # -------------------------------------------------------------- anticheat
+    def _load_anticheat_pools(self):
+        """dialogues_anticheat.json: two top-level groups (auto_clicker,
+        tamper), each a dict of pool_name -> list of {"lines","faces"}
+        entries -- same entry shape as dialogues_spam.json/dialogue_arbiter.py,
+        just without that file's extra per-feature nesting."""
+        try:
+            with open(DIALOGUE_ANTICHEAT_PATH, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+        except FileNotFoundError:
+            log_message(f"dialogues_anticheat: {DIALOGUE_ANTICHEAT_PATH} 不存在，反作弊台词将没有内容可播（检测仍会正常运行）")
+            return {}
+        except (OSError, json.JSONDecodeError):
+            log_exception(f"dialogues_anticheat: 无法加载 {DIALOGUE_ANTICHEAT_PATH}")
+            return {}
+        if not isinstance(raw, dict):
+            log_message("dialogues_anticheat: 顶层必须是JSON对象")
+            return {}
+
+        groups = {}
+        for group_name in ("auto_clicker", "tamper"):
+            pools = {}
+            for pool_name, entries in (raw.get(group_name) or {}).items():
+                if not isinstance(entries, list):
+                    continue
+                cleaned = []
+                for i, entry in enumerate(entries):
+                    ok, reason = _validate_info_entry(entry)
+                    if not ok:
+                        log_message(f"dialogues_anticheat: skipping malformed entry {group_name}.{pool_name}[{i}]: {reason}")
+                        continue
+                    cleaned.append(entry)
+                pools[pool_name] = cleaned
+            groups[group_name] = pools
+        return groups
+
+    def _pick_anticheat_segments(self, group, pool_name):
+        pool = self._anticheat_pools.get(group, {}).get(pool_name) or []
+        if not pool:
+            return None
+        entry = random.choice(pool)
+        return [{"text": line, "face": (faces[0] if len(faces) == 1 else list(faces))}
+                for line, faces in zip(entry["lines"], entry["faces"])]
+
+    def trigger_auto_clicker_stage(self, stage):
+        """Called from PetWindow._handle_click when AutoClickerDetector.on_click()
+        returns a non-None stage (1-6, see anticheat.AutoClickerDetector).
+        Always shown immediately (PRI_CLICK, like every other click reaction)
+        -- these lines exist specifically because someone is hammering the
+        body right now, so there's no sense queuing them behind anything."""
+        segments = self._pick_anticheat_segments("auto_clicker", f"stage{stage}")
+        if segments is None:
+            return
+        self._submit(f"auto_clicker_stage{stage}", segments, PRI_CLICK, bypass_interval=True)
+
+    def _resolve_anticheat_intro(self):
+        """Checked once per launch from trigger_intro(), before the existing
+        milestone rolls -- see anticheat.SaveTamperGuard for the detection
+        model. Returns (category, segments) to _submit(), or None if nothing
+        to say (no tamper, or a tamper event that produced no playable
+        content). Unconditionally corrects config["total_clicks"] back to
+        the verified real value before returning, regardless of what (if
+        anything) gets played -- a tampered number never survives past one
+        detection cycle."""
+        verdict = self.tamper_guard.check(self.config)
+        if verdict is None:
+            return None
+
+        if verdict.exempt and verdict.kind == "existing_milestone":
+            # Reuse the existing milestone/cheat-egg content verbatim: let
+            # the existing roll functions see the tampered value just for
+            # this one call (they read config["total_clicks"] directly),
+            # then resolve() below reverts it -- so the fun reaction still
+            # fires, but the fake number never sticks.
+            self.config["total_clicks"] = verdict.tampered_value
+            if verdict.tampered_value >= anticheat.CHEAT_MILESTONE_THRESHOLD:
+                segments = self._roll_special_cheat_milestone()
+            else:
+                segments = self._roll_special_click_milestone()
+            self.tamper_guard.resolve(self.config, verdict)
+            self.save_config(self.config)
+            if segments:
+                return "intro_egg", segments
+            return None
+
+        if verdict.exempt:
+            # mod_f (改成0) -- always allowed through even while locked, per
+            # the source doc explicitly labeling it a 彩蛋.
+            segments = self._pick_anticheat_segments("tamper", verdict.kind)
+            self.tamper_guard.resolve(self.config, verdict)
+            self.save_config(self.config)
+            self._anticheat_placeholders = verdict.placeholders
+            if segments:
+                return f"tamper_{verdict.kind}", segments
+            return None
+
+        if self.config.get("tamper_locked", False):
+            self.tamper_guard.resolve(self.config, verdict)
+            self.save_config(self.config)
+            if not self.tamper_guard.locked_reply_allowed_this_run():
+                return None  # 本次运行已经回应过一次了，之后彻底静默
+            segments = self._pick_anticheat_segments("tamper", "locked_reply")
+            if segments:
+                return "tamper_locked_reply", segments
+            return None
+
+        segments = self._pick_anticheat_segments("tamper", verdict.kind)
+        self.tamper_guard.resolve(self.config, verdict)
+        self.save_config(self.config)
+        self._anticheat_placeholders = verdict.placeholders
+        if segments:
+            return f"tamper_{verdict.kind}", segments
+        return None
 
     def _roll_info_pool(self):
         weights = self.config.get("info_easter_egg", {}).get("weights", DEFAULT_INFO_WEIGHTS)
@@ -365,12 +487,109 @@ class DialogueManager(QObject):
         if not eggs:
             return None
         hour = datetime.now().hour + datetime.now().minute / 60
+        seen = self._seen_today_bucket("time_eggs:fired")
         for egg in eggs:
+            if egg.get("id") in seen:
+                continue
             lo, hi = egg["hour_range"]
             in_window = lo <= hour < hi if lo <= hi else (hour >= lo or hour < hi - 24)
             if in_window and random.random() < egg["probability"]:
+                seen.append(egg.get("id"))
+                self.save_config(self.config)
+                if self.stats and egg.get("id"):
+                    self.stats.mark_rare_seen(egg["id"])
                 return [dict(s) for s in egg["segments"]]
         return None
+
+    # -------------------------------------------------------- special eggs
+    def _find_special_egg(self, egg_id):
+        for egg in self.data.get("special_eggs", []):
+            if egg.get("id") == egg_id:
+                return egg
+        return None
+
+    def _fire_special_egg(self, egg_id):
+        """Marks egg_id seen (for the collection counter) and returns its
+        segments ready to hand to _submit(), or None if not found."""
+        egg = self._find_special_egg(egg_id)
+        if not egg:
+            return None
+        if self.stats:
+            self.stats.mark_rare_seen(egg_id)
+        return [dict(s) for s in egg["segments"]]
+
+    def _roll_special_late_night(self):
+        """special_late_night: 23:00-4:00, at most once per day, checked
+        from idle (see trigger_idle_random)."""
+        hour = datetime.now().hour
+        if not (hour >= 23 or hour < 4):
+            return None
+        seen = self._seen_today_bucket("special_late_night:fired")
+        if seen:
+            return None
+        segments = self._fire_special_egg("special_late_night")
+        if segments:
+            seen.append(True)
+            self.save_config(self.config)
+        return segments
+
+    def _roll_special_click_milestone(self):
+        """special_milestone_100/500/1000/2000/5000/10000/20000/50000:
+        total_clicks crossing a threshold, each shown once per lifetime
+        (see trigger_click)."""
+        clicks = self.config.get("total_clicks", 0)
+        greeted = set(self.config.get("greeted_click_milestones", []))
+        for milestone, egg_id in ((50000, "special_milestone_50000"),
+                                   (20000, "special_milestone_20000"),
+                                   (10000, "special_milestone_10000"),
+                                   (5000, "special_milestone_5000"),
+                                   (2000, "special_milestone_2000"),
+                                   (1000, "special_milestone_1000"),
+                                   (500, "special_milestone_500"),
+                                   (100, "special_milestone_100")):
+            if clicks >= milestone and milestone not in greeted:
+                segments = self._fire_special_egg(egg_id)
+                if segments:
+                    self.config.setdefault("greeted_click_milestones", []).append(milestone)
+                    self.save_config(self.config)
+                    return segments
+        return None
+
+    def _roll_special_cheat_milestone(self):
+        """special_milestone_cheat (the "1,000,000+" joke): unlike the
+        lifetime-once milestones above, this re-fires on every single
+        launch for as long as total_clicks stays >= 1,000,000 -- it's an
+        anti-cheat jab, not an achievement (see trigger_intro)."""
+        if self.config.get("total_clicks", 0) < 1_000_000:
+            return None
+        return self._fire_special_egg("special_milestone_cheat")
+
+    @staticmethod
+    def _feature_key(category):
+        """Collapses a trigger_menu_flavor() category down to the feature
+        it belongs to, e.g. pin_on/pin_off -> pin, volume_up/volume_down ->
+        volume, show/hide -> hide -- so toggling one feature back and forth
+        doesn't count as two distinct features for special_rapid_multi."""
+        if category in ("show", "hide"):
+            return "hide"
+        return category.split("_")[0]
+
+    def _track_special_rapid_multi(self, category):
+        """special_rapid_multi: 5+ distinct right-click-menu features used
+        within 60 seconds (see trigger_menu_flavor)."""
+        now = time.monotonic()
+        window = self._feature_window
+        window.append((now, self._feature_key(category)))
+        cutoff = now - 60
+        while window and window[0][0] < cutoff:
+            window.pop(0)
+        distinct = {key for _, key in window}
+        if len(distinct) < 5:
+            return None
+        segments = self._fire_special_egg("special_rapid_multi")
+        if segments:
+            window.clear()
+        return segments
 
     # ------------------------------------------------------------ mouse hint
     def note_mouse_sample(self, x):
@@ -429,6 +648,10 @@ class DialogueManager(QObject):
             text = text.replace("{days}", str(self._days_since_install()))
         if "{clicks}" in text:
             text = text.replace("{clicks}", str(self.config.get("total_clicks", 0)))
+        for token, value in self._anticheat_placeholders.items():
+            marker = "{" + token + "}"
+            if marker in text:
+                text = text.replace(marker, value)
         return text
 
     def _days_since_install(self):
@@ -533,10 +756,19 @@ class DialogueManager(QObject):
 
     # ---------------------------------------------------------- interaction
     def record_interaction(self):
+        # Stashed *before* the reset below: trigger_click() reads the gap on
+        # mouseRelease, but this fires on mousePress just before it, so by
+        # then last_interaction_time would already read as "just now" for
+        # every single click. Long-absence checks (reunion, special_long_
+        # absence) need the gap since the *previous* click, not this one.
+        self._gap_before_reset = time.monotonic() - self.last_interaction_time
         self.last_interaction_time = time.monotonic()
         self.config["total_clicks"] = self.config.get("total_clicks", 0) + 1
         self._ensure_today_tracked()
         self.save_config(self.config)
+
+    def seconds_since_previous_interaction(self):
+        return self._gap_before_reset
 
     def _ensure_today_tracked(self):
         today = datetime.now().strftime("%Y-%m-%d")
@@ -571,9 +803,24 @@ class DialogueManager(QObject):
             self.save_config(cfg)
             self._submit("intro_first_run", self._pick("intro_first_run"), PRI_CLICK, bypass_interval=True)
             return
+        anticheat_result = self._resolve_anticheat_intro()
+        if anticheat_result:
+            category, segments = anticheat_result
+            self._submit(category, segments, PRI_CLICK, bypass_interval=True)
+            return
+        cheat_segments = self._roll_special_cheat_milestone()
+        if cheat_segments:
+            self._submit("intro_egg", cheat_segments, PRI_CLICK, bypass_interval=True)
+            return
         if cfg.get("close_count_recent", 0) >= 3:
             self._submit("intro_rapid_restart", self._pick("intro_rapid_restart"), PRI_CLICK, bypass_interval=True)
             return
+        last_close = cfg.get("last_close_time")
+        if last_close and (time.time() - last_close) < 60:
+            segments = self._fire_special_egg("special_quick_restart")
+            if segments:
+                self._submit("intro_egg", segments, PRI_CLICK, bypass_interval=True)
+                return
         if 0 <= now.hour < 4:
             self._submit("intro_late_night", self._pick("intro_late_night"), PRI_CLICK, bypass_interval=True)
             return
@@ -610,10 +857,20 @@ class DialogueManager(QObject):
         now = datetime.now()
         cfg = self.config
 
-        # long-absence reunion takes precedence over ordinary chatter
-        if self.seconds_since_interaction() > cfg.get("reunion_after_minutes", 180) * 60:
+        # long-absence reunion takes precedence over ordinary chatter. Uses
+        # the gap since the *previous* click (seconds_since_interaction()
+        # would already read ~0 here -- this same click's mousePressEvent
+        # just reset it moments ago, see record_interaction()).
+        gap = self.seconds_since_previous_interaction()
+        reunion_seconds = cfg.get("reunion_after_minutes", 180) * 60
+        if gap > reunion_seconds:
             self._submit("reunion", self._pick("reunion"), PRI_CLICK, bypass_interval=True)
             return
+        if gap > 2 * 3600:
+            segments = self._fire_special_egg("special_long_absence")
+            if segments:
+                self._submit("click_egg", segments, PRI_CLICK, bypass_interval=True)
+                return
 
         if now.hour == 0 and now.minute == 0:
             self._submit("click_midnight", self._pick("click_midnight"), PRI_CLICK, bypass_interval=True)
@@ -643,6 +900,11 @@ class DialogueManager(QObject):
                 self.save_config(cfg)
                 self._submit(f"click_streak_{milestone}", self._pick(f"click_streak_{milestone}"), PRI_CLICK, bypass_interval=True)
                 return
+
+        milestone_segments = self._roll_special_click_milestone()
+        if milestone_segments:
+            self._submit("click_egg", milestone_segments, PRI_CLICK, bypass_interval=True)
+            return
 
         time_egg = self._roll_time_egg()
         if time_egg:
@@ -681,6 +943,10 @@ class DialogueManager(QObject):
     # ----------------------------------------------------------------- idle
     def trigger_idle_random(self):
         now = datetime.now()
+        late_night_segments = self._roll_special_late_night()
+        if late_night_segments:
+            self._submit("idle_egg", late_night_segments, PRI_CHAT)
+            return
         if now.minute == 0 and random.random() < 0.02:
             self._submit("idle_hourly", self._pick("idle_hourly"), PRI_CHAT)
             return
@@ -728,6 +994,10 @@ class DialogueManager(QObject):
         hide, mute, volume, autostart, ...). Always eventually shown (never
         silently dropped like a click would be) but queues behind whatever
         is already talking."""
+        rapid_multi_segments = self._track_special_rapid_multi(category)
+        if rapid_multi_segments:
+            self._submit("click_egg", rapid_multi_segments, PRI_CHAT, bypass_interval=True)
+            return
         self._submit(category, self._pick(category), PRI_CHAT, bypass_interval=True)
 
     def trigger_lock_hint(self):

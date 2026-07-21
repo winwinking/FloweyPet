@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 import app_log
+import anticheat
 import dialogue_log
 import flirt as flirt_dialogue
 from dialogue_arbiter import DialogueArbiter
@@ -147,6 +148,7 @@ class PetWindow(QWidget):
         self.dialogue_box.hold_started.connect(self._on_dialogue_hold_started)
         self.dm.show_requested.connect(self._on_show_requested)
         self.arbiter = DialogueArbiter(config, self.dm, self)
+        self.click_detector = anticheat.AutoClickerDetector()
         self.game_detector = GameDetector(config, self.dm, self, self.stats)
 
         self.flirt = FlirtController(config, parent=self)
@@ -520,6 +522,14 @@ class PetWindow(QWidget):
 
     def _handle_click(self):
         if self.dm.busy:
+            return
+        if self.click_detector.is_cooling_down():
+            # AC-06 冷却期：连点器发作到顶后 30 秒内完全无视点击，见 anticheat.py。
+            return
+        stage = self.click_detector.on_click()
+        if stage is not None:
+            self.dm.trigger_auto_clicker_stage(stage)
+            self.stats.record_interaction()
             return
         if self.arbiter.note_body_click():
             # Spam-clicking the pet's own body: the arbiter already showed

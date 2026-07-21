@@ -40,9 +40,13 @@ DEFAULTS = {
     "last_active_date": None,  # "YYYY-MM-DD", for streak tracking
     "streak_days": 0,
     "total_clicks": 0,
+    "tamper_detect_count": 0,  # 反作弊：累计检测到 total_clicks 被手动篡改的次数，永不清零，见 anticheat.py
+    "tamper_locked": False,    # tamper_detect_count > 5 后置 True，永久生效——此后篡改只剩极简回应，不再纠缠
+    "neg_tamper_count": 0,     # 反作弊：累计检测到篡改成负数的次数，用于区分 NEG01(首次)/NEG02(第二次起)
     "last_close_time": None,   # ISO timestamp
     "close_count_recent": 0,
     "greeted_streaks": [],     # which streak milestones already shown
+    "greeted_click_milestones": [],  # which total_clicks milestones (special_milestone_*) already shown
     "greeted_birthday_date": None,
     "pomodoro": {
         "focus_minutes": 25,
@@ -177,5 +181,36 @@ def set_autostart(enabled: bool):
                     winreg.DeleteValue(key, _RUN_NAME)
                 except FileNotFoundError:
                     pass
+    except OSError:
+        pass
+
+
+# ------------------------------------------------------- anti-cheat shadow copy
+# total_clicks lives in config.json, which sits right next to the exe where
+# anyone can open and hand-edit it. To detect that, we keep a second copy
+# somewhere a casual editor won't think to look or touch alongside it: the
+# registry, under the same HKCU root the autostart key above already uses.
+# Only the app's own legitimate click-increment path writes this -- see
+# anticheat.py's SaveTamperGuard, which compares the two at every startup.
+_ANTICHEAT_KEY = r"Software\FloweyPet"
+_ANTICHEAT_VALUE = "ShadowTotalClicks"
+
+
+def read_shadow_clicks():
+    """Returns the last known-good total_clicks the app itself wrote, or
+    None if the registry value has never been set (fresh install, or the
+    key was wiped) -- callers must treat None as "no baseline yet", not 0."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _ANTICHEAT_KEY, 0, winreg.KEY_READ) as key:
+            value, _ = winreg.QueryValueEx(key, _ANTICHEAT_VALUE)
+        return int(value)
+    except (OSError, ValueError):
+        return None
+
+
+def write_shadow_clicks(value):
+    try:
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, _ANTICHEAT_KEY) as key:
+            winreg.SetValueEx(key, _ANTICHEAT_VALUE, 0, winreg.REG_SZ, str(int(value)))
     except OSError:
         pass
