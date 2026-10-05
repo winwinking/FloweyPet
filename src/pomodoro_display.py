@@ -9,6 +9,7 @@ from PyQt6.QtGui import QColor, QFontMetrics, QPainter, QPen
 from PyQt6.QtWidgets import QWidget
 
 from fonts import dseg7_font
+from win_zorder import apply_topmost
 
 REFERENCE_TEXT = "25:00"
 PROBE_PIXEL_SIZE = 48
@@ -67,10 +68,10 @@ class PomodoroDisplay(QWidget):
         if pin == self._pin:
             return
         self._pin = pin
-        was_visible = self.isVisible()
-        self.setWindowFlags(self._window_flags())
-        if was_visible:
-            self.show()
+        apply_topmost(self, pin)
+
+    def is_pinned(self):
+        return self._pin
 
     # ------------------------------------------------------------- display
     def set_time(self, minutes: int, seconds: int):

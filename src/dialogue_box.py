@@ -11,6 +11,7 @@ from PyQt6.QtGui import QColor, QFontMetrics, QPainter, QPen
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from fonts import pixel_font
+from win_zorder import apply_topmost
 from undertale_ui import (
     COLOR_SELECTED,
     COLOR_TEXT,
@@ -225,10 +226,7 @@ class DialogueBox(QWidget):
         if pin == self._pin:
             return
         self._pin = pin
-        was_visible = self.isVisible()
-        self.setWindowFlags(self._window_flags())
-        if was_visible:
-            self.show()
+        apply_topmost(self, pin)
 
     def is_pinned(self):
         """Public hook for GameDetector/TopmostGuard, mirrors

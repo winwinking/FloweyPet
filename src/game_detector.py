@@ -128,6 +128,11 @@ class GameDetector(QObject):
         if cfg.get("enabled", True):
             self._timer.start(poll_seconds * 1000)
 
+    def is_topmost_guard_active(self):
+        """Public hook for TopmostKeeper: True while a game-egg temporary
+        topmost cycle is running."""
+        return self._presenter.is_guard_active()
+
     # ------------------------------------------------------------- pools
     _EXPECTED_POOLS = tuple(
         f"game_{key}_{suffix}" for key in GAME_KEYS for suffix in ("first", "launch", "launch_rare", "exit")

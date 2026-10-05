@@ -33,7 +33,9 @@ from flirt import FlirtController
 from game_detector import GameDetector
 from paths import ICON_PATH
 from pomodoro_display import PomodoroDisplay
+from topmost_keeper import TopmostKeeper
 from undertale_ui import VOLUME_TIERS, ClickableLabel
+from win_zorder import apply_topmost
 
 CLICK_MOVE_THRESHOLD = 4
 IDLE_FRAME_MS = 220
@@ -187,6 +189,13 @@ class PetWindow(QWidget):
         self._time_of_day_timer.timeout.connect(self.dm.check_time_of_day_triggers)
         self._time_of_day_timer.start(60_000)
 
+        self._topmost_keeper = TopmostKeeper(
+            self,
+            guard_active=self.game_detector.is_topmost_guard_active,
+            interval_ms=config.get("topmost_keep_interval_ms", 1000),
+        )
+        self._topmost_keeper.start()
+
         self._tray = QSystemTrayIcon(QIcon(str(ICON_PATH)), self)
         self._tray.setToolTip("Flowey")
         self._tray.activated.connect(self._on_tray_activated)
@@ -215,10 +224,7 @@ class PetWindow(QWidget):
         self._always_on_top = checked
         self.config["always_on_top"] = checked
         self.save_config(self.config)
-        was_visible = self.isVisible()
-        self.setWindowFlags(self._window_flags())
-        if was_visible:
-            self.show()
+        apply_topmost(self, checked)
         self.dialogue_box.set_always_on_top(checked)
         self.pomodoro_display.set_always_on_top(checked)
         self.arbiter.finish_feature("pin", lambda: self.dm.trigger_menu_flavor("pin_on" if checked else "pin_off"))
@@ -1275,4 +1281,5 @@ class PetWindow(QWidget):
 
     def _quit_now(self):
         self._pending_quit = True
+        self._topmost_keeper.stop()
         QApplication.instance().quit()
