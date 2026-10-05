@@ -74,7 +74,6 @@ DEFAULTS = {
     "day_boundary_hour": 6,          # 0:00-this hour counts as "still last night" for the stats panel
     "session_gap_minutes": 90,        # activity gaps longer than this start a new session
     "morning_greet_probability": 0.2,  # odds of the "起这么早" line on a genuinely fresh early-morning boot
-    "version": "3.0.0",  # shown in the "查看信息" easter egg via {ver}; edit by hand to bump it
     "info_easter_egg": {
         "weights": {"normal_intro": 40, "fourth_wall": 30, "nonsense": 20, "rare": 10},
         "anti_spam_window_seconds": 60,

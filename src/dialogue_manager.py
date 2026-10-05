@@ -18,6 +18,7 @@ from datetime import datetime
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
 import anticheat
+import version
 from config import read_shadow_clicks, write_shadow_clicks
 from error_log import log_exception, log_message
 from paths import DIALOGUE_ANTICHEAT_PATH, DIALOGUE_INFO_PATH, DIALOGUE_PATH, DIALOGUE_SYSTEM_PATH
@@ -643,7 +644,7 @@ class DialogueManager(QObject):
         if "{duration}" in text:
             text = text.replace("{duration}", self._session_duration_str())
         if "{ver}" in text:
-            text = text.replace("{ver}", str(self.config.get("version", "?")))
+            text = text.replace("{ver}", version.VERSION)
         if "{days}" in text:
             text = text.replace("{days}", str(self._days_since_install()))
         if "{clicks}" in text:
