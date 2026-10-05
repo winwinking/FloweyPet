@@ -20,7 +20,7 @@ def log_event(message):
         _prune(now)
         with open(LOG_PATH, "a", encoding="utf-8") as f:
             f.write(line)
-    except OSError:
+    except (OSError, ValueError):
         pass
 
 
@@ -29,9 +29,9 @@ def _prune(now):
         return
     cutoff = now - timedelta(days=RETENTION_DAYS)
     try:
-        with open(LOG_PATH, "r", encoding="utf-8") as f:
+        with open(LOG_PATH, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
-    except OSError:
+    except (OSError, ValueError):
         return
     kept = [ln for ln in lines if _within_retention(ln, cutoff)]
     if len(kept) != len(lines):
