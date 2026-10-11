@@ -24,6 +24,7 @@ DEFAULTS = {
     "lock_disable_drag": False,   # 锁定时是否额外禁止拖动桌宠本体（默认允许拖动，锁定后仍可移动位置）
     "lock_hint_click_threshold": 10,  # 锁定期间点击桌宠本体累计这么多次，播一句"我被锁住了"提示
     "lock_hint_cooldown_seconds": 300,  # 锁定提示台词的冷却
+    "lock_hotkey": "Ctrl+Alt+L",  # 全局热键：一键锁定(穿透)/强制解锁，见 hotkey.py；Ctrl/Alt/Shift/Win + 一个字母/数字/F1-F12
     "volume": 0.8,
     "muted": False,
     "menu_sfx_enabled": True,  # independent of "muted": only gates menu move/select blips
