@@ -7,6 +7,8 @@ The menu is defined as a plain list of dicts (`_build_menu_spec`) so adding
 a future item -- a minigame, say -- is a one-line addition here, not new
 widget plumbing.
 """
+from PyQt6.QtCore import QTimer
+
 from undertale_ui import (
     UndertalePopup,
     make_action_row,
@@ -35,6 +37,11 @@ def _build_menu_spec(pet):
             "label": "锁定",
             "get": lambda: pet._locked,
             "set": pet._toggle_lock,
+            # Unlike the other toggles (which leave the menu open so several
+            # can be flipped in a row), locking makes the pet click-through,
+            # so the menu must go away -- whether the lock was applied,
+            # refused by the arbiter's gates, or this was an unlock.
+            "close_after": True,
         },
         {
             "type": "toggle",
@@ -91,9 +98,23 @@ class PetContextMenu(UndertalePopup):
             if kind == "separator":
                 self.add_row(make_separator_row(metrics=self.metrics), selectable=False)
             elif kind == "toggle":
+                # Deferred with singleShot(0) so the menu closes after this
+                # click handler has returned, never from inside it. `pet`'s
+                # method is looked up lazily at that moment.
+                on_change = (
+                    (lambda: QTimer.singleShot(0, lambda: pet._close_active_popup()))
+                    if spec.get("close_after")
+                    else None
+                )
                 self.add_row(
                     make_toggle_row(
-                        spec["label"], spec["get"], spec["set"], self.font, audio=pet.audio, metrics=self.metrics
+                        spec["label"],
+                        spec["get"],
+                        spec["set"],
+                        self.font,
+                        audio=pet.audio,
+                        on_change=on_change,
+                        metrics=self.metrics,
                     )
                 )
             elif kind == "value_action":

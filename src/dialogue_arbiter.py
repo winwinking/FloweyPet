@@ -468,6 +468,17 @@ class DialogueArbiter(QObject):
         _wrap_lock_provider, so this can never get stuck True forever."""
         return monotonic() < self._lock["tantrum_until"]
 
+    def reset_lock_gates(self):
+        """Public hook for PetWindow._force_unlock (tray/hotkey emergency
+        exit): clears the two gates that can make the lock toggle refuse a
+        request -- the post-outburst tantrum zone and lock's own 0.5s
+        debounce cooldown -- so the very next toggle is never rejected. The
+        escalation counter and the rant cooldown are deliberately left
+        alone (they only shape what gets *said*), and no other feature's
+        state is touched."""
+        self._lock["tantrum_until"] = 0.0
+        self._feature("lock").pop("cooldown_until", None)
+
     def on_bubble_finished(self):
         """Call from PetWindow whenever ANY dialogue box content finishes
         (regardless of what it was -- a no-op unless it was one of our own

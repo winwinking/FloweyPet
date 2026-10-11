@@ -219,6 +219,10 @@ class PetWindow(QWidget):
     def _apply_click_through(self, on):
         for w in (self, self.dialogue_box, self.pomodoro_display):
             set_click_through(w, on)
+        # The tooltip's "（已锁定）" suffix follows the lock. Deferred to the event
+        # loop: QSystemTrayIcon.setToolTip talks to the shell, and the caller may
+        # be sitting inside the tray menu's own click dispatch.
+        QTimer.singleShot(0, self._refresh_tray_tooltip)
 
     def is_pinned_on_top(self):
         """Public hook for GameDetector/TopmostGuard: what the 右键菜单"置顶"
@@ -362,7 +366,10 @@ class PetWindow(QWidget):
 
     def _refresh_tray_tooltip(self):
         status = self.pomodoro.status_text()
-        self._tray.setToolTip(f"Flowey - {status}" if status else "Flowey")
+        text = f"Flowey - {status}" if status else "Flowey"
+        if self._locked:
+            text += "（已锁定）"
+        self._tray.setToolTip(text)
 
     def _on_pomodoro_tick(self):
         if self.pomodoro.is_running:
@@ -583,6 +590,14 @@ class PetWindow(QWidget):
         pin_action.setCheckable(True)
         pin_action.setChecked(self._always_on_top)
         pin_action.triggered.connect(self._toggle_always_on_top)
+
+        lock_action = menu.addAction("锁定")
+        lock_action.setCheckable(True)
+        lock_action.setChecked(self._locked)
+        lock_action.triggered.connect(self._on_tray_lock_triggered)
+        # The check mark is re-synced from the real state only here, every time
+        # the menu is about to open -- never from inside the click handler.
+        menu.aboutToShow.connect(lambda: lock_action.setChecked(self._locked))
 
         menu.addSeparator()
         pomo_menu = menu.addMenu("番茄钟")
@@ -805,6 +820,31 @@ class PetWindow(QWidget):
         if not checked:
             self._locked_click_count = 0
         self.arbiter.finish_feature("lock", lambda: self.dm.trigger_menu_flavor("lock_on" if checked else "lock_off"))
+
+    def _force_unlock(self):
+        """Emergency exit from click-through lock (tray menu / hotkey). Must
+        always succeed: it never goes through begin_feature or the tantrum
+        zone, doesn't speak and doesn't touch stats -- it just unlocks and
+        reopens the arbiter's lock gates so the next toggle isn't refused."""
+        self._locked = False
+        self._apply_click_through(False)
+        self._locked_click_count = 0
+        self.arbiter.reset_lock_gates()
+        dialogue_log.log_event("强制解锁（托盘/热键）")
+
+    def _on_tray_lock_triggered(self, checked):
+        """Tray menu 锁定 item: unlocking is the forced path (never
+        refused); locking goes through the normal arbiter flow (may be
+        refused during the debounce/tantrum gates).
+
+        Runs inside the tray menu's own click dispatch, so it only decides
+        what to do (from the lock state AT CLICK TIME) and defers the actual
+        lock/unlock -- which flips native window styles and touches the tray
+        icon -- to the next event-loop turn, after the menu has finished
+        closing. It does not touch the action's check mark either: that is
+        re-synced only by the menu's aboutToShow."""
+        was_locked = self._locked
+        QTimer.singleShot(0, self._force_unlock if was_locked else (lambda: self._toggle_lock(True)))
 
     def _set_volume(self, pct):
         # Continuous-style feature (reg 4): every call really applies the
