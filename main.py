@@ -11,7 +11,7 @@ from error_log import install_global_hook, log_exception
 
 install_global_hook()
 
-from config import load_config, read_autostart_command, read_shadow_clicks, save_config
+from config import load_config, read_autostart_command, read_shadow_clicks, save_config, sync_autostart
 from audio import AudioManager
 import app_log
 import audio_log
@@ -61,6 +61,16 @@ def main():
 
     config["_session_start"] = time.time()
     save_config(config)
+
+    # Keep the autostart entry pointing at this program. Must stay AFTER the
+    # migration above: migration reads the OLD autostart path to locate the
+    # old data folder, and this call overwrites that path.
+    try:
+        autostart_result = sync_autostart(config)
+        if autostart_result not in ("skipped_dev", "off"):
+            app_log.log_event(f"开机自启同步：{autostart_result}")
+    except Exception:
+        log_exception("sync_autostart")
 
     audio = AudioManager(
         volume=config.get("volume", 0.8),

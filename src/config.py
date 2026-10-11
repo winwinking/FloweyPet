@@ -181,7 +181,10 @@ def save_config(cfg):
 
 
 _RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-_RUN_NAME = "FloweyPet"
+# A source run and the packaged exe must not share one autostart entry:
+# otherwise toggling autostart from a source run would overwrite the exe's
+# entry with "python main.py" (and the exe's sync would overwrite it back).
+_RUN_NAME = "FloweyPetDev" if IS_DEV else "FloweyPet"
 
 
 def read_autostart_command():
@@ -195,13 +198,19 @@ def read_autostart_command():
         return None
 
 
-def set_autostart(enabled: bool):
+def _autostart_command():
+    """The command the Run key should hold for the program that is running now."""
     target = Path(sys.executable).resolve()
     if getattr(sys, "frozen", False):
-        command = f'"{target}"'
-    else:
-        main_py = Path(__file__).resolve().parent.parent / "main.py"
-        command = f'"{target}" "{main_py}"'
+        return f'"{target}"'
+    main_py = Path(__file__).resolve().parent.parent / "main.py"
+    return f'"{target}" "{main_py}"'
+
+
+def set_autostart(enabled: bool):
+    """Adds/removes the Run entry. True on success, False if the registry
+    refused (OSError)."""
+    command = _autostart_command()
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_SET_VALUE) as key:
             if enabled:
@@ -211,8 +220,29 @@ def set_autostart(enabled: bool):
                     winreg.DeleteValue(key, _RUN_NAME)
                 except FileNotFoundError:
                     pass
+        return True
     except OSError:
-        pass
+        return False
+
+
+def sync_autostart(config, read_command=None, write=None, expected=None, is_dev=None):
+    """At startup, if autostart is switched on, make sure the Run entry points
+    at the program that is running now (the folder may have moved or the exe
+    been replaced). Never turns autostart on or off by itself and never
+    raises. Returns "skipped_dev" | "off" | "ok" | "updated" | "failed"."""
+    try:
+        if (IS_DEV if is_dev is None else is_dev):
+            return "skipped_dev"
+        if config.get("autostart") is not True:
+            return "off"
+        current = (read_autostart_command if read_command is None else read_command)()
+        want = _autostart_command() if expected is None else expected
+        if isinstance(current, str) and current.strip().lower() == want.strip().lower():
+            return "ok"
+        ok = (set_autostart if write is None else write)(True)
+        return "updated" if ok else "failed"
+    except Exception:  # noqa: BLE001 - startup must never break on this
+        return "failed"
 
 
 # ------------------------------------------------------- anti-cheat shadow copy
