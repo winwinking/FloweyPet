@@ -15,9 +15,6 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
-# Local optional font (words.ttf) must never be shipped: drop it from the bundle.
-a.datas = [d for d in a.datas if d[0].replace(chr(92), '/') != 'assets/fonts/words.ttf']
-
 pyz = PYZ(a.pure)
 
 exe = EXE(
