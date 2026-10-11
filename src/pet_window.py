@@ -701,22 +701,42 @@ class PetWindow(QWidget):
 
     def _show_context_menu(self):
         from pet_menu import PetContextMenu
-        from undertale_ui import position_avoid_pet_and_bubble
 
         self._close_active_popup()
         menu = PetContextMenu(self, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
+        self._place_popup(menu)
+        self._active_popup = menu
+        menu.show()
+        menu.setFocus()
+
+    def _place_popup(self, popup, ref_h=None):
+        """The one placement rule for every popup (see
+        undertale_ui.position_avoid_pet_and_bubble). ref_h is the main
+        menu's height, so all popups agree on above/below/side."""
+        from undertale_ui import position_avoid_pet_and_bubble
+
         position_avoid_pet_and_bubble(
-            menu,
+            popup,
             self.x(),
             self.y(),
             self.width(),
             self.height(),
             self.dialogue_box,
             margin=self.config.get("panel_screen_margin", 8),
+            ref_h=ref_h,
         )
-        self._active_popup = menu
-        menu.show()
-        menu.setFocus()
+
+    def _main_menu_height(self):
+        """Height the main menu has right now (measured on a throwaway,
+        never-shown instance) -- the common yardstick for deciding whether
+        the pet hugs the top/bottom screen edge."""
+        from pet_menu import PetContextMenu
+
+        probe = PetContextMenu(self, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
+        probe.finish_layout()
+        height = probe.height()
+        probe.deleteLater()
+        return height
 
     def _open_menu_category(self, key):
         """Main menu's category row clicked: the row closes the main menu
@@ -726,7 +746,6 @@ class PetWindow(QWidget):
 
     def _show_category_popup(self, key):
         from pet_menu import CategoryPopup, find_category
-        from undertale_ui import position_avoid_pet_and_bubble
 
         if self._pending_quit:
             return
@@ -743,15 +762,7 @@ class PetWindow(QWidget):
                 lambda row: self.flirt.on_menu_selection_changed(row is box.flirt_row)
             )
             box.closed.connect(self.flirt.on_menu_closed)
-        position_avoid_pet_and_bubble(
-            box,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(box, ref_h=self._main_menu_height())
         self._active_popup = box
         box.show()
         box.setFocus()
@@ -931,7 +942,6 @@ class PetWindow(QWidget):
 
     @_guarded_menu_action("音量面板")
     def _open_volume_panel(self):
-        from undertale_ui import position_avoid_pet_and_bubble
         from volume_panel import VolumePanel
 
         self.stats.record_interaction()
@@ -944,15 +954,7 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(
-            panel,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(panel, ref_h=self._main_menu_height())
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -1036,7 +1038,6 @@ class PetWindow(QWidget):
     @_guarded_menu_action("大小面板")
     def _open_size_panel(self):
         from size_panel import SizePanel
-        from undertale_ui import position_avoid_pet_and_bubble
 
         self.stats.record_interaction()
         self._close_active_popup()
@@ -1049,15 +1050,7 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(
-            panel,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(panel, ref_h=self._main_menu_height())
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -1084,7 +1077,6 @@ class PetWindow(QWidget):
     @_guarded_menu_action("提醒设置")
     def _open_reminder_settings(self):
         from reminder_settings import ReminderPanel
-        from undertale_ui import position_avoid_pet_and_bubble
 
         self.stats.record_interaction()
         # Opening the panel always works (it's a view, not a persistent
@@ -1098,15 +1090,7 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(
-            panel,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(panel, ref_h=self._main_menu_height())
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -1232,7 +1216,6 @@ class PetWindow(QWidget):
     def _open_stats_panel(self):
         import roast
         from stats_panel import StatsPanel
-        from undertale_ui import position_avoid_pet_and_bubble
 
         self.stats.record_interaction()
         self._close_active_popup()
@@ -1262,15 +1245,7 @@ class PetWindow(QWidget):
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
         panel.closed.connect(self._on_stats_panel_closed)
-        position_avoid_pet_and_bubble(
-            panel,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(panel, ref_h=self._main_menu_height())
         self._active_popup = panel
         panel.show()
         panel.setFocus()

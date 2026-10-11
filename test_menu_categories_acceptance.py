@@ -96,7 +96,7 @@ def make_pet(flirt=None):
         pet.flirt = flirt
     for name in (
         "_show_context_menu", "_open_menu_category", "_show_category_popup",
-        "_back_to_main_menu", "_close_active_popup",
+        "_back_to_main_menu", "_close_active_popup", "_place_popup", "_main_menu_height",
     ):
         setattr(pet, name, getattr(PetWindow, name).__get__(pet))
     return pet
@@ -354,8 +354,14 @@ def make_bubble(visible):
     return b
 
 
+_main_probe = PetContextMenu(make_pet())
+_main_probe.finish_layout()
+MAIN_H = _main_probe.height()  # the yardstick every popup uses (see PetWindow._main_menu_height)
+_main_probe.close()
+
+
 def placed(popup, px, py, bubble_visible=False):
-    undertale_ui.position_avoid_pet_and_bubble(popup, px, py, PW, PH, make_bubble(bubble_visible), margin=MARGIN)
+    undertale_ui.position_avoid_pet_and_bubble(popup, px, py, PW, PH, make_bubble(bubble_visible), margin=MARGIN, ref_h=MAIN_H)
     return popup.x(), popup.y()
 
 
@@ -391,11 +397,18 @@ try:
         popup.close()
 
     # a tall box near the bottom is nudged up to stay on screen, and still sits on the right
+    # (old: "高的小框仍在右边,只是向上夹紧" at pet y=800. New rule: judged by the MAIN MENU's
+    # height -- at y=800 the main menu still fits beside the pet, so nothing hugs the edge and the
+    # tall box stays on the right, nudged up; with the pet really on the bottom edge (y=828) the
+    # main menu would be squeezed, so the tall box goes directly above the pet.)
     tall = CategoryPopup(make_pet(), find_category(make_pet(), "save"))
     px3, py3 = 870, 800
     x, y = placed(tall, px3, py3)
-    check("靠近屏幕底部: 高的小框仍在右边,只是向上夹紧", x == px3 + PW + GAP and y + tall.height() <= SCREEN.bottom() + 1 - MARGIN + 1 and y < py3,
-          f"x={x} y={y} h={tall.height()}")
+    check("靠近屏幕底部但主菜单仍放得下: 高的小框仍在右边,只是向上夹紧",
+          x == px3 + PW + GAP and y < py3 and y + tall.height() <= SCREEN.bottom() + 1 - MARGIN, f"x={x} y={y} h={tall.height()}")
+    py4 = SCREEN.height() - PH  # pet on the bottom edge: the main menu would be squeezed
+    x, y = placed(tall, px3, py4)
+    check("贴下沿: 高的小框放在小花正上方", x == px3 + (PW - tall.width()) // 2 and y + tall.height() + GAP == py4, f"x={x} y={y} h={tall.height()}")
     tall.close()
 
     # the bubble area only counts while the bubble is showing
@@ -410,6 +423,85 @@ try:
 finally:
     undertale_ui.screen_available_rect = _orig_screen
     undertale_ui._bubble_rect = _orig_bubble_rect
+
+# ===================================================================== 13
+# Placement, vertical rule: squeezed against the top edge -> directly below the
+# pet; against the bottom edge -> directly above; otherwise unchanged.
+undertale_ui.screen_available_rect = lambda *a, **k: SCREEN
+try:
+    cases = {
+        "屏幕中间": ((870, 414), "right"),
+        "贴右边缘": ((1920 - PW - 40, 500), "left"),
+        "贴上沿": ((870, 0), "below"),
+        "贴下沿": ((870, SCREEN.height() - PH), "above"),
+        "贴上沿又贴右边缘": ((1920 - PW - 40, 0), "below"),
+        "贴下沿又贴右边缘": ((1920 - PW - 40, SCREEN.height() - PH), "above"),
+    }
+    for case, ((cx, cy), want) in cases.items():
+        for name, popup in all_popups():
+            x, y = placed(popup, cx, cy, bubble_visible=False)
+            w_, h_ = popup.width(), popup.height()
+            want_here = want  # every popup follows the main menu's verdict, whatever its own height
+            got = ("right" if x == cx + PW + GAP else
+                   "left" if x + w_ + GAP == cx else
+                   "below" if (y == cy + PH + GAP and x == cx + (PW - w_) // 2) else
+                   "above" if (y + h_ + GAP == cy and x == cx + (PW - w_) // 2) else f"其它({x},{y})")
+            check(f"{case}: {name}在小花{ {'right': '右', 'left': '左', 'below': '下', 'above': '上'}[want_here] }方", got == want_here, f"实际 {got}; x={x} y={y} {w_}x{h_}")
+            check(f"{case}: {name}完全在屏幕可用区内(留 {MARGIN}px 边距)",
+                  QRect(x, y, w_, h_) == undertale_ui.clamp_rect_to_screen(QRect(x, y, w_, h_), SCREEN, MARGIN))
+            check(f"{case}: {name}不压在小花身上", not QRect(x, y, w_, h_).intersects(QRect(cx, cy, PW, PH)))
+            popup.close()
+
+    # at the top edge the bubble is off-screen/above anyway: below works with it showing, too
+    for name, popup in all_popups():
+        x, y = placed(popup, 870, 0, bubble_visible=True)
+        check(f"贴上沿(气泡显示): {name}仍在小花下方", y == 0 + PH + GAP, f"y={y}")
+        popup.close()
+
+    # at the bottom edge "above" is where the visible bubble sits: it must not be
+    # chosen over the bubble; whatever is picked stays on screen and off the pet
+    for name, popup in all_popups():
+        x, y = placed(popup, 870, SCREEN.height() - PH, bubble_visible=True)
+        r = QRect(x, y, popup.width(), popup.height())
+        bubble = undertale_ui._bubble_rect(870, SCREEN.height() - PH, PW, make_bubble(True))
+        check(f"贴下沿(气泡显示): {name}不放在小花正上方(那是气泡的位置)", not (y + popup.height() + GAP == SCREEN.height() - PH and x == 870 + (PW - popup.width()) // 2) or not r.intersects(bubble))
+        check(f"贴下沿(气泡显示): {name}不压在小花身上", not r.intersects(QRect(870, SCREEN.height() - PH, PW, PH)))
+        popup.close()
+finally:
+    undertale_ui.screen_available_rect = _orig_screen
+
+# ===================================================================== 14
+# The real PetWindow path (_show_context_menu / _show_category_popup / back):
+# the pet hugging the top or bottom edge puts the menu AND every box on the same
+# side, so forward / back never jumps.
+undertale_ui.screen_available_rect = lambda *a, **k: SCREEN
+try:
+    for case, (cx, cy), side in (("贴上沿", (870, 0), "below"), ("贴下沿", (870, SCREEN.height() - PH), "above"),
+                                 ("屏幕中间", (870, 414), "right")):
+        pet = make_pet()
+        pet.x.return_value, pet.y.return_value = cx, cy
+        pet.dialogue_box.isVisible.return_value = False  # no bubble showing
+        pet._show_context_menu()
+        main = pet._active_popup
+        spots = {"主菜单": (main.x(), main.y(), main.width(), main.height())}
+        main.close()
+        for key, label in LABEL.items():
+            pet._show_category_popup(key)
+            box = pet._active_popup
+            spots[f"「{label}」小框"] = (box.x(), box.y(), box.width(), box.height())
+            box.close()
+        for name, (x, y, w_, h_) in spots.items():
+            got = ("right" if x == cx + PW + GAP else "below" if y == cy + PH + GAP else
+                   "above" if y + h_ + GAP == cy else f"其它({x},{y})")
+            check(f"真实流程·{case}: {name}在小花{side}", got == side, f"实际 {got}")
+        if side == "right":
+            check(f"真实流程·{case}: 主菜单与小框左边缘一致", len({v[0] for v in spots.values()}) == 1, str(spots))
+        else:
+            tops = {v[0] + v[2] // 2 for v in spots.values()}
+            check(f"真实流程·{case}: 主菜单与小框水平居中在小花上", tops == {cx + PW // 2}, str(spots))
+        close_all()
+finally:
+    undertale_ui.screen_available_rect = _orig_screen
 
 print()
 if FAILURES:
