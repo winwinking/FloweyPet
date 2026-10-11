@@ -9,7 +9,7 @@ import sys
 import winreg
 from pathlib import Path
 
-from paths import CONFIG_PATH
+from paths import CONFIG_PATH, IS_DEV
 
 DEFAULTS = {
     "position": None,  # None => PetWindow picks a sensible on-screen default
@@ -186,14 +186,16 @@ def set_autostart(enabled: bool):
 
 
 # ------------------------------------------------------- anti-cheat shadow copy
-# total_clicks lives in config.json, which sits right next to the exe where
-# anyone can open and hand-edit it. To detect that, we keep a second copy
+# total_clicks lives in config.json, in the per-user data directory
+# (paths.USER_DATA_DIR) where anyone can open and hand-edit it. To detect that, we keep a second copy
 # somewhere a casual editor won't think to look or touch alongside it: the
 # registry, under the same HKCU root the autostart key above already uses.
 # Only the app's own legitimate click-increment path writes this -- see
 # anticheat.py's SaveTamperGuard, which compares the two at every startup.
 _ANTICHEAT_KEY = r"Software\FloweyPet"
-_ANTICHEAT_VALUE = "ShadowTotalClicks"
+# Source runs and the packaged exe must not share one shadow value: they keep
+# separate config.json files, so a shared value would look like tampering.
+_ANTICHEAT_VALUE = "ShadowTotalClicksDev" if IS_DEV else "ShadowTotalClicks"
 
 
 def read_shadow_clicks():

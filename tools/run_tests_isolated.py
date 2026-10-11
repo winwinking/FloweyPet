@@ -13,8 +13,8 @@ Redirected log writers (src/):
     reminder_log.LOG_PATH   C:\FloweyPet\reminder.log (also via env FLOWEYPET_REMINDER_LOG,
                             which test_chase_acceptance.py otherwise points at
                             <repo>/test_acceptance_reminder.log)
-Not redirected (they live in the repo dir, git-ignored, never in C:\FloweyPet):
-    config.json / stats.json  (paths.CONFIG_PATH / STATS_PATH)
+config.json / stats.json (paths.CONFIG_PATH / STATS_PATH) are redirected too, via
+the FLOWEYPET_DATA_DIR env var pointing at a <temp>/data subdirectory.
 
 Usage (from the repo root):
     python tools/run_tests_isolated.py [--out DIR]     # all tests, chase last
@@ -50,8 +50,11 @@ def _main(out_dir):
     log_dir = tempfile.mkdtemp(prefix="floweypet_isolated_")
     out = Path(out_dir) if out_dir else Path(log_dir)
     out.mkdir(parents=True, exist_ok=True)
+    data_dir = Path(log_dir) / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, QT_QPA_PLATFORM="offscreen", PYTHONIOENCODING="utf-8",
-               FLOWEYPET_REMINDER_LOG=str(Path(log_dir) / "reminder.log"))
+               FLOWEYPET_REMINDER_LOG=str(Path(log_dir) / "reminder.log"),
+               FLOWEYPET_DATA_DIR=str(data_dir))
     print(f"isolated log dir: {log_dir}")
     rows = []
     for t in tests:
