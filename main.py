@@ -11,7 +11,7 @@ from error_log import install_global_hook, log_exception
 
 install_global_hook()
 
-from config import load_config, read_autostart_command, read_shadow_clicks, save_config, sync_autostart
+from config import load_config, read_autostart_command, read_shadow_clicks, save_config, sync_autostart, write_shadow_clicks
 from audio import AudioManager
 import app_log
 import audio_log
@@ -54,7 +54,8 @@ def main():
         # (e.g. the one the autostart entry points at), not beside this one.
         fallback_dirs = [] if IS_DEV else [autostart_exe_dir(read_autostart_command())]
         legacy_config, legacy_stats, source_dir = pick_legacy_source(APP_DIR, fallback_dirs)
-        result = migrate_legacy_data(USER_DATA_DIR, legacy_config, legacy_stats, read_shadow_clicks)
+        result = migrate_legacy_data(USER_DATA_DIR, legacy_config, legacy_stats, read_shadow_clicks,
+                                       write_shadow=write_shadow_clicks)
         app_log.log_event(f"数据迁移：{result}（数据目录 {USER_DATA_DIR}，旧数据来源 {source_dir}）")
     except Exception:
         log_exception("migrate_legacy_data")

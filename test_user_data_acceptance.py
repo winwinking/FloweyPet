@@ -319,6 +319,75 @@ py_dir = mkdir_with(root, "pydir", files=())
 c, s_, src = pick_legacy_source(prim2, [autostart_exe_dir('"%s" "main.py"' % (py_dir / "python.exe"))])
 check("pick: 源码版自启命令的文件夹没有数据文件 -> 跳过", src == prim2)
 
+# ------------------------------------------------------------------ 13
+# Shadow lifted to the imported click count (write_shadow)
+def run_ws(data, lc, ls, shadow, calls):
+    return migrate_legacy_data(data, lc, ls, lambda: shadow, calls.append)
+
+
+def legacy_with(clicks):
+    data, lc, ls, root = sandbox()
+    lc.write_text(json.dumps({"total_clicks": clicks}), encoding="utf-8")
+    return data, lc, ls
+
+
+data, lc, ls = legacy_with(900)
+calls = []
+run_ws(data, lc, ls, 500, calls)
+check("write_shadow: shadow 小于文件值 -> 文件不变", read_json(data / "config.json")["total_clicks"] == 900)
+check("write_shadow: shadow 小于文件值 -> 调用一次,参数是文件值", calls == [900], str(calls))
+
+data, lc, ls = legacy_with(10)
+calls = []
+run_ws(data, lc, ls, 500, calls)
+check("write_shadow: shadow 大于文件值 -> 文件改成 shadow", read_json(data / "config.json")["total_clicks"] == 500)
+check("write_shadow: shadow 大于文件值 -> 不调用", calls == [], str(calls))
+
+data, lc, ls = legacy_with(500)
+calls = []
+run_ws(data, lc, ls, 500, calls)
+check("write_shadow: 相等 -> 文件不动且不调用", read_json(data / "config.json")["total_clicks"] == 500 and calls == [])
+
+data, lc, ls = legacy_with(900)
+calls = []
+run_ws(data, lc, ls, None, calls)
+check("write_shadow: shadow 为 None -> 不调用", calls == [], str(calls))
+check("write_shadow: shadow 为 None -> 文件不动", read_json(data / "config.json")["total_clicks"] == 900)
+
+data, lc, ls, root = sandbox()
+calls = []
+r = run_ws(data, lc, ls, None, calls)
+check("情况B 前置: 先 fresh", r == "fresh" and marker(data)["state"] == "fresh", r)
+(data / "config.json").write_text(json.dumps({"total_clicks": 3}), encoding="utf-8")
+lc.write_text(json.dumps({"total_clicks": 5000}), encoding="utf-8")
+r = run_ws(data, lc, ls, 3, calls)
+check("情况B: 返回 late_import", r == "late_import", r)
+check("情况B: 文件是 5000", read_json(data / "config.json")["total_clicks"] == 5000)
+check("情况B: write_shadow(5000) 被调用", calls == [5000], str(calls))
+
+data, lc, ls = legacy_with(900)
+try:
+    r = migrate_legacy_data(data, lc, ls, lambda: 500)
+    ok = r == "imported" and read_json(data / "config.json")["total_clicks"] == 900
+except Exception as e:  # noqa: BLE001
+    ok = False
+    r = repr(e)
+check("write_shadow: 不传 -> 行为与原来一致,不报错", ok, str(r))
+data, lc, ls = legacy_with(10)
+r = migrate_legacy_data(data, lc, ls, lambda: 500)
+check("write_shadow: 不传时 shadow 大于文件值仍抬文件", read_json(data / "config.json")["total_clicks"] == 500)
+
+data, lc, ls, root = sandbox()
+lc.write_text(json.dumps({"total_clicks": "abc"}), encoding="utf-8")
+calls = []
+run_ws(data, lc, ls, 500, calls)
+check("write_shadow: total_clicks 不是整数 -> 不调用", calls == [], str(calls))
+data, lc, ls, root = sandbox()
+lc.write_text(json.dumps({"total_clicks": True}), encoding="utf-8")
+calls = []
+run_ws(data, lc, ls, 500, calls)
+check("write_shadow: total_clicks 是 bool -> 不调用", calls == [], str(calls))
+
 print()
 if FAILURES:
     print(f"共 {len(FAILURES)} 项失败")

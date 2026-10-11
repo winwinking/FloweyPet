@@ -90,9 +90,20 @@ def _read_marker_state(data_dir):
         return None
 
 
-def _align_shadow(config_path, read_shadow):
-    """Raise total_clicks to the registry shadow value if the copied file is
-    below it (a stale/older config must not read as tampering later)."""
+def _align_shadow(config_path, read_shadow, write_shadow=None):
+    """Make the copied config's total_clicks and the registry shadow value
+    agree on max(file, shadow).
+
+    File below shadow: raise the file (a stale/older config must not read as
+    tampering later). Shadow below file: raise the shadow through
+    write_shadow. Without that, a user who first ran the new version (fresh
+    data, shadow set to a small number by their clicks) and then imported
+    the old record would see the imported total_clicks far above the shadow,
+    and the anti-cheat would call it tampering and reset the clicks.
+
+    Cost: on the one migration run we trust the click count in the legacy
+    file. Shadow None means no baseline yet: touch nothing, the anti-cheat
+    builds its own at startup."""
     shadow = read_shadow()
     if shadow is None:
         return
@@ -104,10 +115,15 @@ def _align_shadow(config_path, read_shadow):
     if not isinstance(cfg, dict):
         return
     clicks = cfg.get("total_clicks")
-    if isinstance(clicks, bool) or not isinstance(clicks, int) or clicks >= shadow:
+    if (isinstance(clicks, bool) or not isinstance(clicks, int)
+            or isinstance(shadow, bool) or not isinstance(shadow, int)):
         return
-    cfg["total_clicks"] = shadow
-    atomic_write_json(config_path, cfg)
+    final = max(clicks, shadow)
+    if clicks < final:
+        cfg["total_clicks"] = final
+        atomic_write_json(config_path, cfg)
+    if shadow < final and write_shadow is not None:
+        write_shadow(final)
 
 
 def autostart_exe_dir(command):
@@ -164,7 +180,7 @@ def pick_legacy_source(primary_dir, fallback_dirs):
     return primary_dir / "config.json", primary_dir / "stats.json", primary_dir
 
 
-def migrate_legacy_data(data_dir, legacy_config, legacy_stats, read_shadow):
+def migrate_legacy_data(data_dir, legacy_config, legacy_stats, read_shadow, write_shadow=None):
     data_dir.mkdir(parents=True, exist_ok=True)
     legacy = {"config.json": legacy_config, "stats.json": legacy_stats}
     legacy_present = [n for n in NAMES if legacy[n].exists()]
@@ -174,7 +190,7 @@ def migrate_legacy_data(data_dir, legacy_config, legacy_stats, read_shadow):
         for n in legacy_present:
             shutil.copy2(legacy[n], data_dir / n)
         if "config.json" in legacy_present:
-            _align_shadow(data_dir / "config.json", read_shadow)
+            _align_shadow(data_dir / "config.json", read_shadow, write_shadow)
         _write_marker(data_dir, "imported")
 
     if not has_data:
