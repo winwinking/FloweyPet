@@ -18,6 +18,7 @@ FACES_DIR = ASSETS_DIR / "faces"
 APPEAR_DIR = ASSETS_DIR / "appear"
 APPEAR_NEUTRAL_DIR = ASSETS_DIR / "appear_neutral"
 IDLE_DIR = ASSETS_DIR / "idle"
+IDLE_STILL_DIR = ASSETS_DIR / "idle_still"  # single still frame shown when the idle animation is switched off
 SOUNDS_DIR = ASSETS_DIR / "sounds"
 SFX_DIR = ASSETS_DIR / "sfx"  # Undertale-menu move/select blips (see undertale_ui.py)
 FONTS_DIR = ASSETS_DIR / "fonts"

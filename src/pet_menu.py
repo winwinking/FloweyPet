@@ -55,6 +55,12 @@ def _build_menu_spec(pet):
             "get": lambda: pet.config.get("menu_sfx_enabled", True),
             "set": pet._toggle_menu_sfx,
         },
+        {
+            "type": "toggle",
+            "label": "待机动作",
+            "get": lambda: pet.config.get("idle_animation", True),
+            "set": lambda checked: pet._toggle_idle_animation(checked),  # looked up on click, not at menu build
+        },
         {"type": "action", "label": "番茄钟", "action": pet._toggle_pomodoro_from_menu},
         {"type": "action", "label": "提醒设置", "action": pet._open_reminder_settings},
         {"type": "action", "label": "记录", "action": pet._open_stats_panel},

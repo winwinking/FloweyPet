@@ -314,12 +314,18 @@ class PetWindow(QWidget):
     def _enter_idle(self):
         self.state = State.IDLE
         self._idle_idx = 0
-        self._set_base_pixmap(self.sprites.idle_frames[0])
-        self._idle_timer.start(IDLE_FRAME_MS)
+        if self.config.get("idle_animation", True):
+            self._set_base_pixmap(self.sprites.idle_frames[0])
+            self._idle_timer.start(IDLE_FRAME_MS)
+        else:
+            self._idle_timer.stop()
+            self._set_base_pixmap(self.sprites.still_frame)
         self._schedule_idle_chat()
         self._reschedule_afk_timers()
 
     def _advance_idle_frame(self):
+        if not self.config.get("idle_animation", True):
+            return
         if self.state != State.IDLE or self._dragging:
             return
         self._idle_idx = (self._idle_idx + 1) % len(self.sprites.idle_frames)
@@ -801,6 +807,19 @@ class PetWindow(QWidget):
         self.save_config(self.config)
         self.audio.set_menu_sfx_enabled(checked)
 
+    def _toggle_idle_animation(self, checked):
+        # Plain preference switch: no arbiter, no dialogue.
+        self.config["idle_animation"] = checked
+        self.save_config(self.config)
+        if self.state == State.IDLE:
+            self._idle_idx = 0
+            if checked:
+                self._set_base_pixmap(self.sprites.idle_frames[0])
+                self._idle_timer.start(IDLE_FRAME_MS)
+            else:
+                self._idle_timer.stop()
+                self._set_base_pixmap(self.sprites.still_frame)
+
     def _toggle_lock(self, checked):
         # Routed through DialogueArbiter same as pin/mute/hide/autostart,
         # but lock has its own dedicated 3-tier toggle-count escalation
@@ -927,6 +946,8 @@ class PetWindow(QWidget):
             self._exit_frames = frames
             idx = min(self._exit_idx, len(frames) - 1)
             return frames[idx]
+        if not self.config.get("idle_animation", True):
+            return self.sprites.still_frame
         idx = min(self._idle_idx, len(self.sprites.idle_frames) - 1)
         return self.sprites.idle_frames[idx]
 

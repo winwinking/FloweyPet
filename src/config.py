@@ -26,6 +26,7 @@ DEFAULTS = {
     "lock_hint_cooldown_seconds": 300,  # 锁定提示台词的冷却
     "volume": 0.8,
     "muted": False,
+    "idle_animation": True,  # False: idle shows one still frame instead of looping the 3 idle frames
     "menu_sfx_enabled": True,  # independent of "muted": only gates menu move/select blips
     "audio_debug": False,               # log every play attempt (not just failures/rebuilds) to audio.log
     "audio_watchdog_threshold": 5,      # consecutive play failures across all channels before a forced full rebuild
