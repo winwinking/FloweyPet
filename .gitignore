@@ -24,3 +24,4 @@ assets_backup/
 .idea/
 .vscode/
 Thumbs.db
+release/
