@@ -129,7 +129,7 @@ check("规格: 锁定=toggle,战斗=action,其余 4 项=category",
       [s["type"] for s in spec] == ["toggle", "action", "category", "category", "category", "category"])
 check("规格: 分类用嵌套列表(items)描述", all(isinstance(s["items"], list) and s["items"] for s in spec if s["type"] == "category"))
 menu = open_main(pet)
-check("主菜单: 显示的 6 行", popup_texts(menu) == ["锁定", "战斗", "行动 ▸", "物品 ▸", "存档点 ▸", "仁慈 ▸"], str(popup_texts(menu)))
+check("主菜单: 显示的 6 行", popup_texts(menu) == ["锁定", "战斗", "行动", "物品", "存档点", "仁慈"], str(popup_texts(menu)))
 check("主菜单: 是 PetContextMenu,且已打开", isinstance(menu, PetContextMenu) and menu.isVisible())
 check("主菜单: 没有调情行(已移到「行动」小框)", not hasattr(menu, "flirt_row"))
 close_all()
@@ -157,7 +157,7 @@ for key, items in EXPECT.items():
 # Main menu -> category: menu closes, box opens on the next tick, only one popup
 pet = make_pet()
 menu = open_main(pet)
-row_for(menu, "行动 ▸").activate()
+row_for(menu, "行动").activate()
 check("点分类: 主菜单立即关闭", menu.isVisible() is False)
 check("点分类: 点击处理返回时小框尚未打开(排队到下一个事件循环)", pet._active_popup is menu)
 pump()
@@ -170,9 +170,9 @@ close_all()
 for key, label in LABEL.items():
     pet = make_pet()
     menu = open_main(pet)
-    row_for(menu, label + " ▸").activate()
+    row_for(menu, label).activate()
     pump()
-    check(f"主菜单「{label} ▸」打开的是 {key} 小框", pet._active_popup.category_key == key)
+    check(f"主菜单「{label}」打开的是 {key} 小框", pet._active_popup.category_key == key)
     close_all()
 
 # ===================================================================== 4
@@ -281,7 +281,7 @@ def make_flirt_pet():
 
 pet, ctl, events = make_flirt_pet()
 menu = open_main(pet)
-row_for(menu, "行动 ▸").activate()
+row_for(menu, "行动").activate()
 pump()
 check("从主菜单点进「行动」: 不触发逃跑/抓包台词", events == [] and ctl.state == "idle", f"{events} {ctl.state}")
 box = pet._active_popup
@@ -333,6 +333,83 @@ check("fight 用的表情 evil 在 faces_manifest 里存在", fight[0]["face"] i
 # nested spec flattening keeps every leaf once
 leaves = [s.get("label") for s in iter_leaf_specs(pet_menu._build_menu_spec(make_pet())) if s["type"] != "separator"]
 check("展开后的叶子项: 16 项且无重复", len(leaves) == 16 and len(set(leaves)) == 16, str(leaves))
+
+# ===================================================================== 12
+# Placement: one rule for every popup -- right of the pet, top aligned with the
+# pet's top; left only if the right side doesn't fit the screen; then below.
+import undertale_ui  # noqa: E402
+from PyQt6.QtCore import QRect  # noqa: E402
+
+SCREEN = QRect(0, 0, 1920, 1040)
+PW, PH, GAP, MARGIN = 180, 212, undertale_ui.GAP_FROM_PET, 8
+_orig_screen = undertale_ui.screen_available_rect
+_orig_bubble_rect = undertale_ui._bubble_rect
+undertale_ui.screen_available_rect = lambda *a, **k: SCREEN
+
+
+def make_bubble(visible):
+    b = MagicMock()
+    b.width.return_value, b.height.return_value = 495, 112  # the real bubble size at 100% (2.75 x pet width)
+    b.isVisible.return_value = visible
+    return b
+
+
+def placed(popup, px, py, bubble_visible=False):
+    undertale_ui.position_avoid_pet_and_bubble(popup, px, py, PW, PH, make_bubble(bubble_visible), margin=MARGIN)
+    return popup.x(), popup.y()
+
+
+def all_popups():
+    pet_ = make_pet()
+    yield "主菜单", PetContextMenu(pet_)
+    for key, label in LABEL.items():
+        yield f"「{label}」小框", CategoryPopup(pet_, find_category(pet_, key))
+
+
+try:
+    # pet in the middle of the screen: right, top level with the pet, for every popup,
+    # bubble hidden or showing alike
+    px, py = 870, 414
+    right_x = px + PW + GAP
+    for name, popup in all_popups():
+        for shown in (False, True):
+            x, y = placed(popup, px, py, bubble_visible=shown)
+            check(f"屏幕中间(气泡{'显示' if shown else '隐藏'}): {name}在右边", x == right_x, f"x={x}, 期望 {right_x}")
+            check(f"屏幕中间(气泡{'显示' if shown else '隐藏'}): {name}顶部与小花顶部对齐", y == py, f"y={y}, 期望 {py}")
+        popup.close()
+
+    # same left edge for the menu and every box => no jumping when going back / opening a box
+    xs = {name: placed(popup, px, py)[0] for name, popup in all_popups()}
+    check("主菜单和四个小框的左边缘一致(返回/进入不跳位)", len(set(xs.values())) == 1, str(xs))
+
+    # pet against the right edge: right doesn't fit -> left, top aligned
+    px2, py2 = 1920 - PW - 40, 500  # the default start position's x
+    for name, popup in all_popups():
+        x, y = placed(popup, px2, py2)
+        check(f"靠右边缘: {name}在左边", x + popup.width() + GAP == px2, f"x={x} w={popup.width()}")
+        check(f"靠右边缘: {name}顶部与小花顶部对齐", y == py2, f"y={y}")
+        popup.close()
+
+    # a tall box near the bottom is nudged up to stay on screen, and still sits on the right
+    tall = CategoryPopup(make_pet(), find_category(make_pet(), "save"))
+    px3, py3 = 870, 800
+    x, y = placed(tall, px3, py3)
+    check("靠近屏幕底部: 高的小框仍在右边,只是向上夹紧", x == px3 + PW + GAP and y + tall.height() <= SCREEN.bottom() + 1 - MARGIN + 1 and y < py3,
+          f"x={x} y={y} h={tall.height()}")
+    tall.close()
+
+    # the bubble area only counts while the bubble is showing
+    menu_ = PetContextMenu(make_pet())
+    blocker = QRect(px + PW, py - 20, 600, PH + 40)  # a "bubble" area sitting right where the right candidate would go
+    undertale_ui._bubble_rect = lambda *a, **k: blocker
+    x_hidden, _ = placed(menu_, px, py, bubble_visible=False)
+    x_shown, _ = placed(menu_, px, py, bubble_visible=True)
+    check("气泡隐藏: 即使它的区域挡在右边,也不影响右边判定", x_hidden == right_x, f"x={x_hidden}")
+    check("气泡显示: 它的区域挡住右边时,右边被让出", x_shown != right_x, f"x={x_shown}")
+    menu_.close()
+finally:
+    undertale_ui.screen_available_rect = _orig_screen
+    undertale_ui._bubble_rect = _orig_bubble_rect
 
 print()
 if FAILURES:

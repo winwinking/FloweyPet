@@ -658,37 +658,48 @@ def _bubble_rect(pet_x, pet_y, pet_w, dialogue_box):
 
 
 def position_avoid_pet_and_bubble(popup, pet_x, pet_y, pet_w, pet_h, dialogue_box, gap=GAP_FROM_PET, margin=0):
-    """Tries beside the pet (right, then left, then below) in turn, taking
-    the first candidate that both fits on screen and doesn't overlap the pet
-    body or the dialogue bubble's display area. If none fit cleanly, falls
-    back to a screen-clamped position nudged clear of the bubble -- covering
-    the bubble is the one thing this never allows. `margin` (config's
-    panel_screen_margin) is extra safety padding kept clear of the screen
-    edge itself, on top of never overlapping the pet/bubble."""
+    """One placement rule for every popup (main menu, category boxes, the
+    volume/size/reminder/stats panels), so moving between them never makes
+    the popup jump around.
+
+    Right of the pet first, top edge level with the pet's top (nudged up
+    only as far as needed to stay on screen -- a vertical nudge never
+    disqualifies it); then left, same rule; then below the pet. A side
+    candidate is used if it fits horizontally inside the screen's available
+    area and overlaps neither the pet nor -- only while the bubble is
+    actually showing -- the dialogue bubble's area. The pet and the bubble
+    are tested separately (never their united bounding box, which would also
+    swallow the empty space beside the pet under a wide bubble). If nothing
+    fits cleanly, falls back to a screen-clamped position nudged clear of the
+    visible bubble. `margin` (config's panel_screen_margin) is extra safety
+    padding kept clear of the screen edge itself."""
     popup.finish_layout()
     screen = screen_available_rect(pet_x, pet_y, pet_w, pet_h)
     w, h = popup.width(), popup.height()
 
     pet_rect = QRect(pet_x, pet_y, pet_w, pet_h)
     bubble_rect = _bubble_rect(pet_x, pet_y, pet_w, dialogue_box)
-    forbidden = pet_rect.united(bubble_rect)
+    bubble_shown = dialogue_box.isVisible()
 
-    y_centered = pet_y + (pet_h - h) // 2
-    candidates = [
-        QRect(pet_x + pet_w + gap, y_centered, w, h),  # right
-        QRect(pet_x - gap - w, y_centered, w, h),  # left
-        QRect(pet_x + (pet_w - w) // 2, pet_y + pet_h + gap, w, h),  # below
-    ]
+    def blocked(rect):
+        return rect.intersects(pet_rect) or (bubble_shown and rect.intersects(bubble_rect))
 
-    for rect in candidates:
-        clamped = clamp_rect_to_screen(rect, screen, margin)
-        fits_on_screen = clamped == rect
-        if fits_on_screen and not clamped.intersects(forbidden):
+    right = QRect(pet_x + pet_w + gap, pet_y, w, h)
+    left = QRect(pet_x - gap - w, pet_y, w, h)
+    below = QRect(pet_x + (pet_w - w) // 2, pet_y + pet_h + gap, w, h)
+
+    for side in (right, left):
+        clamped = clamp_rect_to_screen(side, screen, margin)
+        if clamped.x() == side.x() and not blocked(clamped):
             popup.move(clamped.x(), clamped.y())
             return
+    clamped = clamp_rect_to_screen(below, screen, margin)
+    if clamped == below and not blocked(clamped):
+        popup.move(clamped.x(), clamped.y())
+        return
 
-    fallback = clamp_rect_to_screen(candidates[0], screen, margin)
-    if fallback.intersects(bubble_rect):
+    fallback = clamp_rect_to_screen(right, screen, margin)
+    if bubble_shown and fallback.intersects(bubble_rect):
         new_y = min(screen.y() + screen.height() - h - margin, bubble_rect.y() + bubble_rect.height() + gap)
         fallback = QRect(fallback.x(), new_y, w, h)
     if fallback.intersects(pet_rect):

@@ -4,7 +4,7 @@ tray's context menu is a different surface and keeps its native QMenu --
 Windows renders that one itself, outside our control).
 
 Two layers, Undertale battle-menu style. The main menu (PetContextMenu) has
-a few direct items plus category rows ("行动 ▸" ...); clicking a category
+a few direct items plus category rows ("行动" ...); clicking a category
 closes the main menu and opens that category's small box (CategoryPopup) --
 still only ONE popup at a time (PetWindow._active_popup). The box's first
 row is "< 返回" (also Esc), which reopens the main menu.
@@ -24,7 +24,6 @@ from undertale_ui import (
     make_value_action_row,
 )
 
-CATEGORY_MARK = " ▸"   # shown after a category's label on the main menu
 BACK_LABEL = "< 返回"
 
 
@@ -192,7 +191,7 @@ def _add_spec_rows(popup, pet, items):
             key = spec["key"]
             popup.add_row(
                 make_action_row(
-                    spec["label"] + CATEGORY_MARK,
+                    spec["label"],
                     lambda key=key: pet._open_menu_category(key),
                     popup.font,
                     audio=pet.audio,
