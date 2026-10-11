@@ -4,24 +4,50 @@ from PyQt6.QtGui import QFontDatabase, QFont
 from paths import FONT_DIR, FONTS_DIR
 
 _family = None
+_families = None
 _dseg7_family = None
 _dseg7_is_fallback = False
 _dseg7_warned = False
+
+
+def _load_family(path):
+    font_id = QFontDatabase.addApplicationFont(str(path))
+    families = QFontDatabase.applicationFontFamilies(font_id)
+    return families[0] if families else None
+
+
+def load_pixel_font_families():
+    """[primary, fallback]. If the optional local assets/fonts/words.ttf is
+    present and loads, it is primary and fusion-pixel is the fallback for
+    glyphs words.ttf lacks; otherwise just fusion-pixel (else Consolas)."""
+    global _families
+    if _families is not None:
+        return _families
+    fusion = _load_family(FONTS_DIR / "fusion-pixel.ttf")
+    words_path = FONTS_DIR / "words.ttf"
+    words = _load_family(words_path) if words_path.exists() else None
+    if words and fusion and words != fusion:
+        _families = [words, fusion]
+    elif words:
+        _families = [words]
+    else:
+        _families = [fusion or "Consolas"]
+    return _families
 
 
 def load_pixel_font_family():
     global _family
     if _family is not None:
         return _family
-    font_path = FONTS_DIR / "fusion-pixel.ttf"
-    font_id = QFontDatabase.addApplicationFont(str(font_path))
-    families = QFontDatabase.applicationFontFamilies(font_id)
-    _family = families[0] if families else "Consolas"
+    _family = load_pixel_font_families()[0]
     return _family
 
 
 def pixel_font(point_size: int) -> QFont:
-    font = QFont(load_pixel_font_family())
+    families = load_pixel_font_families()
+    font = QFont(families[0])
+    if len(families) > 1:
+        font.setFamilies(families)
     font.setPixelSize(point_size)
     font.setStyleStrategy(QFont.StyleStrategy.NoAntialias)
     return font

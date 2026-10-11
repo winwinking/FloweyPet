@@ -23,3 +23,6 @@ assets_backup/
 .idea/
 .vscode/
 Thumbs.db
+
+# Local optional font (not redistributable; never ship)
+assets/fonts/words.ttf
