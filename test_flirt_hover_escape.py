@@ -185,6 +185,7 @@ class FakePet:
     def __init__(self):
         self.audio = None
         self._always_on_top = True
+        self._locked = False  # pet_menu's 锁定 row now reads pet._locked, not config
         self.config = {"volume": 0.8}
         self.pet_scale = 1.0
         self.flirt, self._flirt_events = make_controller()
