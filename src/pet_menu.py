@@ -33,7 +33,7 @@ def _build_menu_spec(pet):
         {
             "type": "toggle",
             "label": "锁定",
-            "get": lambda: pet.config.get("locked", False),
+            "get": lambda: pet._locked,
             "set": pet._toggle_lock,
         },
         {

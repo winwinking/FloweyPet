@@ -35,7 +35,7 @@ from paths import ICON_PATH
 from pomodoro_display import PomodoroDisplay
 from topmost_keeper import TopmostKeeper
 from undertale_ui import VOLUME_TIERS, ClickableLabel
-from win_zorder import apply_topmost
+from win_zorder import apply_topmost, set_click_through
 
 CLICK_MOVE_THRESHOLD = 4
 IDLE_FRAME_MS = 220
@@ -131,7 +131,7 @@ class PetWindow(QWidget):
         self._last_face_key = None
         self._appear_source = "appear"
         self._last_duplicate_launch_roast = float("-inf")
-        self._locked = config.get("locked", False)
+        self._locked = False  # click-through lock is never persisted: always starts unlocked
         self._locked_click_count = 0
         self._last_lock_hint_time = float("-inf")
 
@@ -145,6 +145,7 @@ class PetWindow(QWidget):
             pet_scale=self.pet_scale,
             min_font_px=config.get("bubble_min_font_size", 15),
             screen_margin=config.get("bubble_screen_margin", 8),
+            is_locked=lambda: self._locked,
         )
         self.dialogue_box.finished.connect(self._on_dialogue_finished)
         self.dialogue_box.hold_started.connect(self._on_dialogue_hold_started)
@@ -158,7 +159,7 @@ class PetWindow(QWidget):
         self.flirt.on_escape = self._on_flirt_escape
         self.flirt.on_stall = self._on_flirt_stall
 
-        self.pomodoro_display = PomodoroDisplay(self.pet_display_width, self._always_on_top)
+        self.pomodoro_display = PomodoroDisplay(self.pet_display_width, self._always_on_top, is_locked=lambda: self._locked)
 
         self.pomodoro.active_changed.connect(self._on_pomodoro_active_changed)
         self.pomodoro.tick.connect(self._refresh_tray_tooltip)
@@ -210,6 +211,14 @@ class PetWindow(QWidget):
         if self._always_on_top:
             flags |= Qt.WindowType.WindowStaysOnTopHint
         return flags
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        set_click_through(self, self._locked)
+
+    def _apply_click_through(self, on):
+        for w in (self, self.dialogue_box, self.pomodoro_display):
+            set_click_through(w, on)
 
     def is_pinned_on_top(self):
         """Public hook for GameDetector/TopmostGuard: what the 右键菜单"置顶"
@@ -792,8 +801,7 @@ class PetWindow(QWidget):
             return  # inside the 0.5s debounce cooldown: state frozen, ignored
         self.stats.record_interaction()
         self._locked = checked
-        self.config["locked"] = checked
-        self.save_config(self.config)
+        self._apply_click_through(checked)
         if not checked:
             self._locked_click_count = 0
         self.arbiter.finish_feature("lock", lambda: self.dm.trigger_menu_flavor("lock_on" if checked else "lock_off"))
