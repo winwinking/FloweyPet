@@ -9,7 +9,9 @@ import sys
 import winreg
 from pathlib import Path
 
+from error_log import log_exception, log_message
 from paths import CONFIG_PATH, IS_DEV
+from user_data import atomic_write_json, quarantine_bad_file
 
 DEFAULTS = {
     "position": None,  # None => PetWindow picks a sensible on-screen default
@@ -145,20 +147,37 @@ def _deep_merge(defaults, loaded):
     return out
 
 
+def _default_copy():
+    # Deep copy: DEFAULTS nests dicts/lists, a shallow dict() would let edits
+    # to the returned config leak back into DEFAULTS.
+    return json.loads(json.dumps(DEFAULTS))
+
+
 def load_config():
-    if CONFIG_PATH.exists():
-        try:
-            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                loaded = json.load(f)
-            return _deep_merge(DEFAULTS, loaded)
-        except (json.JSONDecodeError, OSError):
-            pass
-    return dict(DEFAULTS)
+    if not CONFIG_PATH.exists():
+        return _default_copy()
+    try:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            loaded = json.load(f)
+    except OSError as e:
+        log_message(f"load_config: 读取 {CONFIG_PATH} 失败（{e!r}），本次使用默认值，文件未改动")
+        return _default_copy()
+    except ValueError as e:  # json.JSONDecodeError / UnicodeDecodeError
+        moved = quarantine_bad_file(CONFIG_PATH)
+        log_message(f"load_config: {CONFIG_PATH} 不是合法 JSON（{e!r}），已改名为 {moved}，使用默认值")
+        return _default_copy()
+    if not isinstance(loaded, dict):
+        moved = quarantine_bad_file(CONFIG_PATH)
+        log_message(f"load_config: {CONFIG_PATH} 内容不是 JSON 对象，已改名为 {moved}，使用默认值")
+        return _default_copy()
+    return _deep_merge(DEFAULTS, loaded)
 
 
 def save_config(cfg):
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, ensure_ascii=False, indent=2)
+    try:
+        atomic_write_json(CONFIG_PATH, cfg)
+    except OSError:
+        log_exception("save_config")
 
 
 _RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"

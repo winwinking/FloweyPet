@@ -26,6 +26,38 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+def atomic_write_json(path, data):
+    """Writes `data` as JSON to `path` via a sibling .tmp file + os.replace,
+    so a crash mid-write can never leave a half-written file behind. On any
+    error the .tmp is removed and the original exception is re-raised."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        raise
+
+
+def quarantine_bad_file(path):
+    """Renames an unreadable file to <name>.bad-YYYYmmdd_HHMMSS next to it
+    (kept for inspection, never deleted). Returns the new path, or None if
+    the rename failed. Never raises."""
+    try:
+        target = path.with_name(path.name + ".bad-" + datetime.now().strftime("%Y%m%d_%H%M%S"))
+        os.replace(path, target)
+        return target
+    except Exception:  # noqa: BLE001
+        return None
+
+
 NAMES = ("config.json", "stats.json")
 MARKER = "migration.json"
 
