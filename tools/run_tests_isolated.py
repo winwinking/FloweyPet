@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """Runs the acceptance tests serially, each in its own process, with every
 log file redirected into a throwaway temp dir -- so a test run can never
-touch (or corrupt) C:\FloweyPet\*.log, the log directory of a real
-FloweyPet install. No src/ or test file is modified: the redirect is done by
+touch (or corrupt) the real logs in <user data dir>\logs (paths.LOG_DIR), the
+log directory of a real FloweyPet install. No src/ or test file is modified: the redirect is done by
 setting each log module's LOG_PATH before the test script starts.
 
 Redirected log writers (src/):
-    app_log.LOG_PATH        C:\FloweyPet\app.log
-    audio_log.LOG_PATH      C:\FloweyPet\audio.log
-    dialogue_log.LOG_PATH   C:\FloweyPet\dialogue.log
-    error_log.LOG_PATH      C:\FloweyPet\error.log
-    reminder_log.LOG_PATH   C:\FloweyPet\reminder.log (also via env FLOWEYPET_REMINDER_LOG,
+    app_log.LOG_PATH        LOG_DIR\app.log
+    audio_log.LOG_PATH      LOG_DIR\audio.log
+    dialogue_log.LOG_PATH   LOG_DIR\dialogue.log
+    error_log.LOG_PATH      LOG_DIR\error.log
+    reminder_log.LOG_PATH   LOG_DIR\reminder.log (also via env FLOWEYPET_REMINDER_LOG,
                             which test_chase_acceptance.py otherwise points at
                             <repo>/test_acceptance_reminder.log)
 config.json / stats.json (paths.CONFIG_PATH / STATS_PATH) are redirected too, via

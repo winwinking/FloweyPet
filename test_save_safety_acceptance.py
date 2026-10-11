@@ -56,7 +56,14 @@ def bads(name):
     return sorted(DATA.glob(name + ".bad-*"))
 
 
-check("测试数据目录确实是临时目录", paths.CONFIG_PATH == DATA / "config.json" and paths.STATS_PATH == DATA / "stats.json")
+# Redirect explicitly instead of relying on import order: under
+# tools/run_tests_isolated.py the log modules (which import paths) are loaded
+# before this file runs, so paths may already be resolved to the runner's dir.
+config.CONFIG_PATH = DATA / "config.json"
+stats.STATS_PATH = DATA / "stats.json"
+paths.CONFIG_PATH = config.CONFIG_PATH
+paths.STATS_PATH = stats.STATS_PATH
+check("读写的数据目录是本测试自己的临时目录", config.CONFIG_PATH.parent == DATA and stats.STATS_PATH.parent == DATA)
 
 # ------------------------------------------------------------------ 1
 # Bad JSON / non-dict JSON, config and stats alike
@@ -230,6 +237,78 @@ check("stats 保存后文件里中文不被转义", "中文统计" in paths.STAT
 back = stats._load()
 check("stats 往返: 值一致", back["interaction_count"] == 77 and back["note"] == "中文统计")
 check("stats 往返: 没有 .tmp 残留、没有 .bad 文件", not list(DATA.glob("*.tmp")) and not bads("stats.json"))
+
+# ------------------------------------------------------------------ 6
+# os.replace retry on PermissionError
+retry_target = TMP / "retry" / "r.json"
+user_data.atomic_write_json(retry_target, {"v": "old"})
+pauses = []
+real_sleep = user_data.time.sleep
+user_data.time.sleep = lambda s: pauses.append(s)
+
+
+def replace_failing(n_failures, exc):
+    calls = {"n": 0}
+
+    def fake(src, dst):
+        calls["n"] += 1
+        if calls["n"] <= n_failures:
+            raise exc("simulated")
+        return real_replace(src, dst)
+    return fake, calls
+
+
+try:
+    fake, calls = replace_failing(2, PermissionError)
+    os.replace = fake
+    try:
+        user_data.atomic_write_json(retry_target, {"v": "两次失败后成功"})
+        ok = True
+    except Exception as e:  # noqa: BLE001
+        ok = False
+    finally:
+        os.replace = real_replace
+    check("replace 前两次 PermissionError、第三次成功: 写入成功", ok)
+    check("重试: 内容正确", json.loads(retry_target.read_text(encoding="utf-8")) == {"v": "两次失败后成功"})
+    check("重试: 共调用 3 次 os.replace", calls["n"] == 3, str(calls))
+    check("重试: 两次间隔分别为 0.05 / 0.1 秒", pauses == [0.05, 0.1], str(pauses))
+    check("重试: 无 .tmp 残留", not list(retry_target.parent.glob("*.tmp")))
+
+    pauses.clear()
+    fake, calls = replace_failing(99, PermissionError)
+    os.replace = fake
+    try:
+        raised = None
+        try:
+            user_data.atomic_write_json(retry_target, {"v": "never"})
+        except PermissionError as e:
+            raised = e
+    finally:
+        os.replace = real_replace
+    check("replace 一直 PermissionError: 抛出 PermissionError", raised is not None)
+    check("一直失败: 恰好尝试 3 次", calls["n"] == 3, str(calls))
+    check("一直失败: 原文件内容不变", json.loads(retry_target.read_text(encoding="utf-8")) == {"v": "两次失败后成功"})
+    check("一直失败: 无 .tmp 残留", not list(retry_target.parent.glob("*.tmp")))
+
+    pauses.clear()
+    fake, calls = replace_failing(99, OSError)
+    os.replace = fake
+    try:
+        raised = None
+        try:
+            user_data.atomic_write_json(retry_target, {"v": "never"})
+        except OSError as e:
+            raised = e
+    finally:
+        os.replace = real_replace
+    check("replace 抛普通 OSError: 直接抛出", raised is not None and not isinstance(raised, PermissionError))
+    check("普通 OSError: 不重试(调用 1 次、不 sleep)", calls["n"] == 1 and pauses == [], f"{calls} {pauses}")
+    check("普通 OSError: 原文件不变且无 .tmp",
+          json.loads(retry_target.read_text(encoding="utf-8")) == {"v": "两次失败后成功"}
+          and not list(retry_target.parent.glob("*.tmp")))
+finally:
+    user_data.time.sleep = real_sleep
+    os.replace = real_replace
 
 print()
 if FAILURES:

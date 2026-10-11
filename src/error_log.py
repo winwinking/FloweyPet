@@ -10,7 +10,9 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-LOG_PATH = Path(r"C:\FloweyPet\error.log")
+from paths import LOG_DIR
+
+LOG_PATH = LOG_DIR / "error.log"
 
 
 def log_exception(context, exc_info=None):

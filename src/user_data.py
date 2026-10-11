@@ -23,8 +23,12 @@ Results returned:
 import json
 import os
 import shutil
+import time
 from datetime import datetime
 from pathlib import Path
+
+REPLACE_RETRY_PAUSES = (0.05, 0.1)
+
 
 def atomic_write_json(path, data):
     """Writes `data` as JSON to `path` via a sibling .tmp file + os.replace,
@@ -37,7 +41,17 @@ def atomic_write_json(path, data):
             json.dump(data, f, ensure_ascii=False, indent=2)
             f.flush()
             os.fsync(f.fileno())
-        os.replace(tmp, path)
+        # Windows: antivirus / indexers / backup tools can briefly hold the
+        # target open, making the replace fail with PermissionError. Try up
+        # to 3 times (pausing 0.05s, then 0.1s); any other error is not retried.
+        for pause in REPLACE_RETRY_PAUSES + (None,):
+            try:
+                os.replace(tmp, path)
+                break
+            except PermissionError:
+                if pause is None:
+                    raise
+                time.sleep(pause)
     except BaseException:
         try:
             tmp.unlink()
@@ -64,10 +78,7 @@ MARKER = "migration.json"
 
 def _write_marker(data_dir, state):
     payload = {"state": state, "time": datetime.now().isoformat(timespec="seconds")}
-    tmp = data_dir / (MARKER + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, data_dir / MARKER)
+    atomic_write_json(data_dir / MARKER, payload)
 
 
 def _read_marker_state(data_dir):
@@ -96,10 +107,7 @@ def _align_shadow(config_path, read_shadow):
     if isinstance(clicks, bool) or not isinstance(clicks, int) or clicks >= shadow:
         return
     cfg["total_clicks"] = shadow
-    tmp = config_path.with_name(config_path.name + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, config_path)
+    atomic_write_json(config_path, cfg)
 
 
 def autostart_exe_dir(command):

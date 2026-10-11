@@ -32,6 +32,8 @@ elif os.environ.get("APPDATA"):
 else:
     USER_DATA_DIR = Path.home() / ".floweypet"
 
+LOG_DIR = USER_DATA_DIR / "logs"
+
 ASSETS_DIR = APP_DIR / "assets"
 ICON_PATH = ASSETS_DIR / "icon.ico"
 FACES_DIR = ASSETS_DIR / "faces"

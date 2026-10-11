@@ -8,7 +8,9 @@ reconstructable after the fact. Same pattern as app_log.py/reminder_log.py.
 from datetime import datetime, timedelta
 from pathlib import Path
 
-LOG_PATH = Path(r"C:\FloweyPet\dialogue.log")
+from paths import LOG_DIR
+
+LOG_PATH = LOG_DIR / "dialogue.log"
 RETENTION_DAYS = 7
 
 
