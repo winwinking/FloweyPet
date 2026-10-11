@@ -11,6 +11,7 @@ always get through immediately once the current line finishes.
 """
 import ctypes
 import json
+import re
 import random
 import time
 from datetime import datetime
@@ -21,7 +22,7 @@ import anticheat
 import version
 from config import read_shadow_clicks, write_shadow_clicks
 from error_log import log_exception, log_message
-from paths import DIALOGUE_ANTICHEAT_PATH, DIALOGUE_INFO_PATH, DIALOGUE_PATH, DIALOGUE_SYSTEM_PATH
+from paths import DIALOGUE_ANTICHEAT_PATH, DIALOGUE_INFO_PATH, DIALOGUE_PATH, DIALOGUE_SYSTEM_PATH, FACES_DIR
 
 PRI_REMINDER = 40
 PRI_POMODORO = 30
@@ -988,6 +989,22 @@ class DialogueManager(QObject):
         dialogue.json, since this is an app-lifecycle event rather than
         in-character content."""
         self._submit("duplicate_launch", self._pick("duplicate_launch"), PRI_CLICK, bypass_interval=True)
+
+    def trigger_update_announce(self, new_version, line=None, face=None):
+        """A newer version was found. `line`/`face` come from version.json
+        (the face is checked against assets/faces, falling back to neutral);
+        without a line, the update_available pool in dialogues_system.json
+        is used. {new_ver} is replaced with `new_version` either way."""
+        if line:
+            if not (isinstance(face, str) and re.fullmatch(r"[A-Za-z0-9_-]+", face) and (FACES_DIR / face).is_dir()):
+                face = "neutral"
+            segments = [{"text": line, "face": face}]
+        else:
+            segments = self._pick("update_available")
+        if not segments:
+            return
+        segments = [dict(seg, text=seg.get("text", "").replace("{new_ver}", str(new_version))) for seg in segments]
+        self._submit("update_available", segments, PRI_CHAT, bypass_interval=True)
 
     # --------------------------------------------------------- menu flavor
     def trigger_menu_flavor(self, category):

@@ -1,5 +1,5 @@
 {
-  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code.",
+  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code. update_available is the fallback line used when an update is found but version.json has no 'line': {new_ver} is the new version, {ver} the running one.",
   "duplicate_launch": [
     {
       "text": "一个我还不够吗？",
@@ -61,6 +61,16 @@
     {
       "text": "我最后说一遍。你只能拥有一朵花。",
       "face": "evil_color"
+    }
+  ],
+  "update_available": [
+    {
+      "text": "【占位】新版本 {new_ver} 可以下载了，你现在是 {ver}。",
+      "face": "neutral"
+    },
+    {
+      "text": "【占位】有更新：{new_ver}。",
+      "face": "neutral"
     }
   ]
 }

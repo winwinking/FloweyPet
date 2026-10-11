@@ -37,6 +37,11 @@ DEFAULTS = {
     "font_scale": 1.75,
     "always_on_top": True,
     "autostart": False,
+    "check_updates": True,  # 是否检查更新：只读取一个公开的 version.json，不发送任何数据，只提示、不自动替换
+    "update_url": "https://raw.githubusercontent.com/winwinking/FloweyPet/master/version.json",  # 版本信息文件的地址
+    "update_check_hours": 3,  # 启动后每隔多少小时再检查一次
+    "update_first_delay_seconds": 8,  # 启动后等多少秒做第一次检查，避开开场动画
+    "last_announced_version": None,  # 上次已经播报过的新版本号，同一个版本只说一次
     "first_run_done": False,
     "birthday": None,          # "MM-DD" or null
     "install_date": None,      # "YYYY-MM-DD"

@@ -110,6 +110,12 @@ def _build_menu_spec(pet):
                     "get": lambda: pet.config.get("autostart", False),
                     "set": pet._toggle_autostart,
                 },
+                {
+                    "type": "toggle",
+                    "label": "检查更新",
+                    "get": lambda: pet.config.get("check_updates", True),
+                    "set": lambda checked: pet._toggle_update_check(checked),  # looked up on click, not at menu build
+                },
             ],
         },
         {

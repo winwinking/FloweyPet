@@ -9,8 +9,8 @@ import functools
 import random
 import time
 
-from PyQt6.QtCore import QPoint, Qt, QTimer
-from PyQt6.QtGui import QCursor, QIcon, QPainter
+from PyQt6.QtCore import QPoint, Qt, QTimer, QUrl
+from PyQt6.QtGui import QCursor, QDesktopServices, QIcon, QPainter
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -34,6 +34,7 @@ from game_detector import GameDetector
 from paths import ICON_PATH
 from pomodoro_display import PomodoroDisplay
 from topmost_keeper import TopmostKeeper
+from update_checker import should_announce
 from undertale_ui import VOLUME_TIERS, ClickableLabel
 from win_zorder import apply_topmost, set_click_through
 
@@ -120,6 +121,8 @@ class PetWindow(QWidget):
         self._drag_moved = False
         self._drag_offset = QPoint()
         self._pending_quit = False
+        self._update_checker = None
+        self._update_info = None  # newest version found by UpdateChecker, shown in the tray menu
         self._exit_interrupted = False  # this exit sequence's one-and-only interrupt line already used?
         self._resume_exit_animation_after_interrupt = False
         self._pending_hide = False
@@ -589,6 +592,12 @@ class PetWindow(QWidget):
     def _build_menu(self):
         menu = QMenu()
 
+        update_info = getattr(self, "_update_info", None)
+        if isinstance(update_info, dict) and "version" in update_info:
+            update_action = menu.addAction(f"更新到 v{update_info['version']}")
+            update_action.triggered.connect(lambda: self._open_update_page(update_info["url"]))
+            menu.addSeparator()
+
         visible_action = menu.addAction("隐藏" if self.isVisible() else "显示 Flowey")
         visible_action.triggered.connect(self._toggle_visible)
 
@@ -854,6 +863,33 @@ class PetWindow(QWidget):
         self.save_config(self.config)
         self.audio.set_muted(checked)
         self.arbiter.finish_feature("mute", lambda: self.dm.trigger_menu_flavor("mute_on" if checked else "mute_off"))
+
+    # ---------------------------------------------------------- update check
+    def attach_update_checker(self, checker):
+        self._update_checker = checker
+        checker.update_available.connect(self._on_update_available)
+
+    def _open_update_page(self, url):
+        QDesktopServices.openUrl(QUrl(url))
+
+    def _on_update_available(self, info):
+        # The tray menu is built once at startup and again after each tray
+        # activation, so rebuild it right now to make the new entry appear.
+        self._update_info = info
+        self._tray.setContextMenu(self._build_menu())
+        # Speak only when Flowey is actually on screen and not leaving; in
+        # that case don't record it either, so the next check can announce.
+        if self.isVisible() and not self._pending_quit and should_announce(self.config, info["version"]):
+            self.dm.trigger_update_announce(info["version"], info.get("line"), info.get("face"))
+            self.config["last_announced_version"] = info["version"]
+            self.save_config(self.config)
+
+    def _toggle_update_check(self, checked):
+        self.stats.record_interaction()
+        self.config["check_updates"] = checked
+        self.save_config(self.config)
+        if self._update_checker is not None:
+            self._update_checker.set_enabled(checked)
 
     def _toggle_menu_sfx(self, checked):
         self.stats.record_interaction()

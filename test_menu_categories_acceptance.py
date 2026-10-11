@@ -139,7 +139,7 @@ close_all()
 EXPECT = {
     "act": ["查看信息", "调情"],
     "item": ["番茄钟", "提醒设置", "记录"],
-    "save": ["置顶", "大小", "待机动作", "---", "静音", "音量", "界面音效", "---", "开机自启"],
+    "save": ["置顶", "大小", "待机动作", "---", "静音", "音量", "界面音效", "---", "开机自启", "检查更新"],
     "mercy": ["隐身", "离开"],
 }
 LABEL = {"act": "行动", "item": "物品", "save": "存档点", "mercy": "仁慈"}
@@ -332,7 +332,7 @@ check("fight 用的表情 evil 在 faces_manifest 里存在", fight[0]["face"] i
 
 # nested spec flattening keeps every leaf once
 leaves = [s.get("label") for s in iter_leaf_specs(pet_menu._build_menu_spec(make_pet())) if s["type"] != "separator"]
-check("展开后的叶子项: 16 项且无重复", len(leaves) == 16 and len(set(leaves)) == 16, str(leaves))
+check("展开后的叶子项: 17 项且无重复", len(leaves) == 17 and len(set(leaves)) == 17, str(leaves))
 
 # ===================================================================== 12
 # Placement: one rule for every popup -- right of the pet, top aligned with the

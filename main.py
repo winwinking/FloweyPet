@@ -22,6 +22,7 @@ from pomodoro import Pomodoro
 from reminders import Reminders
 from single_instance import SingleInstanceGuard
 from stats import Stats
+from update_checker import UpdateChecker
 from user_data import autostart_exe_dir, migrate_legacy_data, pick_legacy_source
 from pet_window import PetWindow
 
@@ -94,6 +95,12 @@ def main():
 
     window = PetWindow(config, save_config, dm, audio, sprites, pomodoro, reminders, stats)
     guard.on_activate_requested = window.on_duplicate_launch_activation
+    try:
+        update_checker = UpdateChecker(config)
+        window.attach_update_checker(update_checker)
+        update_checker.start()
+    except Exception:
+        log_exception("update_checker")
     app.aboutToQuit.connect(guard.close)
     window.show()
 
