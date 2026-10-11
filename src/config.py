@@ -165,6 +165,17 @@ _RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 _RUN_NAME = "FloweyPet"
 
 
+def read_autostart_command():
+    """The command string stored in the HKCU Run key for FloweyPet, or None
+    if unset/unreadable. Read-only."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_READ) as key:
+            value, _ = winreg.QueryValueEx(key, _RUN_NAME)
+        return value if isinstance(value, str) else None
+    except OSError:
+        return None
+
+
 def set_autostart(enabled: bool):
     target = Path(sys.executable).resolve()
     if getattr(sys, "frozen", False):

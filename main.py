@@ -11,18 +11,18 @@ from error_log import install_global_hook, log_exception
 
 install_global_hook()
 
-from config import load_config, read_shadow_clicks, save_config
+from config import load_config, read_autostart_command, read_shadow_clicks, save_config
 from audio import AudioManager
 import app_log
 import audio_log
 from compositor import SpriteBank
 from dialogue_manager import DialogueManager
-from paths import LEGACY_CONFIG_PATH, LEGACY_STATS_PATH, USER_DATA_DIR
+from paths import APP_DIR, IS_DEV, USER_DATA_DIR
 from pomodoro import Pomodoro
 from reminders import Reminders
 from single_instance import SingleInstanceGuard
 from stats import Stats
-from user_data import migrate_legacy_data
+from user_data import autostart_exe_dir, migrate_legacy_data, pick_legacy_source
 from pet_window import PetWindow
 
 
@@ -49,10 +49,12 @@ def main():
     # dir. Must run only after the single-instance check above passed, so a
     # second launch never rewrites data under a running first instance.
     try:
-        result = migrate_legacy_data(
-            USER_DATA_DIR, LEGACY_CONFIG_PATH, LEGACY_STATS_PATH, read_shadow_clicks
-        )
-        app_log.log_event(f"数据迁移：{result}（数据目录 {USER_DATA_DIR}）")
+        # Packaged build only: the old data may sit beside a different exe
+        # (e.g. the one the autostart entry points at), not beside this one.
+        fallback_dirs = [] if IS_DEV else [autostart_exe_dir(read_autostart_command())]
+        legacy_config, legacy_stats, source_dir = pick_legacy_source(APP_DIR, fallback_dirs)
+        result = migrate_legacy_data(USER_DATA_DIR, legacy_config, legacy_stats, read_shadow_clicks)
+        app_log.log_event(f"数据迁移：{result}（数据目录 {USER_DATA_DIR}，旧数据来源 {source_dir}）")
     except Exception:
         log_exception("migrate_legacy_data")
     config = load_config()

@@ -182,6 +182,143 @@ except Exception as e:  # noqa: BLE001
 check("旧 config 是坏 JSON: 不抛异常", ok, r)
 check("旧 config 是坏 JSON: 照样复制", (data / "config.json").read_bytes() == b"{not json at all" and r == "imported")
 
+# ------------------------------------------------------------------ 9
+# Interrupted import -> "importing" marker -> resumed
+import shutil  # noqa: E402
+from user_data import autostart_exe_dir, pick_legacy_source  # noqa: E402
+
+
+def failing_copy2(fail_name):
+    real = shutil.copy2
+
+    def fake(src, dst, *a, **kw):
+        if Path(dst).name == fail_name and Path(dst).parent.name == "data":
+            raise OSError("simulated disk error")
+        return real(src, dst, *a, **kw)
+    return real, fake
+
+
+data, lc, ls, root = sandbox()
+lc.write_text('{"total_clicks": 5}', encoding="utf-8")
+ls.write_text('{"interaction_count": 3}', encoding="utf-8")
+real, fake = failing_copy2("stats.json")
+shutil.copy2 = fake
+try:
+    raised = False
+    try:
+        run(data, lc, ls)
+    except OSError:
+        raised = True
+finally:
+    shutil.copy2 = real
+check("搬到一半出错: 异常向外抛出", raised)
+check("搬到一半出错: 标记是 importing", marker(data)["state"] == "importing")
+r = run(data, lc, ls)
+check("恢复后重跑: 返回 resumed_import", r == "resumed_import", r)
+check("恢复后重跑: 两个文件都和旧文件一致",
+      (data / "config.json").read_bytes() == lc.read_bytes() and (data / "stats.json").read_bytes() == ls.read_bytes())
+check("恢复后重跑: 标记 imported", marker(data)["state"] == "imported")
+check("恢复后重跑: 没有备份目录", not list(data.glob("backup_before_import_*")))
+
+# importing + legacy files gone -> keep data, close marker
+data, lc, ls, root = sandbox()
+lc.write_text('{"total_clicks": 5}', encoding="utf-8")
+shutil.copy2 = fake_ = failing_copy2("config.json")[1]
+try:
+    try:
+        run(data, lc, ls)
+    except OSError:
+        pass
+finally:
+    shutil.copy2 = real
+(data / "config.json").write_text('{"progress": "mine"}', encoding="utf-8")
+lc.unlink()
+r = run(data, lc, ls)
+check("importing 且旧文件已消失: 返回 none", r == "none", r)
+check("importing 且旧文件已消失: 数据不变", read_json(data / "config.json") == {"progress": "mine"})
+check("importing 且旧文件已消失: 标记变 imported", marker(data)["state"] == "imported")
+lc.write_text('{"total_clicks": 777}', encoding="utf-8")
+r = run(data, lc, ls)
+check("之后旧文件重新出现: 返回 none,不覆盖",
+      r == "none" and read_json(data / "config.json") == {"progress": "mine"})
+
+# Case B interrupted, then rerun
+data, lc, ls, root = sandbox()
+run(data, lc, ls)
+(data / "config.json").write_text('{"new": true}', encoding="utf-8")
+(data / "stats.json").write_text('{"s": "new"}', encoding="utf-8")
+lc.write_text('{"total_clicks": 99}', encoding="utf-8")
+ls.write_text('{"s": "old"}', encoding="utf-8")
+shutil.copy2 = failing_copy2("stats.json")[1]
+try:
+    raised = False
+    try:
+        run(data, lc, ls)
+    except OSError:
+        raised = True
+finally:
+    shutil.copy2 = real
+check("B 搬到一半出错: 异常抛出且标记 importing", raised and marker(data)["state"] == "importing")
+r = run(data, lc, ls)
+check("B 出错后重跑: 返回 resumed_import", r == "resumed_import", r)
+check("B 出错后重跑: 备份目录只有一个", len(list(data.glob("backup_before_import_*"))) == 1)
+check("B 出错后重跑: 新数据是旧文件内容",
+      read_json(data / "config.json") == {"total_clicks": 99} and read_json(data / "stats.json") == {"s": "old"})
+check("B 出错后重跑: 标记 imported", marker(data)["state"] == "imported")
+
+# ------------------------------------------------------------------ 10
+# autostart_exe_dir
+check("autostart: 带引号含空格的 exe", autostart_exe_dir('"C:\\Program Files\\Flowey Pet\\FloweyPet.exe"') == Path("C:\\Program Files\\Flowey Pet"))
+check("autostart: 带引号 exe 后跟参数", autostart_exe_dir('"C:\\A B\\FloweyPet.exe" --x') == Path("C:\\A B"))
+check("autostart: 不带引号的 exe", autostart_exe_dir("C:\\Games\\FloweyPet.exe") == Path("C:\\Games"))
+check("autostart: 不带引号 exe 后跟参数", autostart_exe_dir("C:\\Games\\FloweyPet.EXE --x") == Path("C:\\Games"))
+check("autostart: 源码版 python.exe + main.py 取 python.exe 所在文件夹",
+      autostart_exe_dir('"C:\\Python39\\python.exe" "E:\\src\\main.py"') == Path("C:\\Python39"))
+for label, val in (("None", None), ("空字符串", ""), ("abc", "abc"), ("只有一个引号", '"'), ("引号未闭合", '"C:\\a\\b.exe'), ("非字符串", 123)):
+    try:
+        got = autostart_exe_dir(val)
+        ok = got is None
+    except Exception as e:  # noqa: BLE001
+        got, ok = repr(e), False
+    check(f"autostart: {label} -> None,不抛异常", ok, str(got))
+
+# ------------------------------------------------------------------ 11
+# pick_legacy_source
+def mkdir_with(root, name, files=("config.json",)):
+    d = root / name
+    d.mkdir(parents=True)
+    for f in files:
+        (d / f).write_text("{}", encoding="utf-8")
+    return d
+
+
+root = Path(tempfile.mkdtemp(prefix="floweypet_pick_"))
+prim = mkdir_with(root, "prim")
+fb = mkdir_with(root, "fb")
+c, s_, src = pick_legacy_source(prim, [fb])
+check("pick: primary 有文件 -> 用 primary", src == prim and c == prim / "config.json" and s_ == prim / "stats.json")
+prim2 = mkdir_with(root, "prim2", files=())
+c, s_, src = pick_legacy_source(prim2, [fb])
+check("pick: primary 没有、fallback 有 -> 用 fallback", src == fb and c == fb / "config.json")
+fb_only_stats = mkdir_with(root, "fb_stats", files=("stats.json",))
+c, s_, src = pick_legacy_source(prim2, [fb_only_stats])
+check("pick: fallback 只有 stats.json 也算", src == fb_only_stats)
+c, s_, src = pick_legacy_source(prim2, [prim2, fb])
+check("pick: fallback 和 primary 是同一个文件夹 -> 跳过", src == fb)
+c, s_, src = pick_legacy_source(prim2, [prim2 / ".." / "prim2", fb])
+check("pick: 用 resolve 比较(带 .. 的同一文件夹也跳过)", src == fb)
+c, s_, src = pick_legacy_source(prim2, [root / "nope", None, fb])
+check("pick: fallback 不存在/None -> 跳过", src == fb)
+empty_fb = mkdir_with(root, "empty_fb", files=())
+c, s_, src = pick_legacy_source(prim2, [empty_fb, root / "nope", None])
+check("pick: 都没有 -> 返回 primary 的路径",
+      src == prim2 and c == prim2 / "config.json" and s_ == prim2 / "stats.json")
+c, s_, src = pick_legacy_source(prim2, [])
+check("pick: 空候选列表 -> primary", src == prim2)
+py_dir = mkdir_with(root, "pydir", files=())
+c, s_, src = pick_legacy_source(prim2, [autostart_exe_dir('"%s" "main.py"' % (py_dir / "python.exe"))])
+check("pick: 源码版自启命令的文件夹没有数据文件 -> 跳过", src == prim2)
+
 print()
 if FAILURES:
     print(f"共 {len(FAILURES)} 项失败")
