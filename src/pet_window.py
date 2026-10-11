@@ -31,7 +31,6 @@ from dialogue_box import DialogueBox
 from error_log import log_exception
 from flirt import FlirtController
 from game_detector import GameDetector
-from hotkey import HotkeyManager
 from paths import ICON_PATH
 from pomodoro_display import PomodoroDisplay
 from topmost_keeper import TopmostKeeper
@@ -205,7 +204,6 @@ class PetWindow(QWidget):
         self._tray.show()
 
         self._start_appear()
-        self._setup_lock_hotkey()
 
     # --------------------------------------------------------------- window
     def _window_flags(self):
@@ -833,47 +831,6 @@ class PetWindow(QWidget):
         self._locked_click_count = 0
         self.arbiter.reset_lock_gates()
         dialogue_log.log_event("强制解锁（托盘/热键）")
-
-    def _setup_lock_hotkey(self):
-        """Global hotkey (config "lock_hotkey", default Ctrl+Alt+L): locks,
-        or force-unlocks if already locked -- so a click-through pet can
-        always be unlocked, even from inside a fullscreen game. Never raises
-        and never blocks startup; a failed registration just warns."""
-        spec = self.config.get("lock_hotkey", "Ctrl+Alt+L")
-        try:
-            self._lock_hotkey = HotkeyManager()
-            app = QApplication.instance()
-            app.installNativeEventFilter(self._lock_hotkey)
-            self._lock_hotkey.pressed.connect(self._on_lock_hotkey_pressed)
-            app.aboutToQuit.connect(self._lock_hotkey.unregister)
-            if not self._lock_hotkey.register(spec):
-                self._on_lock_hotkey_register_failed(spec, self._lock_hotkey.last_error)
-        except Exception as e:  # noqa: BLE001 -- a hotkey problem must never stop Flowey from starting
-            self._on_lock_hotkey_register_failed(spec, repr(e))
-
-    def _on_lock_hotkey_register_failed(self, spec, error):
-        dialogue_log.log_event(f"锁定热键注册失败：{spec}（错误={error}）")
-        # TODO: later have Flowey say this herself in dialogue instead of a
-        # system tray balloon.
-        try:
-            self._tray.showMessage(
-                "Flowey",
-                f"锁定热键 {spec} 注册失败，可能被其他软件占用",
-                QSystemTrayIcon.MessageIcon.Warning,
-                8000,
-            )
-        except Exception:  # noqa: BLE001
-            pass
-
-    def _on_lock_hotkey_pressed(self):
-        # Called from inside Qt's native event filter: only queue the work.
-        QTimer.singleShot(0, self._run_lock_hotkey)
-
-    def _run_lock_hotkey(self):
-        if self._locked:
-            self._force_unlock()
-        else:
-            self._toggle_lock(True)
 
     def _on_tray_lock_triggered(self, checked):
         """Tray menu 锁定 item: unlocking is the forced path (never
