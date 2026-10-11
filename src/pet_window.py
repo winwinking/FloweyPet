@@ -703,11 +703,8 @@ class PetWindow(QWidget):
         from pet_menu import PetContextMenu
         from undertale_ui import position_avoid_pet_and_bubble
 
+        self._close_active_popup()
         menu = PetContextMenu(self, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
-        menu.selection_changed.connect(
-            lambda row: self.flirt.on_menu_selection_changed(row is menu.flirt_row)
-        )
-        menu.closed.connect(self.flirt.on_menu_closed)
         position_avoid_pet_and_bubble(
             menu,
             self.x(),
@@ -720,6 +717,52 @@ class PetWindow(QWidget):
         self._active_popup = menu
         menu.show()
         menu.setFocus()
+
+    def _open_menu_category(self, key):
+        """Main menu's category row clicked: the row closes the main menu
+        itself; the category's box opens on the next event-loop tick (never
+        from inside the click that is still closing the menu)."""
+        QTimer.singleShot(0, lambda: self._show_category_popup(key))
+
+    def _show_category_popup(self, key):
+        from pet_menu import CategoryPopup, find_category
+        from undertale_ui import position_avoid_pet_and_bubble
+
+        if self._pending_quit:
+            return
+        spec = find_category(self, key)
+        if spec is None:
+            return
+        self._close_active_popup()
+        box = CategoryPopup(self, spec, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
+        if box.flirt_row is not None:
+            # The 调情 hover/escape state machine listens to the box that
+            # actually holds the 调情 row (not the main menu), so entering
+            # the box from the main menu never reads as "menu closed".
+            box.selection_changed.connect(
+                lambda row: self.flirt.on_menu_selection_changed(row is box.flirt_row)
+            )
+            box.closed.connect(self.flirt.on_menu_closed)
+        position_avoid_pet_and_bubble(
+            box,
+            self.x(),
+            self.y(),
+            self.width(),
+            self.height(),
+            self.dialogue_box,
+            margin=self.config.get("panel_screen_margin", 8),
+        )
+        self._active_popup = box
+        box.show()
+        box.setFocus()
+
+    def _back_to_main_menu(self):
+        """"< 返回" / Esc in a category box: close it, reopen the main menu
+        (queued, like a fresh right-click)."""
+        self._close_active_popup()
+        if self._pending_quit:
+            return
+        QTimer.singleShot(0, self._show_context_menu)
 
     def _close_active_popup(self):
         if self._active_popup is not None:
@@ -1067,6 +1110,12 @@ class PetWindow(QWidget):
         self._active_popup = panel
         panel.show()
         panel.setFocus()
+
+    @_guarded_menu_action("战斗")
+    def _on_fight_clicked(self):
+        # Placeholder: one line from dialogue.json's "fight" pool.
+        self.stats.record_interaction()
+        self.arbiter.finish_feature("fight", lambda: self.dm.trigger_menu_flavor("fight"))
 
     @_guarded_menu_action("查看信息")
     def _view_info(self):

@@ -192,9 +192,11 @@ pet.config = {"volume": 0.8}
 pet._always_on_top = True
 pet._locked = False
 spec = pet_menu._build_menu_spec(pet)
-labels = [s.get("label") for s in spec]
-check("菜单有「待机动作」,紧跟在「界面音效」后面", "待机动作" in labels and labels.index("待机动作") == labels.index("界面音效") + 1, str(labels))
-row = spec[labels.index("待机动作")]
+# 待机动作 now sits in the 存档点 box (second layer), right after 大小
+save_items = pet_menu.find_category(pet, "save")["items"]
+labels = [s.get("label") for s in save_items]
+check("「存档点」小框里有「待机动作」,紧跟在「大小」后面", "待机动作" in labels and labels.index("待机动作") == labels.index("大小") + 1, str(labels))
+row = save_items[labels.index("待机动作")]
 check("「待机动作」是 toggle 类型", row["type"] == "toggle")
 check("get: 缺省读作 True", row["get"]() is True)
 pet.config["idle_animation"] = False

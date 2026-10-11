@@ -26,7 +26,7 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 app = QApplication(sys.argv)
 
 import dialogue_log  # noqa: E402
-from pet_menu import PetContextMenu  # noqa: E402
+from pet_menu import CategoryPopup, PetContextMenu, find_category, iter_leaf_specs  # noqa: E402
 from pet_window import PetWindow  # noqa: E402
 from undertale_ui import ClickableLabel  # noqa: E402
 
@@ -75,6 +75,14 @@ def open_menu(pet):
     return menu
 
 
+def open_category(pet, key):
+    box = CategoryPopup(pet, find_category(pet, key))
+    pet._active_popup = box
+    box.show()
+    pump()
+    return box
+
+
 def row_for(menu, label):
     for row in menu._selectable:
         lab = row.findChild(ClickableLabel)
@@ -118,9 +126,11 @@ check("解锁: 事件循环转一轮后菜单已关闭", menu.isVisible() is Fal
 
 # ===================================================================== 4
 # Every other toggle keeps the menu open
-for label in ("置顶", "隐身", "静音", "界面音效", "开机自启"):
+# (these toggles now live in the category boxes: 存档点 / 仁慈)
+TOGGLE_HOME = {"置顶": "save", "隐身": "mercy", "静音": "save", "界面音效": "save", "开机自启": "save"}
+for label, category in TOGGLE_HOME.items():
     pet = make_pet()
-    menu = open_menu(pet)
+    menu = open_category(pet, category)
     row_for(menu, label).activate()
     pump()
     check(f"其他 toggle「{label}」: 点击后菜单仍然打开", menu.isVisible() is True)
@@ -132,7 +142,7 @@ for label in ("置顶", "隐身", "静音", "界面音效", "开机自启"):
 import pet_menu  # noqa: E402
 
 spec = pet_menu._build_menu_spec(make_pet())
-closers = [s["label"] for s in spec if s.get("close_after")]
+closers = [s["label"] for s in iter_leaf_specs(spec) if s.get("close_after")]
 check("只有「锁定」一项声明 close_after", closers == ["锁定"], str(closers))
 
 print()
