@@ -23,16 +23,12 @@ from ctypes import wintypes
 from PyQt6.QtCore import QTimer
 
 from process_snapshot import process_name_for_pid
+from win_zorder import _hwnd_of, _set_topmost  # noqa: F401 -- tests monkeypatch game_egg_display._set_topmost
 
 _user32 = ctypes.windll.user32
 
 MONITOR_DEFAULTTONEAREST = 2
 GA_ROOT = 2
-SWP_NOMOVE = 0x0002
-SWP_NOSIZE = 0x0001
-SWP_NOACTIVATE = 0x0010
-HWND_TOPMOST = -1
-HWND_NOTOPMOST = -2
 
 
 class _RECT(ctypes.Structure):
@@ -69,20 +65,6 @@ _user32.WindowFromPoint.argtypes = [_POINT]
 _user32.WindowFromPoint.restype = wintypes.HWND
 _user32.GetAncestor.argtypes = [wintypes.HWND, wintypes.UINT]
 _user32.GetAncestor.restype = wintypes.HWND
-_user32.SetWindowPos.argtypes = [
-    ctypes.c_void_p,
-    ctypes.c_void_p,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_int,
-    ctypes.c_uint,
-]
-_user32.SetWindowPos.restype = wintypes.BOOL
-
-
-def _hwnd_of(widget):
-    return int(widget.winId())
 
 
 def _foreground_pid_and_hwnd():
@@ -143,11 +125,6 @@ def point_shows_one_of(x, y, own_hwnds):
         return True
     root = _user32.GetAncestor(hwnd_at_point, GA_ROOT)
     return bool(root) and root in own_hwnds
-
-
-def _set_topmost(hwnd, topmost):
-    insert_after = HWND_TOPMOST if topmost else HWND_NOTOPMOST
-    _user32.SetWindowPos(hwnd, insert_after, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
 
 
 class TopmostGuard:
@@ -220,6 +197,11 @@ class TopmostEggPresenter:
         self._occlusion_check = occlusion_check
         self._point_check = point_check
         self._verify_delay_ms = verify_delay_ms
+
+    def is_guard_active(self):
+        """Public read for TopmostKeeper: True while a temporary-topmost
+        cycle owns the windows' z-order (the keeper must stay out of it)."""
+        return self._guard.is_active()
 
     def present(self, key, pet, dialogue_box, process_name_lower, show_now, on_downgrade, log):
         occluded = self._occlusion_check(process_name_lower)

@@ -30,7 +30,7 @@ app = QApplication(sys.argv)
 
 from flirt import FlirtController  # noqa: E402
 from fonts import pixel_font  # noqa: E402
-from pet_menu import PetContextMenu  # noqa: E402
+from pet_menu import CategoryPopup, find_category  # noqa: E402
 from undertale_ui import MenuRow  # noqa: E402
 
 FAILURES = []
@@ -185,6 +185,7 @@ class FakePet:
     def __init__(self):
         self.audio = None
         self._always_on_top = True
+        self._locked = False  # pet_menu's 锁定 row now reads pet._locked, not config
         self.config = {"volume": 0.8}
         self.pet_scale = 1.0
         self.flirt, self._flirt_events = make_controller()
@@ -197,6 +198,7 @@ class FakePet:
             "_toggle_menu_sfx", "_toggle_pomodoro_from_menu", "_open_reminder_settings",
             "_open_stats_panel", "_open_volume_panel", "_open_size_panel",
             "_toggle_autostart", "_on_flirt_clicked", "_view_info", "request_quit",
+            "_on_fight_clicked",  # new: the 战斗 row on the main menu
         ):
             setattr(self, name, _noop)
 
@@ -205,8 +207,9 @@ class FakePet:
 
 
 fake_pet = FakePet()
-menu = PetContextMenu(fake_pet)
-check("菜单集成: flirt_row 被正确记录", menu.flirt_row is not None)
+# 调情 now lives in the 行动 box (second layer), not the main menu
+menu = CategoryPopup(fake_pet, find_category(fake_pet, "act"))
+check("菜单集成: flirt_row 被正确记录(在「行动」小框上)", menu.flirt_row is not None)
 fake_pet.flirt.on_menu_selection_changed(True)
 wait_s(0.3)
 check("菜单集成: 悬停调情行满6s触发抓包", fake_pet._flirt_events == ["hesitate"], str(fake_pet._flirt_events))

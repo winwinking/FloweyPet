@@ -9,8 +9,8 @@ import functools
 import random
 import time
 
-from PyQt6.QtCore import QPoint, Qt, QTimer
-from PyQt6.QtGui import QCursor, QIcon, QPainter
+from PyQt6.QtCore import QPoint, Qt, QTimer, QUrl
+from PyQt6.QtGui import QCursor, QDesktopServices, QIcon, QPainter
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -33,7 +33,10 @@ from flirt import FlirtController
 from game_detector import GameDetector
 from paths import ICON_PATH
 from pomodoro_display import PomodoroDisplay
+from topmost_keeper import TopmostKeeper
+from update_checker import should_announce
 from undertale_ui import VOLUME_TIERS, ClickableLabel
+from win_zorder import apply_topmost, set_click_through
 
 CLICK_MOVE_THRESHOLD = 4
 IDLE_FRAME_MS = 220
@@ -118,6 +121,8 @@ class PetWindow(QWidget):
         self._drag_moved = False
         self._drag_offset = QPoint()
         self._pending_quit = False
+        self._update_checker = None
+        self._update_info = None  # newest version found by UpdateChecker, shown in the tray menu
         self._exit_interrupted = False  # this exit sequence's one-and-only interrupt line already used?
         self._resume_exit_animation_after_interrupt = False
         self._pending_hide = False
@@ -129,7 +134,7 @@ class PetWindow(QWidget):
         self._last_face_key = None
         self._appear_source = "appear"
         self._last_duplicate_launch_roast = float("-inf")
-        self._locked = config.get("locked", False)
+        self._locked = False  # click-through lock is never persisted: always starts unlocked
         self._locked_click_count = 0
         self._last_lock_hint_time = float("-inf")
 
@@ -143,6 +148,7 @@ class PetWindow(QWidget):
             pet_scale=self.pet_scale,
             min_font_px=config.get("bubble_min_font_size", 15),
             screen_margin=config.get("bubble_screen_margin", 8),
+            is_locked=lambda: self._locked,
         )
         self.dialogue_box.finished.connect(self._on_dialogue_finished)
         self.dialogue_box.hold_started.connect(self._on_dialogue_hold_started)
@@ -156,7 +162,7 @@ class PetWindow(QWidget):
         self.flirt.on_escape = self._on_flirt_escape
         self.flirt.on_stall = self._on_flirt_stall
 
-        self.pomodoro_display = PomodoroDisplay(self.pet_display_width, self._always_on_top)
+        self.pomodoro_display = PomodoroDisplay(self.pet_display_width, self._always_on_top, is_locked=lambda: self._locked)
 
         self.pomodoro.active_changed.connect(self._on_pomodoro_active_changed)
         self.pomodoro.tick.connect(self._refresh_tray_tooltip)
@@ -187,6 +193,13 @@ class PetWindow(QWidget):
         self._time_of_day_timer.timeout.connect(self.dm.check_time_of_day_triggers)
         self._time_of_day_timer.start(60_000)
 
+        self._topmost_keeper = TopmostKeeper(
+            self,
+            guard_active=self.game_detector.is_topmost_guard_active,
+            interval_ms=config.get("topmost_keep_interval_ms", 1000),
+        )
+        self._topmost_keeper.start()
+
         self._tray = QSystemTrayIcon(QIcon(str(ICON_PATH)), self)
         self._tray.setToolTip("Flowey")
         self._tray.activated.connect(self._on_tray_activated)
@@ -202,6 +215,18 @@ class PetWindow(QWidget):
             flags |= Qt.WindowType.WindowStaysOnTopHint
         return flags
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        set_click_through(self, self._locked)
+
+    def _apply_click_through(self, on):
+        for w in (self, self.dialogue_box, self.pomodoro_display):
+            set_click_through(w, on)
+        # The tooltip's "（已锁定）" suffix follows the lock. Deferred to the event
+        # loop: QSystemTrayIcon.setToolTip talks to the shell, and the caller may
+        # be sitting inside the tray menu's own click dispatch.
+        QTimer.singleShot(0, self._refresh_tray_tooltip)
+
     def is_pinned_on_top(self):
         """Public hook for GameDetector/TopmostGuard: what the 右键菜单"置顶"
         checkbox currently says -- i.e. what z-order this window should be
@@ -215,10 +240,7 @@ class PetWindow(QWidget):
         self._always_on_top = checked
         self.config["always_on_top"] = checked
         self.save_config(self.config)
-        was_visible = self.isVisible()
-        self.setWindowFlags(self._window_flags())
-        if was_visible:
-            self.show()
+        apply_topmost(self, checked)
         self.dialogue_box.set_always_on_top(checked)
         self.pomodoro_display.set_always_on_top(checked)
         self.arbiter.finish_feature("pin", lambda: self.dm.trigger_menu_flavor("pin_on" if checked else "pin_off"))
@@ -295,12 +317,18 @@ class PetWindow(QWidget):
     def _enter_idle(self):
         self.state = State.IDLE
         self._idle_idx = 0
-        self._set_base_pixmap(self.sprites.idle_frames[0])
-        self._idle_timer.start(IDLE_FRAME_MS)
+        if self.config.get("idle_animation", True):
+            self._set_base_pixmap(self.sprites.idle_frames[0])
+            self._idle_timer.start(IDLE_FRAME_MS)
+        else:
+            self._idle_timer.stop()
+            self._set_base_pixmap(self.sprites.still_frame)
         self._schedule_idle_chat()
         self._reschedule_afk_timers()
 
     def _advance_idle_frame(self):
+        if not self.config.get("idle_animation", True):
+            return
         if self.state != State.IDLE or self._dragging:
             return
         self._idle_idx = (self._idle_idx + 1) % len(self.sprites.idle_frames)
@@ -347,7 +375,10 @@ class PetWindow(QWidget):
 
     def _refresh_tray_tooltip(self):
         status = self.pomodoro.status_text()
-        self._tray.setToolTip(f"Flowey - {status}" if status else "Flowey")
+        text = f"Flowey - {status}" if status else "Flowey"
+        if self._locked:
+            text += "（已锁定）"
+        self._tray.setToolTip(text)
 
     def _on_pomodoro_tick(self):
         if self.pomodoro.is_running:
@@ -561,6 +592,12 @@ class PetWindow(QWidget):
     def _build_menu(self):
         menu = QMenu()
 
+        update_info = getattr(self, "_update_info", None)
+        if isinstance(update_info, dict) and "version" in update_info:
+            update_action = menu.addAction(f"更新到 v{update_info['version']}")
+            update_action.triggered.connect(lambda: self._open_update_page(update_info["url"]))
+            menu.addSeparator()
+
         visible_action = menu.addAction("隐藏" if self.isVisible() else "显示 Flowey")
         visible_action.triggered.connect(self._toggle_visible)
 
@@ -568,6 +605,14 @@ class PetWindow(QWidget):
         pin_action.setCheckable(True)
         pin_action.setChecked(self._always_on_top)
         pin_action.triggered.connect(self._toggle_always_on_top)
+
+        lock_action = menu.addAction("锁定")
+        lock_action.setCheckable(True)
+        lock_action.setChecked(self._locked)
+        lock_action.triggered.connect(self._on_tray_lock_triggered)
+        # The check mark is re-synced from the real state only here, every time
+        # the menu is about to open -- never from inside the click handler.
+        menu.aboutToShow.connect(lambda: lock_action.setChecked(self._locked))
 
         menu.addSeparator()
         pomo_menu = menu.addMenu("番茄钟")
@@ -665,25 +710,79 @@ class PetWindow(QWidget):
 
     def _show_context_menu(self):
         from pet_menu import PetContextMenu
+
+        self._close_active_popup()
+        menu = PetContextMenu(self, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
+        self._place_popup(menu)
+        self._active_popup = menu
+        menu.show()
+        menu.setFocus()
+
+    def _place_popup(self, popup, ref_h=None):
+        """The one placement rule for every popup (see
+        undertale_ui.position_avoid_pet_and_bubble). ref_h is the main
+        menu's height, so all popups agree on above/below/side."""
         from undertale_ui import position_avoid_pet_and_bubble
 
-        menu = PetContextMenu(self, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
-        menu.selection_changed.connect(
-            lambda row: self.flirt.on_menu_selection_changed(row is menu.flirt_row)
-        )
-        menu.closed.connect(self.flirt.on_menu_closed)
         position_avoid_pet_and_bubble(
-            menu,
+            popup,
             self.x(),
             self.y(),
             self.width(),
             self.height(),
             self.dialogue_box,
             margin=self.config.get("panel_screen_margin", 8),
+            ref_h=ref_h,
         )
-        self._active_popup = menu
-        menu.show()
-        menu.setFocus()
+
+    def _main_menu_height(self):
+        """Height the main menu has right now (measured on a throwaway,
+        never-shown instance) -- the common yardstick for deciding whether
+        the pet hugs the top/bottom screen edge."""
+        from pet_menu import PetContextMenu
+
+        probe = PetContextMenu(self, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
+        probe.finish_layout()
+        height = probe.height()
+        probe.deleteLater()
+        return height
+
+    def _open_menu_category(self, key):
+        """Main menu's category row clicked: the row closes the main menu
+        itself; the category's box opens on the next event-loop tick (never
+        from inside the click that is still closing the menu)."""
+        QTimer.singleShot(0, lambda: self._show_category_popup(key))
+
+    def _show_category_popup(self, key):
+        from pet_menu import CategoryPopup, find_category
+
+        if self._pending_quit:
+            return
+        spec = find_category(self, key)
+        if spec is None:
+            return
+        self._close_active_popup()
+        box = CategoryPopup(self, spec, ui_scale=self._ui_scale(), min_font_px=self.config.get("ui_min_font_size", 10))
+        if box.flirt_row is not None:
+            # The 调情 hover/escape state machine listens to the box that
+            # actually holds the 调情 row (not the main menu), so entering
+            # the box from the main menu never reads as "menu closed".
+            box.selection_changed.connect(
+                lambda row: self.flirt.on_menu_selection_changed(row is box.flirt_row)
+            )
+            box.closed.connect(self.flirt.on_menu_closed)
+        self._place_popup(box, ref_h=self._main_menu_height())
+        self._active_popup = box
+        box.show()
+        box.setFocus()
+
+    def _back_to_main_menu(self):
+        """"< 返回" / Esc in a category box: close it, reopen the main menu
+        (queued, like a fresh right-click)."""
+        self._close_active_popup()
+        if self._pending_quit:
+            return
+        QTimer.singleShot(0, self._show_context_menu)
 
     def _close_active_popup(self):
         if self._active_popup is not None:
@@ -765,11 +864,51 @@ class PetWindow(QWidget):
         self.audio.set_muted(checked)
         self.arbiter.finish_feature("mute", lambda: self.dm.trigger_menu_flavor("mute_on" if checked else "mute_off"))
 
+    # ---------------------------------------------------------- update check
+    def attach_update_checker(self, checker):
+        self._update_checker = checker
+        checker.update_available.connect(self._on_update_available)
+
+    def _open_update_page(self, url):
+        QDesktopServices.openUrl(QUrl(url))
+
+    def _on_update_available(self, info):
+        # The tray menu is built once at startup and again after each tray
+        # activation, so rebuild it right now to make the new entry appear.
+        self._update_info = info
+        self._tray.setContextMenu(self._build_menu())
+        # Speak only when Flowey is actually on screen and not leaving; in
+        # that case don't record it either, so the next check can announce.
+        if self.isVisible() and not self._pending_quit and should_announce(self.config, info["version"]):
+            self.dm.trigger_update_announce(info["version"], info.get("line"), info.get("face"))
+            self.config["last_announced_version"] = info["version"]
+            self.save_config(self.config)
+
+    def _toggle_update_check(self, checked):
+        self.stats.record_interaction()
+        self.config["check_updates"] = checked
+        self.save_config(self.config)
+        if self._update_checker is not None:
+            self._update_checker.set_enabled(checked)
+
     def _toggle_menu_sfx(self, checked):
         self.stats.record_interaction()
         self.config["menu_sfx_enabled"] = checked
         self.save_config(self.config)
         self.audio.set_menu_sfx_enabled(checked)
+
+    def _toggle_idle_animation(self, checked):
+        # Plain preference switch: no arbiter, no dialogue.
+        self.config["idle_animation"] = checked
+        self.save_config(self.config)
+        if self.state == State.IDLE:
+            self._idle_idx = 0
+            if checked:
+                self._set_base_pixmap(self.sprites.idle_frames[0])
+                self._idle_timer.start(IDLE_FRAME_MS)
+            else:
+                self._idle_timer.stop()
+                self._set_base_pixmap(self.sprites.still_frame)
 
     def _toggle_lock(self, checked):
         # Routed through DialogueArbiter same as pin/mute/hide/autostart,
@@ -786,11 +925,35 @@ class PetWindow(QWidget):
             return  # inside the 0.5s debounce cooldown: state frozen, ignored
         self.stats.record_interaction()
         self._locked = checked
-        self.config["locked"] = checked
-        self.save_config(self.config)
+        self._apply_click_through(checked)
         if not checked:
             self._locked_click_count = 0
         self.arbiter.finish_feature("lock", lambda: self.dm.trigger_menu_flavor("lock_on" if checked else "lock_off"))
+
+    def _force_unlock(self):
+        """Emergency exit from click-through lock (tray menu / hotkey). Must
+        always succeed: it never goes through begin_feature or the tantrum
+        zone, doesn't speak and doesn't touch stats -- it just unlocks and
+        reopens the arbiter's lock gates so the next toggle isn't refused."""
+        self._locked = False
+        self._apply_click_through(False)
+        self._locked_click_count = 0
+        self.arbiter.reset_lock_gates()
+        dialogue_log.log_event("强制解锁（托盘/热键）")
+
+    def _on_tray_lock_triggered(self, checked):
+        """Tray menu 锁定 item: unlocking is the forced path (never
+        refused); locking goes through the normal arbiter flow (may be
+        refused during the debounce/tantrum gates).
+
+        Runs inside the tray menu's own click dispatch, so it only decides
+        what to do (from the lock state AT CLICK TIME) and defers the actual
+        lock/unlock -- which flips native window styles and touches the tray
+        icon -- to the next event-loop turn, after the menu has finished
+        closing. It does not touch the action's check mark either: that is
+        re-synced only by the menu's aboutToShow."""
+        was_locked = self._locked
+        QTimer.singleShot(0, self._force_unlock if was_locked else (lambda: self._toggle_lock(True)))
 
     def _set_volume(self, pct):
         # Continuous-style feature (reg 4): every call really applies the
@@ -815,7 +978,6 @@ class PetWindow(QWidget):
 
     @_guarded_menu_action("音量面板")
     def _open_volume_panel(self):
-        from undertale_ui import position_avoid_pet_and_bubble
         from volume_panel import VolumePanel
 
         self.stats.record_interaction()
@@ -828,15 +990,7 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(
-            panel,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(panel, ref_h=self._main_menu_height())
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -873,6 +1027,8 @@ class PetWindow(QWidget):
             self._exit_frames = frames
             idx = min(self._exit_idx, len(frames) - 1)
             return frames[idx]
+        if not self.config.get("idle_animation", True):
+            return self.sprites.still_frame
         idx = min(self._idle_idx, len(self.sprites.idle_frames) - 1)
         return self.sprites.idle_frames[idx]
 
@@ -918,7 +1074,6 @@ class PetWindow(QWidget):
     @_guarded_menu_action("大小面板")
     def _open_size_panel(self):
         from size_panel import SizePanel
-        from undertale_ui import position_avoid_pet_and_bubble
 
         self.stats.record_interaction()
         self._close_active_popup()
@@ -931,15 +1086,7 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(
-            panel,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(panel, ref_h=self._main_menu_height())
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -966,7 +1113,6 @@ class PetWindow(QWidget):
     @_guarded_menu_action("提醒设置")
     def _open_reminder_settings(self):
         from reminder_settings import ReminderPanel
-        from undertale_ui import position_avoid_pet_and_bubble
 
         self.stats.record_interaction()
         # Opening the panel always works (it's a view, not a persistent
@@ -980,18 +1126,16 @@ class PetWindow(QWidget):
             ui_scale=self._ui_scale(),
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
-        position_avoid_pet_and_bubble(
-            panel,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(panel, ref_h=self._main_menu_height())
         self._active_popup = panel
         panel.show()
         panel.setFocus()
+
+    @_guarded_menu_action("战斗")
+    def _on_fight_clicked(self):
+        # Placeholder: one line from dialogue.json's "fight" pool.
+        self.stats.record_interaction()
+        self.arbiter.finish_feature("fight", lambda: self.dm.trigger_menu_flavor("fight"))
 
     @_guarded_menu_action("查看信息")
     def _view_info(self):
@@ -1108,7 +1252,6 @@ class PetWindow(QWidget):
     def _open_stats_panel(self):
         import roast
         from stats_panel import StatsPanel
-        from undertale_ui import position_avoid_pet_and_bubble
 
         self.stats.record_interaction()
         self._close_active_popup()
@@ -1138,15 +1281,7 @@ class PetWindow(QWidget):
             min_font_px=self.config.get("ui_min_font_size", 10),
         )
         panel.closed.connect(self._on_stats_panel_closed)
-        position_avoid_pet_and_bubble(
-            panel,
-            self.x(),
-            self.y(),
-            self.width(),
-            self.height(),
-            self.dialogue_box,
-            margin=self.config.get("panel_screen_margin", 8),
-        )
+        self._place_popup(panel, ref_h=self._main_menu_height())
         self._active_popup = panel
         panel.show()
         panel.setFocus()
@@ -1275,4 +1410,5 @@ class PetWindow(QWidget):
 
     def _quit_now(self):
         self._pending_quit = True
+        self._topmost_keeper.stop()
         QApplication.instance().quit()

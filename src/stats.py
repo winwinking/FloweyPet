@@ -9,7 +9,9 @@ from datetime import datetime, timedelta
 
 from PyQt6.QtCore import QObject, QTimer
 
+from error_log import log_exception, log_message
 from paths import STATS_PATH
+from user_data import atomic_write_json, quarantine_bad_file
 
 AUTOSAVE_INTERVAL_MS = 5 * 60_000
 COMPANION_TICK_MS = 60_000
@@ -52,14 +54,28 @@ def _deep_merge(defaults, loaded):
     return out
 
 
-def _load():
-    if STATS_PATH.exists():
-        try:
-            with open(STATS_PATH, "r", encoding="utf-8") as f:
-                return _deep_merge(DEFAULTS, json.load(f))
-        except (OSError, json.JSONDecodeError):
-            pass
+def _default_copy():
     return json.loads(json.dumps(DEFAULTS))  # deep copy, defaults nest dicts/lists
+
+
+def _load():
+    if not STATS_PATH.exists():
+        return _default_copy()
+    try:
+        with open(STATS_PATH, "r", encoding="utf-8") as f:
+            loaded = json.load(f)
+    except OSError as e:
+        log_message(f"stats load: 读取 {STATS_PATH} 失败（{e!r}），本次使用默认值，文件未改动")
+        return _default_copy()
+    except ValueError as e:  # json.JSONDecodeError / UnicodeDecodeError
+        moved = quarantine_bad_file(STATS_PATH)
+        log_message(f"stats load: {STATS_PATH} 不是合法 JSON（{e!r}），已改名为 {moved}，使用默认值")
+        return _default_copy()
+    if not isinstance(loaded, dict):
+        moved = quarantine_bad_file(STATS_PATH)
+        log_message(f"stats load: {STATS_PATH} 内容不是 JSON 对象，已改名为 {moved}，使用默认值")
+        return _default_copy()
+    return _deep_merge(DEFAULTS, loaded)
 
 
 class Stats(QObject):
@@ -85,10 +101,9 @@ class Stats(QObject):
 
     def save(self):
         try:
-            with open(STATS_PATH, "w", encoding="utf-8") as f:
-                json.dump(self.data, f, ensure_ascii=False, indent=2)
+            atomic_write_json(STATS_PATH, self.data)
         except OSError:
-            pass
+            log_exception("stats.save")
 
     def _tick_companion_minute(self):
         self.data["companion_minutes"] += 1

@@ -10,10 +10,12 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from paths import LOG_DIR
+
 # FLOWEYPET_REMINDER_LOG lets a test run redirect this file away from the
 # real instance's log, so an offscreen self-test never interleaves its
 # events with (or prunes) the log the user actually reads.
-LOG_PATH = Path(os.environ.get("FLOWEYPET_REMINDER_LOG", r"C:\FloweyPet\reminder.log"))
+LOG_PATH = Path(os.environ.get("FLOWEYPET_REMINDER_LOG") or (LOG_DIR / "reminder.log"))
 RETENTION_DAYS = 7
 
 
@@ -25,7 +27,7 @@ def log_event(message):
         _prune(now)
         with open(LOG_PATH, "a", encoding="utf-8") as f:
             f.write(line)
-    except OSError:
+    except (OSError, ValueError):
         pass
 
 
@@ -34,9 +36,9 @@ def _prune(now):
         return
     cutoff = now - timedelta(days=RETENTION_DAYS)
     try:
-        with open(LOG_PATH, "r", encoding="utf-8") as f:
+        with open(LOG_PATH, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
-    except OSError:
+    except (OSError, ValueError):
         return
     kept = [ln for ln in lines if _within_retention(ln, cutoff)]
     if len(kept) != len(lines):

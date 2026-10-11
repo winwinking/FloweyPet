@@ -305,13 +305,19 @@ class FakeSelf:
         self.dm = FakeDM()
         self.stats = FakeStats()
         self.arbiter = FakeArbiter()
-        self._locked = config.get("locked", False)
+        # Lock is click-through now and is never persisted: PetWindow always
+        # starts unlocked, so the fake no longer seeds _locked from config.
+        self._locked = False
+        self.click_through_calls = []
         self._locked_click_count = 0
         self._last_lock_hint_time = float("-inf")
         self._saved = []
 
     def save_config(self, cfg):
         self._saved.append(dict(cfg))
+
+    def _apply_click_through(self, on):
+        self.click_through_calls.append(on)
 
 
 cfg = {"lock_hint_click_threshold": 10, "lock_hint_cooldown_seconds": 300}
@@ -334,7 +340,15 @@ check("锁定提示: 冷却过后再满10次可再次触发", fake.dm.hints == 2
 fake2 = FakeSelf({"locked": False})
 PetWindow._toggle_lock(fake2, True)
 check("锁定开关: 打开后 self._locked 为真", fake2._locked is True)
-check("锁定开关: 打开后配置项写入 True", fake2.config["locked"] is True)
+# REPLACED (was: 打开后配置项写入 True -> fake2.config["locked"] is True).
+# Lock is now mouse click-through at the native-window layer and is no
+# longer persisted: _toggle_lock must NOT write config["locked"] nor call
+# save_config, and must apply click-through to the windows instead.
+check("锁定开关: 打开后 self._locked 为 True(新语义a)", fake2._locked is True)
+check("锁定开关: 打开后未把 locked 写进配置/未落盘(新语义b)",
+      fake2.config.get("locked") is not True and fake2._saved == [], str(fake2.config))
+check("锁定开关: 打开后穿透被应用,最后一次为 True(新语义c)",
+      bool(fake2.click_through_calls) and fake2.click_through_calls[-1] is True, str(fake2.click_through_calls))
 check("锁定开关: 打开播放 lock_on 台词", fake2.dm.flavors == ["lock_on"])
 fake2._locked_click_count = 7
 PetWindow._toggle_lock(fake2, False)

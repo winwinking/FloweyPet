@@ -32,6 +32,7 @@ from paths import (
     FACES_DIR,
     FACES_MANIFEST_PATH,
     IDLE_DIR,
+    IDLE_STILL_DIR,
     QUIT_ANIM_DIR,
     STEM_BASE_PATH,
 )
@@ -53,11 +54,13 @@ class SpriteBank:
         self._raw_appear = self._load_raw(APPEAR_DIR, 9)
         self._raw_appear_neutral = self._load_raw(APPEAR_NEUTRAL_DIR, 9)
         self._raw_idle = self._load_raw(IDLE_DIR, 3)
+        self._raw_still = self._load_raw_existing(IDLE_STILL_DIR)[:1]  # optional; [] -> idle_frames[0]
         self._raw_quit = self._load_raw_existing(QUIT_ANIM_DIR)
 
         self.appear_frames = []
         self.appear_neutral_frames = []
         self.idle_frames = []
+        self.still_frame = None
         self.quit_frames = []
         self._rescale_all()
 
@@ -83,6 +86,7 @@ class SpriteBank:
         self.appear_frames = [self._scale(pm) for pm in self._raw_appear]
         self.appear_neutral_frames = [self._scale(pm) for pm in self._raw_appear_neutral]
         self.idle_frames = [self._scale(pm) for pm in self._raw_idle]
+        self.still_frame = self._scale(self._raw_still[0]) if self._raw_still else self.idle_frames[0]
         self.quit_frames = [self._scale(pm) for pm in self._raw_quit]
 
     # -------------------------------------------------------------- loading

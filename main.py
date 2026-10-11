@@ -7,19 +7,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from PyQt6.QtWidgets import QApplication
 
-from error_log import install_global_hook
+from error_log import install_global_hook, log_exception
 
 install_global_hook()
 
-from config import load_config, save_config
+from config import load_config, read_autostart_command, read_shadow_clicks, save_config, sync_autostart, write_shadow_clicks
 from audio import AudioManager
+import app_log
 import audio_log
 from compositor import SpriteBank
 from dialogue_manager import DialogueManager
+from paths import APP_DIR, IS_DEV, USER_DATA_DIR
 from pomodoro import Pomodoro
 from reminders import Reminders
 from single_instance import SingleInstanceGuard
 from stats import Stats
+from update_checker import UpdateChecker
+from user_data import autostart_exe_dir, migrate_legacy_data, pick_legacy_source
 from pet_window import PetWindow
 
 
@@ -42,8 +46,33 @@ def main():
     if not guard.try_claim():
         sys.exit(0)
 
+    # Move config.json / stats.json from beside the exe into the user data
+    # dir. Must run only after the single-instance check above passed, so a
+    # second launch never rewrites data under a running first instance.
+    try:
+        # Packaged build only: the old data may sit beside a different exe
+        # (e.g. the one the autostart entry points at), not beside this one.
+        fallback_dirs = [] if IS_DEV else [autostart_exe_dir(read_autostart_command())]
+        legacy_config, legacy_stats, source_dir = pick_legacy_source(APP_DIR, fallback_dirs)
+        result = migrate_legacy_data(USER_DATA_DIR, legacy_config, legacy_stats, read_shadow_clicks,
+                                       write_shadow=write_shadow_clicks)
+        app_log.log_event(f"数据迁移：{result}（数据目录 {USER_DATA_DIR}，旧数据来源 {source_dir}）")
+    except Exception:
+        log_exception("migrate_legacy_data")
+    config = load_config()
+
     config["_session_start"] = time.time()
     save_config(config)
+
+    # Keep the autostart entry pointing at this program. Must stay AFTER the
+    # migration above: migration reads the OLD autostart path to locate the
+    # old data folder, and this call overwrites that path.
+    try:
+        autostart_result = sync_autostart(config)
+        if autostart_result not in ("skipped_dev", "off"):
+            app_log.log_event(f"开机自启同步：{autostart_result}")
+    except Exception:
+        log_exception("sync_autostart")
 
     audio = AudioManager(
         volume=config.get("volume", 0.8),
@@ -67,6 +96,12 @@ def main():
 
     window = PetWindow(config, save_config, dm, audio, sprites, pomodoro, reminders, stats)
     guard.on_activate_requested = window.on_duplicate_launch_activation
+    try:
+        update_checker = UpdateChecker(config)
+        window.attach_update_checker(update_checker)
+        update_checker.start()
+    except Exception:
+        log_exception("update_checker")
     app.aboutToQuit.connect(guard.close)
     window.show()
 

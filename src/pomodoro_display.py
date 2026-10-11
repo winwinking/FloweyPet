@@ -9,6 +9,7 @@ from PyQt6.QtGui import QColor, QFontMetrics, QPainter, QPen
 from PyQt6.QtWidgets import QWidget
 
 from fonts import dseg7_font
+from win_zorder import apply_topmost, set_click_through
 
 REFERENCE_TEXT = "25:00"
 PROBE_PIXEL_SIZE = 48
@@ -29,8 +30,9 @@ def _fit_pixel_size(pet_width_px: int) -> int:
 
 
 class PomodoroDisplay(QWidget):
-    def __init__(self, pet_width_px: int, always_on_top: bool = True):
+    def __init__(self, pet_width_px: int, always_on_top: bool = True, is_locked=None):
         self._pin = always_on_top
+        self._is_locked = is_locked or (lambda: False)  # injected by PetWindow; avoids importing it
         super().__init__(None, self._window_flags())
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
@@ -63,14 +65,18 @@ class PomodoroDisplay(QWidget):
             flags |= Qt.WindowType.WindowStaysOnTopHint
         return flags
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        set_click_through(self, self._is_locked())
+
     def set_always_on_top(self, pin: bool):
         if pin == self._pin:
             return
         self._pin = pin
-        was_visible = self.isVisible()
-        self.setWindowFlags(self._window_flags())
-        if was_visible:
-            self.show()
+        apply_topmost(self, pin)
+
+    def is_pinned(self):
+        return self._pin
 
     # ------------------------------------------------------------- display
     def set_time(self, minutes: int, seconds: int):

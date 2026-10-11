@@ -11,6 +11,7 @@ from PyQt6.QtGui import QColor, QFontMetrics, QPainter, QPen
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QWidget
 
 from fonts import pixel_font
+from win_zorder import apply_topmost, set_click_through
 from undertale_ui import (
     COLOR_SELECTED,
     COLOR_TEXT,
@@ -162,8 +163,10 @@ class DialogueBox(QWidget):
         pet_scale: float = 1.0,
         min_font_px: int = None,
         screen_margin: int = DEFAULT_SCREEN_MARGIN,
+        is_locked=None,
     ):
         self._pin = always_on_top
+        self._is_locked = is_locked or (lambda: False)  # injected by PetWindow; avoids importing it
         self._confirm_hold_ms = confirm_hold_ms
         self.test_mode = test_mode
         self._screen_margin = screen_margin
@@ -221,14 +224,15 @@ class DialogueBox(QWidget):
             flags |= Qt.WindowType.WindowStaysOnTopHint
         return flags
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        set_click_through(self, self._is_locked())  # a recreated native window loses its ex-style
+
     def set_always_on_top(self, pin: bool):
         if pin == self._pin:
             return
         self._pin = pin
-        was_visible = self.isVisible()
-        self.setWindowFlags(self._window_flags())
-        if was_visible:
-            self.show()
+        apply_topmost(self, pin)
 
     def is_pinned(self):
         """Public hook for GameDetector/TopmostGuard, mirrors

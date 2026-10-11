@@ -9,7 +9,9 @@ import sys
 import winreg
 from pathlib import Path
 
-from paths import CONFIG_PATH
+from error_log import log_exception, log_message
+from paths import CONFIG_PATH, IS_DEV
+from user_data import atomic_write_json, quarantine_bad_file
 
 DEFAULTS = {
     "position": None,  # None => PetWindow picks a sensible on-screen default
@@ -26,6 +28,7 @@ DEFAULTS = {
     "lock_hint_cooldown_seconds": 300,  # 锁定提示台词的冷却
     "volume": 0.8,
     "muted": False,
+    "idle_animation": True,  # False: idle shows one still frame instead of looping the 3 idle frames
     "menu_sfx_enabled": True,  # independent of "muted": only gates menu move/select blips
     "audio_debug": False,               # log every play attempt (not just failures/rebuilds) to audio.log
     "audio_watchdog_threshold": 5,      # consecutive play failures across all channels before a forced full rebuild
@@ -34,6 +37,11 @@ DEFAULTS = {
     "font_scale": 1.75,
     "always_on_top": True,
     "autostart": False,
+    "check_updates": True,  # 是否检查更新：只读取一个公开的 version.json，不发送任何数据，只提示、不自动替换
+    "update_url": "https://raw.githubusercontent.com/winwinking/FloweyPet/master/version.json",  # 版本信息文件的地址
+    "update_check_hours": 3,  # 启动后每隔多少小时再检查一次
+    "update_first_delay_seconds": 8,  # 启动后等多少秒做第一次检查，避开开场动画
+    "last_announced_version": None,  # 上次已经播报过的新版本号，同一个版本只说一次
     "first_run_done": False,
     "birthday": None,          # "MM-DD" or null
     "install_date": None,      # "YYYY-MM-DD"
@@ -74,7 +82,6 @@ DEFAULTS = {
     "day_boundary_hour": 6,          # 0:00-this hour counts as "still last night" for the stats panel
     "session_gap_minutes": 90,        # activity gaps longer than this start a new session
     "morning_greet_probability": 0.2,  # odds of the "起这么早" line on a genuinely fresh early-morning boot
-    "version": "3.0.0",  # shown in the "查看信息" easter egg via {ver}; edit by hand to bump it
     "info_easter_egg": {
         "weights": {"normal_intro": 40, "fourth_wall": 30, "nonsense": 20, "rare": 10},
         "anti_spam_window_seconds": 60,
@@ -145,33 +152,70 @@ def _deep_merge(defaults, loaded):
     return out
 
 
+def _default_copy():
+    # Deep copy: DEFAULTS nests dicts/lists, a shallow dict() would let edits
+    # to the returned config leak back into DEFAULTS.
+    return json.loads(json.dumps(DEFAULTS))
+
+
 def load_config():
-    if CONFIG_PATH.exists():
-        try:
-            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                loaded = json.load(f)
-            return _deep_merge(DEFAULTS, loaded)
-        except (json.JSONDecodeError, OSError):
-            pass
-    return dict(DEFAULTS)
+    if not CONFIG_PATH.exists():
+        return _default_copy()
+    try:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            loaded = json.load(f)
+    except OSError as e:
+        log_message(f"load_config: 读取 {CONFIG_PATH} 失败（{e!r}），本次使用默认值，文件未改动")
+        return _default_copy()
+    except ValueError as e:  # json.JSONDecodeError / UnicodeDecodeError
+        moved = quarantine_bad_file(CONFIG_PATH)
+        log_message(f"load_config: {CONFIG_PATH} 不是合法 JSON（{e!r}），已改名为 {moved}，使用默认值")
+        return _default_copy()
+    if not isinstance(loaded, dict):
+        moved = quarantine_bad_file(CONFIG_PATH)
+        log_message(f"load_config: {CONFIG_PATH} 内容不是 JSON 对象，已改名为 {moved}，使用默认值")
+        return _default_copy()
+    return _deep_merge(DEFAULTS, loaded)
 
 
 def save_config(cfg):
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, ensure_ascii=False, indent=2)
+    try:
+        atomic_write_json(CONFIG_PATH, cfg)
+    except OSError:
+        log_exception("save_config")
 
 
 _RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-_RUN_NAME = "FloweyPet"
+# A source run and the packaged exe must not share one autostart entry:
+# otherwise toggling autostart from a source run would overwrite the exe's
+# entry with "python main.py" (and the exe's sync would overwrite it back).
+_RUN_NAME = "FloweyPetDev" if IS_DEV else "FloweyPet"
+
+
+def read_autostart_command():
+    """The command string stored in the HKCU Run key for FloweyPet, or None
+    if unset/unreadable. Read-only."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_READ) as key:
+            value, _ = winreg.QueryValueEx(key, _RUN_NAME)
+        return value if isinstance(value, str) else None
+    except OSError:
+        return None
+
+
+def _autostart_command():
+    """The command the Run key should hold for the program that is running now."""
+    target = Path(sys.executable).resolve()
+    if getattr(sys, "frozen", False):
+        return f'"{target}"'
+    main_py = Path(__file__).resolve().parent.parent / "main.py"
+    return f'"{target}" "{main_py}"'
 
 
 def set_autostart(enabled: bool):
-    target = Path(sys.executable).resolve()
-    if getattr(sys, "frozen", False):
-        command = f'"{target}"'
-    else:
-        main_py = Path(__file__).resolve().parent.parent / "main.py"
-        command = f'"{target}" "{main_py}"'
+    """Adds/removes the Run entry. True on success, False if the registry
+    refused (OSError)."""
+    command = _autostart_command()
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_SET_VALUE) as key:
             if enabled:
@@ -181,19 +225,42 @@ def set_autostart(enabled: bool):
                     winreg.DeleteValue(key, _RUN_NAME)
                 except FileNotFoundError:
                     pass
+        return True
     except OSError:
-        pass
+        return False
+
+
+def sync_autostart(config, read_command=None, write=None, expected=None, is_dev=None):
+    """At startup, if autostart is switched on, make sure the Run entry points
+    at the program that is running now (the folder may have moved or the exe
+    been replaced). Never turns autostart on or off by itself and never
+    raises. Returns "skipped_dev" | "off" | "ok" | "updated" | "failed"."""
+    try:
+        if (IS_DEV if is_dev is None else is_dev):
+            return "skipped_dev"
+        if config.get("autostart") is not True:
+            return "off"
+        current = (read_autostart_command if read_command is None else read_command)()
+        want = _autostart_command() if expected is None else expected
+        if isinstance(current, str) and current.strip().lower() == want.strip().lower():
+            return "ok"
+        ok = (set_autostart if write is None else write)(True)
+        return "updated" if ok else "failed"
+    except Exception:  # noqa: BLE001 - startup must never break on this
+        return "failed"
 
 
 # ------------------------------------------------------- anti-cheat shadow copy
-# total_clicks lives in config.json, which sits right next to the exe where
-# anyone can open and hand-edit it. To detect that, we keep a second copy
+# total_clicks lives in config.json, in the per-user data directory
+# (paths.USER_DATA_DIR) where anyone can open and hand-edit it. To detect that, we keep a second copy
 # somewhere a casual editor won't think to look or touch alongside it: the
 # registry, under the same HKCU root the autostart key above already uses.
 # Only the app's own legitimate click-increment path writes this -- see
 # anticheat.py's SaveTamperGuard, which compares the two at every startup.
 _ANTICHEAT_KEY = r"Software\FloweyPet"
-_ANTICHEAT_VALUE = "ShadowTotalClicks"
+# Source runs and the packaged exe must not share one shadow value: they keep
+# separate config.json files, so a shared value would look like tampering.
+_ANTICHEAT_VALUE = "ShadowTotalClicksDev" if IS_DEV else "ShadowTotalClicks"
 
 
 def read_shadow_clicks():
