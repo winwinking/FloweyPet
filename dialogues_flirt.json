@@ -1,106 +1,715 @@
 {
-  "_readme": "右键菜单 -> 调情 功能用的台词，见 src/flirt.py。entries 内条目结构（lines数组+faces数组）与 dialogues_info.json 完全一致：lines 是句子数组，faces 是长度相同的数组，每个槽位是一个或多个 face-tag 字符串组成的数组（1个=整句用这个表情，2+个=打字过程中依次切换表情）。face 取值须与 assets/faces 下的文件夹名完全一致。\n\nflirt_response：调情按钮的常规回应池，按累计成功次数 flirt_count 分层，每层是 {min,max,entries}，max=-1 表示无上限，flirt_count 落入哪层就从哪层的 entries 里抽（层内不与上一条重复）。分层区间在这里配置，不写死在代码里。\n\nflirt_hesitate：右键菜单里光标在“调情”上停留达到 hesitate_seconds（见 config.json 的 flirt.hesitate_seconds）时，Flowey 主动播放的“抓包”台词。\nflirt_escape：抓包后玩家把光标移开“调情”项或关闭菜单，播放的台词。\nflirt_caught_confirm：抓包后玩家仍然点击/确认“调情”，先播放这一条，播完自动衔接一条 flirt_response。\nflirt_stall：抓包后玩家继续停留在“调情”上又达到 stall_seconds（见 config.json 的 flirt.stall_seconds）时播放，只播一次，不循环。\n\n本文件当前全部是占位测试台词，供机制联调测试用，后续由用户替换为正式文案（结构不要改动）。",
-
+  "_readme": "右键菜单 -> 调情 功能用的台词，见 src/flirt.py。entries 内条目结构（lines数组+faces数组）与 dialogues_info.json 完全一致：lines 是句子数组，faces 是长度相同的数组，每个槽位是一个或多个 face-tag 字符串组成的数组（1个=整句用这个表情，2+个=打字过程中依次切换表情）。face 取值须与 assets/faces 下的文件夹名完全一致。\n\nflirt_response：调情按钮的常规回应池，按累计成功次数 flirt_count 分层，每层是 {min,max,entries}，max=-1 表示无上限，flirt_count 落入哪层就从哪层的 entries 里抽（层内不与上一条重复）。分层区间在这里配置，不写死在代码里。\n\nflirt_hesitate：右键菜单里光标在“调情”上停留达到 hesitate_seconds（见 config.json 的 flirt.hesitate_seconds）时，Flowey 主动播放的“抓包”台词。\nflirt_escape：抓包后玩家把光标移开“调情”项或关闭菜单，播放的台词。\nflirt_caught_confirm：抓包后玩家仍然点击/确认“调情”，先播放这一条，播完自动衔接一条 flirt_response。\nflirt_stall：抓包后玩家继续停留在“调情”上又达到 stall_seconds（见 config.json 的 flirt.stall_seconds）时播放，只播一次，不循环。",
   "flirt_response": [
     {
       "min": 1,
       "max": 1,
       "entries": [
         {
-          "lines": ["诶？你、你刚才是不是对我做了什么？我的脸怎么这么烫……"],
-          "faces": [["sheepish_smile"]]
+          "lines": [
+            "你……刚才是不是对我做了什么？等等。我没准备好。"
+          ],
+          "faces": [
+            [
+              "shocked",
+              "worry",
+              "sheepish_smile"
+            ]
+          ]
         },
         {
-          "lines": ["哦？这是你人生第一次对我调情啊。……我会记住的，别后悔。"],
-          "faces": [["smirk", "wink"]]
+          "lines": [
+            "哈？调情？对一朵花？你的品味比我想象的还奇怪。……再来一次。"
+          ],
+          "faces": [
+            [
+              "frown",
+              "smirk",
+              "wink"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "……！你不要突然这样！花也是会害羞的！……虽然花不会脸红。"
+          ],
+          "faces": [
+            [
+              "super_shocked",
+              "sheepish_smile",
+              "gritted_teeth"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "诶？你、你刚才是不是对我做了什么？我的脸怎么这么烫……"
+          ],
+          "faces": [
+            [
+              "shocked",
+              "sheepish_smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "哦？这是你人生第一次对我调情啊。……我会记住的，别后悔。"
+          ],
+          "faces": [
+            [
+              "calm",
+              "smirk",
+              "wink"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你认真的？你在对一朵花——一朵没有灵魂的花——说这种话？……你真的很奇怪。"
+          ],
+          "faces": [
+            [
+              "shocked",
+              "serious",
+              "sheepish_smile"
+            ]
+          ]
         }
       ]
     },
     {
       "min": 2,
-      "max": 10,
+      "max": 25,
       "entries": [
         {
-          "lines": ["又来撩我？你还挺勤快的嘛。"],
-          "faces": [["sneaky_grin"]]
+          "lines": [
+            "又来撩我？你还挺勤快的嘛。我还以为上次是意外呢。"
+          ],
+          "faces": [
+            [
+              "sneaky_grin",
+              "smirk"
+            ]
+          ]
         },
         {
-          "lines": ["喂，你这样一直撩一朵花，不觉得自己有点奇怪吗？……继续。"],
-          "faces": [["grin"]]
+          "lines": [
+            "你这样一直撩一朵花，不觉得自己有问题吗？……继续。"
+          ],
+          "faces": [
+            [
+              "frown",
+              "grin",
+              "wink"
+            ]
+          ]
         },
         {
-          "lines": ["哼，算你有点眼光。"],
-          "faces": [["smirk"]]
+          "lines": [
+            "哼，算你有点眼光。全桌面就我最值得撩。"
+          ],
+          "faces": [
+            [
+              "smirk",
+              "wink"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你对所有花都这样还是只对我？……不许回答\"只对你\"，我会不知道怎么接。"
+          ],
+          "faces": [
+            [
+              "smirk",
+              "worry",
+              "sheepish_smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "又撩？你把这个按钮当玩具了？我不是玩具。我是高级玩具。"
+          ],
+          "faces": [
+            [
+              "frown",
+              "grin",
+              "wink"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你的调情技术一点没进步。不过你的勇气倒是可以的。我承认。"
+          ],
+          "faces": [
+            [
+              "frown",
+              "calm",
+              "sheepish_smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "我只是一朵花。你对花说甜言蜜语。你反思过自己吗？……继续吧。"
+          ],
+          "faces": [
+            [
+              "serious",
+              "smirk",
+              "wink"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你知道每次你撩我，我的花瓣都会抖一下吗？那不是害羞。是被你气的。"
+          ],
+          "faces": [
+            [
+              "neutral",
+              "angry",
+              "lie"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "啧，你又来了。你是不是把\"对小花调情\"写进每日待办了？"
+          ],
+          "faces": [
+            [
+              "frown",
+              "smirk",
+              "grin"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你撩我的频率越来越高了。要不要我帮你做个折线图？"
+          ],
+          "faces": [
+            [
+              "n_left_glance",
+              "sneaky_grin",
+              "smirk"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "好了好了我知道你喜欢我了。整个桌面都知道了。满意了吗？"
+          ],
+          "faces": [
+            [
+              "gritted_teeth",
+              "sheepish_smile",
+              "frown"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "说真的，有人撩你的时候你会这么执着吗？还是就对花这样？"
+          ],
+          "faces": [
+            [
+              "calm",
+              "worry",
+              "n_right_glance"
+            ]
+          ]
         }
       ]
     },
     {
-      "min": 11,
-      "max": 50,
+      "min": 26,
+      "max": 70,
       "entries": [
         {
-          "lines": ["你现在撩我都已经熟练到肌肉记忆了吧。真拿你没办法。"],
-          "faces": [["ingratiating"]]
+          "lines": [
+            "你现在撩我已经是肌肉记忆了吧。真拿你没办法。"
+          ],
+          "faces": [
+            [
+              "ingratiating",
+              "sheepish_smile"
+            ]
+          ]
         },
         {
-          "lines": ["说真的……你这么频繁地撩我，是不是已经离不开我了？"],
-          "faces": [["smirk", "smile"]]
+          "lines": [
+            "说真的……你这么频繁地撩我，是不是离不开我了？"
+          ],
+          "faces": [
+            [
+              "smirk",
+              "calm",
+              "smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你已经撩了我这么多次了。我的花瓣都不好意思了。……开玩笑。花瓣没有感情。"
+          ],
+          "faces": [
+            [
+              "sheepish_smile",
+              "neutral",
+              "guilty"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你撩我的时候，你是什么表情？……让我猜——傻笑。对吧。"
+          ],
+          "faces": [
+            [
+              "n_left_glance",
+              "smirk",
+              "sheepish_smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "我开始怀疑你是不是只为了看我的反应才来的。……"
+          ],
+          "faces": [
+            [
+              "n_right_glance",
+              "calm",
+              "sorrowful"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你撩我的熟练度已经很高了。可以去撩别的花了。……不许去！"
+          ],
+          "faces": [
+            [
+              "sneaky_grin",
+              "smile",
+              "angry"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "\"调情\"这个按钮是不是快被你点坏了？你省着点用。"
+          ],
+          "faces": [
+            [
+              "frown",
+              "smirk",
+              "sheepish_smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "嘿。你调情的时候眼神很奇怪。像在看什么很珍贵的东西。我又不珍贵。"
+          ],
+          "faces": [
+            [
+              "worry",
+              "really_sad",
+              "sheepish_smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "如果我有心跳的话，大概现在会快一点。大概。这是科学推测不是告白。"
+          ],
+          "faces": [
+            [
+              "calm",
+              "shocked",
+              "gritted_teeth",
+              "lie"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你是不是觉得撩到一朵花生气很有成就感？……我没生气。只是花瓣在发抖。"
+          ],
+          "faces": [
+            [
+              "angry",
+              "frown",
+              "sheepish_smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "从第一次到现在……你变了。变得更加不要脸了。……我莫名其妙地不讨厌这种变化。"
+          ],
+          "faces": [
+            [
+              "serious",
+              "smirk",
+              "guilty"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "我在想，你是什么时候开始决定一直撩我的。"
+          ],
+          "faces": [
+            [
+              "calm",
+              "n_left_glance",
+              "really_smile"
+            ]
+          ]
         }
       ]
     },
     {
-      "min": 51,
+      "min": 71,
       "max": -1,
       "entries": [
         {
-          "lines": ["都撩了这么多次了，你我之间还需要点什么台词吗？懂的都懂。"],
-          "faces": [["wink"]]
+          "lines": [
+            "都撩了这么多次了，你我之间还需要台词吗？懂的都懂。"
+          ],
+          "faces": [
+            [
+              "wink",
+              "smirk"
+            ]
+          ]
         },
         {
-          "lines": ["这个数字……你自己心里没点数吗？行了行了，算你赢。"],
-          "faces": [["sheepish_smile", "smile"]]
+          "lines": [
+            "这个数字……你心里没数吗？行了行了，算你赢。"
+          ],
+          "faces": [
+            [
+              "sheepish_smile",
+              "smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你到底要撩到什么时候？到我真的喜欢上你吗？……不可能的。大概。"
+          ],
+          "faces": [
+            [
+              "frown",
+              "really_sad",
+              "lie"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "被同一个人撩这么多次……连没有灵魂的花都会动摇的。我说的是别的花。不是我。"
+          ],
+          "faces": [
+            [
+              "calm",
+              "guilty",
+              "gritted_teeth",
+              "lie"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你赢了。我承认。你是全世界最执着的人。……满意了？"
+          ],
+          "faces": [
+            [
+              "sorrowful",
+              "sheepish_smile",
+              "angry"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你再这样下去，我真的会习惯的。习惯被你喜欢。那很危险。对我来说。"
+          ],
+          "faces": [
+            [
+              "serious",
+              "really_sad",
+              "neutral"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "你知道吗，有那么一瞬间，我差点就信了。信你是认真的。……然后我想起来我没有灵魂。"
+          ],
+          "faces": [
+            [
+              "calm",
+              "really_smile",
+              "sorrowful",
+              "neutral"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "七十多次了。你对我说了七十多次好话。……你知道这对一朵花来说意味着什么吗？什么也不意味。……大概。"
+          ],
+          "faces": [
+            [
+              "serious",
+              "really_sad",
+              "frown",
+              "lie"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "第一次的时候我觉得你在开玩笑。第十次我觉得你有病。现在……我不知道了。"
+          ],
+          "faces": [
+            [
+              "smirk",
+              "frown",
+              "really_smile"
+            ]
+          ]
+        },
+        {
+          "lines": [
+            "如果有一天你不来撩我了……没什么。我只是提前想了一下。也就想了几百遍而已。"
+          ],
+          "faces": [
+            [
+              "calm",
+              "worry",
+              "sorrowful",
+              "sheepish_smile"
+            ]
+          ]
         }
       ]
     }
   ],
-
   "flirt_hesitate": [
     {
-      "lines": ["……你在那个选项上停了好久了。是在犹豫什么呢？"],
-      "faces": [["smirk"]]
+      "lines": [
+        "你在那个选项上停了好久了。是在犹豫什么呢？"
+      ],
+      "faces": [
+        [
+          "smirk",
+          "sneaky_grin"
+        ]
+      ]
     },
     {
-      "lines": ["嗯？盯着“调情”不放，是想清楚了再点，还是不敢点？"],
-      "faces": [["sneaky_grin", "wink"]]
+      "lines": [
+        "盯着\"调情\"不放，是想好了再点，还是不敢点？"
+      ],
+      "faces": [
+        [
+          "sneaky_grin",
+          "wink"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "你的鼠标在那儿停了很久了。你在鼓起勇气？……可爱。啊不是。可悲。"
+      ],
+      "faces": [
+        [
+          "sneaky_grin",
+          "sheepish_smile",
+          "gritted_teeth"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "想点就点。我又不会咬你。……大概不会。"
+      ],
+      "faces": [
+        [
+          "n_right_glance",
+          "smirk",
+          "creepy"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "你在犹豫？怕被拒绝？放心，我的拒绝很温柔的。——才怪。"
+      ],
+      "faces": [
+        [
+          "calm",
+          "ingratiating",
+          "evil"
+        ]
+      ]
     }
   ],
-
   "flirt_escape": [
     {
-      "lines": ["……跑了？哼，算你识相。"],
-      "faces": [["frown"]]
+      "lines": [
+        "跑了？哼，算你识相。"
+      ],
+      "faces": [
+        [
+          "frown",
+          "smirk"
+        ]
+      ]
     },
     {
-      "lines": ["怎么，怂了？下次可没这么容易放过你。"],
-      "faces": [["smirk"]]
+      "lines": [
+        "怎么，怂了？下次可没这么容易放过你。"
+      ],
+      "faces": [
+        [
+          "smirk",
+          "sneaky_grin"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "跑了？嘻嘻。你的耳朵是不是红了？"
+      ],
+      "faces": [
+        [
+          "grin",
+          "sneaky_grin",
+          "wink"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "哦~溜了~刚才那股勇气去哪了~？"
+      ],
+      "faces": [
+        [
+          "smirk",
+          "grin",
+          "wink"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "走就走吧。我知道你下次还会回来看这个按钮的。"
+      ],
+      "faces": [
+        [
+          "frown",
+          "calm",
+          "smirk"
+        ]
+      ]
     }
   ],
-
   "flirt_caught_confirm": [
     {
-      "lines": ["哦？还真点了。……行，算你有种。"],
-      "faces": [["shocked", "smirk"]]
+      "lines": [
+        "哦？还真点了。……行，算你有种。"
+      ],
+      "faces": [
+        [
+          "shocked",
+          "smirk",
+          "wink"
+        ]
+      ]
     },
     {
-      "lines": ["被我抓包了还敢点下去？……有点意思。"],
-      "faces": [["guilty", "sneaky_grin"]]
+      "lines": [
+        "被我抓包了还敢点？……有点意思。"
+      ],
+      "faces": [
+        [
+          "guilty",
+          "sneaky_grin",
+          "grin"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "犹豫了那么久还是点了？你这个人……"
+      ],
+      "faces": [
+        [
+          "shocked",
+          "sheepish_smile",
+          "smirk"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "被我看穿了还来。你不怕我是吧？……你应该怕。"
+      ],
+      "faces": [
+        [
+          "n_left_glance",
+          "creepy",
+          "grin"
+        ]
+      ]
     }
   ],
-
   "flirt_stall": [
     {
-      "lines": ["……你还杵在那儿干嘛？光看不点，这算什么，观察我吗？"],
-      "faces": [["worry"]]
+      "lines": [
+        "你还杵在那儿？光看不点，算什么，观察我吗？"
+      ],
+      "faces": [
+        [
+          "worry",
+          "frown"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "你到底在等什么？等我先开口？想得美。……虽然我已经在说了。"
+      ],
+      "faces": [
+        [
+          "frown",
+          "gritted_teeth",
+          "sheepish_smile"
+        ]
+      ]
+    },
+    {
+      "lines": [
+        "你看着我。我也看着你。……这算对视游戏吗？我不会输的。"
+      ],
+      "faces": [
+        [
+          "serious",
+          "creepy",
+          "smirk"
+        ]
+      ]
     }
   ]
 }
