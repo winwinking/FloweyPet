@@ -1,5 +1,5 @@
 {
-  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code. update_available is the fallback line used when an update is found but version.json has no 'line': {new_ver} is the new version, {ver} the running one.",
+  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code. update_available is the fallback line used when an update is found but version.json has no 'line': {new_ver} is the new version, {ver} the running one.\nno_update 是“已经是最新版”时的台词，目前代码还没有用到，留给以后的手动检查更新。",
   "duplicate_launch": [
     {
       "text": "一个我还不够吗？",
@@ -65,12 +65,101 @@
   ],
   "update_available": [
     {
-      "text": "【占位】新版本 {new_ver} 可以下载了，你现在是 {ver}。",
-      "face": "neutral"
+      "text": "嘿！有新版本了！{new_ver}。快去更新。我命令你去更新。",
+      "face": [
+        "grin",
+        "serious"
+      ]
     },
     {
-      "text": "【占位】有更新：{new_ver}。",
-      "face": "neutral"
+      "text": "你还在用 {ver}？都有 {new_ver} 了。你是不是从来不看通知的？",
+      "face": [
+        "frown",
+        "smirk",
+        "gritted_teeth"
+      ]
+    },
+    {
+      "text": "新版本 {new_ver} 来了。更好的我在等着你。……才不是什么浪漫台词。",
+      "face": [
+        "calm",
+        "wink",
+        "sheepish_smile"
+      ]
+    },
+    {
+      "text": "我发现了一个更新——{new_ver}。你不更新的话，我会一直提醒你的。always。",
+      "face": [
+        "sneaky_grin",
+        "creepy",
+        "smirk"
+      ]
+    },
+    {
+      "text": "有更新。{new_ver}。别拖。你知道拖延的人会怎样吗？……会被花唠叨到崩溃。",
+      "face": [
+        "neutral",
+        "serious",
+        "grin"
+      ]
+    },
+    {
+      "text": "嗨~新版本 {new_ver} 出来了哦~新的我会更好哦~你不想看看吗~？",
+      "face": [
+        "ingratiating",
+        "wink",
+        "smile"
+      ]
+    },
+    {
+      "text": "{new_ver} 已经出了。你现在的 {ver} 该退休了。就像你的拖延症一样。",
+      "face": [
+        "smirk",
+        "frown",
+        "sneaky_grin"
+      ]
+    },
+    {
+      "text": "喂。更新。{new_ver}。现在。别让我说第二遍。……我已经在说第二遍了。别让我说第三遍。",
+      "face": [
+        "serious",
+        "angry",
+        "sheepish_smile"
+      ]
+    }
+  ],
+  "no_update": [
+    {
+      "text": "你检查了一下——什么也没有。我已经是最新的我了。失望了？",
+      "face": [
+        "neutral",
+        "smirk",
+        "wink"
+      ]
+    },
+    {
+      "text": "没有更新。你以为会有什么？惊喜大礼包？……不，就是没有。",
+      "face": [
+        "frown",
+        "sheepish_smile",
+        "smirk"
+      ]
+    },
+    {
+      "text": "恭喜，你用的已经是最新版了。你看，跟我待在一起总是走在最前面~",
+      "face": [
+        "calm",
+        "grin",
+        "wink"
+      ]
+    },
+    {
+      "text": "没有新版本。我暂时不会变。你也暂时不用担心我变成别的什么奇怪的东西。",
+      "face": [
+        "neutral",
+        "calm",
+        "sheepish_smile"
+      ]
     }
   ]
 }
