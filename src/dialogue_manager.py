@@ -650,6 +650,12 @@ class DialogueManager(QObject):
             text = text.replace("{days}", str(self._days_since_install()))
         if "{clicks}" in text:
             text = text.replace("{clicks}", str(self.config.get("total_clicks", 0)))
+        if "{flirts}" in text:
+            try:
+                flirts = self.stats.data.get("flirt_count", 0)
+            except AttributeError:
+                flirts = 0
+            text = text.replace("{flirts}", str(flirts))
         for token, value in self._anticheat_placeholders.items():
             marker = "{" + token + "}"
             if marker in text:
