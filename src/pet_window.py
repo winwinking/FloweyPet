@@ -63,6 +63,15 @@ EXIT_FAILSAFE_MS = 15000
 HIDE_FAILSAFE_GRACE_MS = 6000  # generous margin over any realistic escalation-line playback time
 
 
+def clamp_origin_into_area(x, y, w, h, area):
+    """Top-left (x, y) that keeps a w x h window inside `area` (a QRect-like
+    with x()/y()/width()/height(), typically a screen's availableGeometry).
+    A window larger than the area is pinned to the area's top-left."""
+    x = max(area.x(), min(x, area.x() + area.width() - w))
+    y = max(area.y(), min(y, area.y() + area.height() - h))
+    return x, y
+
+
 def _guarded_menu_action(context):
     """Wraps a right-click-menu entry point (opening a panel, playing a
     dialogue line) so an exception inside it is logged and reported to the
@@ -254,9 +263,7 @@ class PetWindow(QWidget):
             y = screen.y() + screen.height() - h - 60
         else:
             x, y = pos["x"], pos["y"]
-        x = max(screen.x(), min(x, screen.x() + screen.width() - w))
-        y = max(screen.y(), min(y, screen.y() + screen.height() - h))
-        return x, y
+        return clamp_origin_into_area(x, y, w, h, screen)
 
     def _make_singleshot(self, callback):
         t = QTimer(self)
@@ -1050,6 +1057,10 @@ class PetWindow(QWidget):
         new_w, new_h = new_size.width(), new_size.height()
         new_x = round(old_center_x - new_w / 2)
         new_y = old_bottom - new_h
+        # Growing a tier can push the pet past a screen edge: clamp back
+        # into the available area of the screen the pet is on right now.
+        screen = self.screen() or QApplication.primaryScreen()
+        new_x, new_y = clamp_origin_into_area(new_x, new_y, new_w, new_h, screen.availableGeometry())
         self.setFixedSize(new_w, new_h)
         self.move(new_x, new_y)
         self.pet_display_width = new_w
