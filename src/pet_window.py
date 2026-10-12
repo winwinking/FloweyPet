@@ -27,6 +27,7 @@ import anticheat
 import dialogue_log
 import flirt as flirt_dialogue
 from dialogue_arbiter import DialogueArbiter
+from config import DEFAULT_PET_SIZE_TIERS
 from dialogue_box import DialogueBox
 from error_log import log_exception
 from flirt import FlirtController
@@ -1080,7 +1081,7 @@ class PetWindow(QWidget):
         panel = SizePanel(
             lambda: self.pet_scale,
             self._apply_pet_scale,
-            self.config.get("pet_size_tiers", [1.0, 0.85, 0.7, 0.55]),
+            self.config.get("pet_size_tiers", DEFAULT_PET_SIZE_TIERS),
             audio=self.audio,
             always_on_top=self._always_on_top,
             ui_scale=self._ui_scale(),

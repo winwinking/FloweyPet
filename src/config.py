@@ -13,10 +13,19 @@ from error_log import log_exception, log_message
 from paths import CONFIG_PATH, IS_DEV
 from user_data import atomic_write_json, quarantine_bad_file
 
+# Pet size tiers (multipliers, biggest first). Sprites are drawn at
+# BASE_SCALE(4) * tier, so every tier here gives a whole-number upscale
+# factor -- pixel art loses rows at a fractional one.
+DEFAULT_PET_SIZE_TIERS = [2.0, 1.5, 1.25, 1.0, 0.75, 0.5, 0.25]
+
 DEFAULTS = {
     "position": None,  # None => PetWindow picks a sensible on-screen default
     "pet_scale": 1.0,             # current size tier multiplier, see pet_size_tiers
-    "pet_size_tiers": [1.0, 0.85, 0.7, 0.55],  # editable list of size tiers (100% first/max)
+    "pet_size_tiers": list(DEFAULT_PET_SIZE_TIERS),  # list of size tiers, see DEFAULT_PET_SIZE_TIERS
+    # Bookkeeping for the one-time 3.3.0 tier-list replacement (see
+    # apply_size_settings). Default 1 so a config.json without the key is
+    # treated as holding the old 85/70/55% tiers.
+    "size_tiers_schema": 1,
     "ui_follow_ratio": 0.5,       # how much menus/panels shrink relative to the pet (0=not at all, 1=fully)
     "bubble_min_font_size": 15,   # floor for the dialogue bubble's font size in px (~70% of the 21px default)
     "ui_min_font_size": 10,       # floor for menu/panel font size in px
@@ -176,6 +185,44 @@ def load_config():
         log_message(f"load_config: {CONFIG_PATH} 内容不是 JSON 对象，已改名为 {moved}，使用默认值")
         return _default_copy()
     return _deep_merge(DEFAULTS, loaded)
+
+
+def snap_pet_scale(value, tiers):
+    """The tier closest to `value` (ties go to the larger tier). A
+    non-numeric value counts as 1.0; an unusable tier list leaves the value
+    alone."""
+    ok = [t for t in tiers if isinstance(t, (int, float)) and not isinstance(t, bool)] if isinstance(tiers, list) else []
+    if not ok:
+        return value
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        value = 1.0
+    return min(ok, key=lambda t: (round(abs(t - value), 9), -t))
+
+
+def apply_size_settings(cfg):
+    """Startup fix-ups for the size settings; call right after load_config()
+    and before anything reads pet_scale. (1) One-time: size_tiers_schema < 2
+    -> replace pet_size_tiers with the new list. (2) Every start: if
+    pet_scale isn't one of the tiers, snap it to the nearest. Saves once if
+    anything changed; touches only pet_size_tiers, size_tiers_schema and
+    pet_scale. Returns True if it changed something."""
+    changed = False
+    if cfg.get("size_tiers_schema", 1) < 2:
+        log_message(f"config migrate: 大小挡位改为新列表，旧列表 {cfg.get('pet_size_tiers')!r}")
+        cfg["pet_size_tiers"] = list(DEFAULT_PET_SIZE_TIERS)
+        cfg["size_tiers_schema"] = 2
+        changed = True
+    tiers = cfg.get("pet_size_tiers")
+    scale = cfg.get("pet_scale", 1.0)
+    if isinstance(tiers, list) and scale not in tiers:
+        snapped = snap_pet_scale(scale, tiers)
+        if snapped != scale:
+            log_message(f"config: pet_scale {scale!r} 不在挡位 {tiers!r} 里，吸附到 {snapped!r}")
+            cfg["pet_scale"] = snapped
+            changed = True
+    if changed:
+        save_config(cfg)
+    return changed
 
 
 def save_config(cfg):

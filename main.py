@@ -13,7 +13,7 @@ from error_log import install_global_hook, log_exception
 
 install_global_hook()
 
-from config import load_config, read_autostart_command, read_shadow_clicks, save_config, sync_autostart, write_shadow_clicks
+from config import apply_size_settings, load_config, read_autostart_command, read_shadow_clicks, save_config, sync_autostart, write_shadow_clicks
 from audio import AudioManager
 import app_log
 import audio_log
@@ -77,6 +77,12 @@ def main():
     except Exception:
         log_exception("migrate_legacy_data")
     config = load_config()
+    # Size-tier migration + pet_scale snapping: must run before anything
+    # reads pet_scale (SpriteBank / PetWindow below).
+    try:
+        apply_size_settings(config)
+    except Exception:
+        log_exception("apply_size_settings")
 
     config["_session_start"] = time.time()
     save_config(config)
