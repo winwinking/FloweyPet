@@ -5,6 +5,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
 from error_log import install_global_hook, log_exception
@@ -28,8 +30,23 @@ from pet_window import PetWindow
 
 
 def main():
+    # Don't follow Windows' fractional display scaling (125% / 150% ...):
+    # the pixel font and pixel-art sprites lose rows under a non-integer
+    # device-pixel ratio (the 记录 panel's text got cut off at 125%, verified
+    # on a real desktop). Floor rounds the scale down to a whole number.
+    # Must be set before the QApplication is created.
+    QGuiApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.Floor)
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
+    try:
+        screen = app.primaryScreen()
+        geo = screen.geometry()
+        app_log.log_event(
+            f"显示：主屏 devicePixelRatio={screen.devicePixelRatio()} "
+            f"逻辑分辨率={geo.width()}x{geo.height()} 缩放策略=Floor"
+        )
+    except Exception:
+        log_exception("log screen info")
 
     config = load_config()
 
