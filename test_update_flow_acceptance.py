@@ -640,6 +640,21 @@ for name in keep_dirs:
     (root / name).mkdir()
     (root / name / "keep.txt").write_text("keep")
 (root / "FloweyPet-update-file").write_text("a file with the prefix, not a folder")
+
+
+def age_tree(path, seconds=11 * 60):
+    """Sets mtime of the folder, all sub folders and all files to `seconds` ago
+    (cleanup only deletes folders untouched for 10 minutes)."""
+    t = time.time() - seconds
+    items = [path]
+    for dp, dn, fn in os.walk(path):
+        items += [os.path.join(dp, x) for x in dn + fn]
+    for x in items:
+        os.utime(x, (t, t))
+
+
+for name in ("FloweyPet-update-aaaa", "FloweyPet-update-bbbb"):
+    age_tree(root / name)
 logs = []
 n = uf.cleanup_old_update_dirs(root, log=logs.append)
 left = sorted(os.listdir(root))
@@ -670,6 +685,8 @@ if p.poll() is not None:
                          stdin=subprocess.DEVNULL)
     CHILDREN.append(p)
     time.sleep(0.8)
+age_tree(locked_dir)
+age_tree(root / "FloweyPet-update-gone")
 logs.clear()
 try:
     n = uf.cleanup_old_update_dirs(root, log=logs.append)
@@ -683,6 +700,7 @@ check("其他名字的文件夹仍然没碰", all((root / k / "keep.txt").exists
 p.kill()
 p.wait(10)
 time.sleep(0.3)
+age_tree(locked_dir)  # the previous cleanup deleted a file in it, which refreshed its mtime
 check("进程结束后能清掉", uf.cleanup_old_update_dirs(root) == 1 and not locked_dir.exists())
 orig_listdir = uf.os.listdir
 uf.os.listdir = lambda *a: (_ for _ in ()).throw(RuntimeError("boom"))
@@ -696,8 +714,9 @@ finally:
 check("内部出现意外错误也不抛异常", raised is False)
 check("remove_dir: 不存在的路径 / None 不出错", uf.remove_dir(str(TMP / "none_such")) is True and uf.remove_dir(None) is True)
 main_src = (ROOT / "main.py").read_text(encoding="utf-8")
-check("main.py: 只在打包版且不在临时目录时清理 (elif not IS_DEV)",
-      re.search(r"if running_from_temp:.*?elif not IS_DEV:\s+[^\n]*\n\s+update_flow\.cleanup_old_update_dirs\(log=app_log\.log_event\)", main_src, re.S) is not None)
+check("main.py: 清理在 guard.try_claim() 之后, 且只在 打包版且不在临时目录 的条件里",
+      main_src.index("update_flow.cleanup_old_update_dirs(") > main_src.index("guard.try_claim()")
+      and re.search(r"if not IS_DEV and not running_from_temp:\s+update_flow\.cleanup_old_update_dirs\(log=app_log\.log_event\)", main_src) is not None)
 
 # ------------------------------------------------------------------ 12
 print("== 12 六个新台词池 ==")

@@ -21,6 +21,7 @@ import os
 import shutil
 import tempfile
 import threading
+import time
 
 import update_download
 import update_unpack
@@ -121,19 +122,41 @@ def remove_dir(path):
     return not os.path.exists(path)
 
 
-def cleanup_old_update_dirs(temp_root=None, log=None):
+MIN_AGE_SECONDS = 600
+
+
+def _newest_mtime(path):
+    """Latest modification time of `path` and everything inside it."""
+    newest = os.lstat(path).st_mtime
+    for dirpath, dirnames, filenames in os.walk(path):
+        for name in dirnames + filenames:
+            newest = max(newest, os.lstat(os.path.join(dirpath, name)).st_mtime)
+    return newest
+
+
+def cleanup_old_update_dirs(temp_root=None, log=None, min_age_seconds=MIN_AGE_SECONDS):
     """Deletes <temp>/FloweyPet-update-* folders (leftovers of earlier
-    updates). Only folders whose name starts with that prefix are touched;
-    anything that cannot be deleted is skipped. Never raises. Returns the
-    number removed."""
+    updates). Only folders whose name starts with that prefix are touched,
+    and only if the folder and everything inside it was last modified at
+    least `min_age_seconds` ago: a younger one may belong to an update that is
+    running right now (a download, or the updater copying files out of it) and
+    is skipped without being counted. If a modification time cannot be read
+    the folder counts as young. Anything that cannot be deleted is skipped.
+    Never raises. Returns the number removed."""
     removed = skipped = 0
     try:
+        now = time.time()
         root = tempfile.gettempdir() if temp_root is None else os.fspath(temp_root)
         for name in os.listdir(root):
             if not name.startswith(TEMP_PREFIX):
                 continue
             path = os.path.join(root, name)
             if os.path.islink(path) or not os.path.isdir(path):
+                continue
+            try:
+                if _newest_mtime(path) > now - min_age_seconds:
+                    continue
+            except Exception:  # noqa: BLE001 - unreadable times: treat as young
                 continue
             if remove_dir(path):
                 removed += 1

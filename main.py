@@ -89,9 +89,6 @@ def main():
     running_from_temp = (not IS_DEV) and updater_apply.is_running_from_temp()
     if running_from_temp:
         app_log.log_event(f"运行在系统临时目录（{APP_DIR}）：跳过旧数据迁移和开机自启同步")
-    elif not IS_DEV:
-        # leftovers of earlier one-click updates (never touches other folders)
-        update_flow.cleanup_old_update_dirs(log=app_log.log_event)
 
     # Single-instance guard: must run before any window is created. If a
     # live instance already answers, this process notifies it and exits
@@ -105,6 +102,13 @@ def main():
     )
     if not guard.try_claim():
         sys.exit(0)
+
+    # Leftovers of earlier one-click updates. Only after the single-instance
+    # check: a second launch must not delete the folder a running update is
+    # still using. Only folders untouched for 10 minutes are removed (see
+    # update_flow.cleanup_old_update_dirs); never touches other folders.
+    if not IS_DEV and not running_from_temp:
+        update_flow.cleanup_old_update_dirs(log=app_log.log_event)
 
     # Move config.json / stats.json from beside the exe into the user data
     # dir. Must run only after the single-instance check above passed, so a
