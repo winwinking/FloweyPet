@@ -52,6 +52,8 @@ QUIT_ANIM_DIR = ASSETS_DIR / "anim" / "quit"
 
 DIALOGUE_PATH = APP_DIR / "dialogue.json"
 DIALOGUE_INFO_PATH = APP_DIR / "dialogues_info.json"
+PERSONA_PATH = APP_DIR / "persona.md"  # Flowey persona text sent as the API chat system prompt, see api_chat.py
+DIALOGUE_CHAT_PATH = APP_DIR / "dialogues_chat.json"  # chat (行动 -> 聊天) line pools, e.g. chat_no_api
 DIALOGUE_SYSTEM_PATH = APP_DIR / "dialogues_system.json"  # app/system-lifecycle lines, e.g. duplicate_launch
 DIALOGUE_FLIRT_PATH = APP_DIR / "dialogues_flirt.json"
 DIALOGUE_CHASE_PATH = APP_DIR / "dialogues_chase.json"  # reminder-chase (追讨) line pools, see reminder_chase.py
@@ -60,6 +62,7 @@ DIALOGUE_GAME_PATH = APP_DIR / "dialogues_game.json"  # UNDERTALE/DELTARUNE laun
 DIALOGUE_ANTICHEAT_PATH = APP_DIR / "dialogues_anticheat.json"  # auto-clicker + save-tamper line pools, see anticheat.py
 STATS_ROAST_PATH = APP_DIR / "stats_roast.json"
 CONFIG_PATH = USER_DATA_DIR / "config.json"
+API_KEY_PATH = USER_DATA_DIR / "api_key.txt"  # the API chat key, deliberately NOT in config.json, see api_key_store.py
 STATS_PATH = USER_DATA_DIR / "stats.json"
 # Pre-migration location (next to the executable); read-only, see user_data.py
 LEGACY_CONFIG_PATH = APP_DIR / "config.json"

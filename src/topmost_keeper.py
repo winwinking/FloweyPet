@@ -39,11 +39,18 @@ class TopmostKeeper(QObject):
             if self._pet.is_exiting() or self._guard_active():
                 return
             pet = self._pet
-            for widget, pinned in (
+            widgets = [
                 (pet, pet.is_pinned_on_top),
                 (pet.pomodoro_display, pet.pomodoro_display.is_pinned),
                 (pet.dialogue_box, pet.dialogue_box.is_pinned),
-            ):
+            ]
+            chat = getattr(pet, "_chat_box", None)
+            if chat is not None:
+                widgets.append((chat, chat.is_pinned))
+            api_panel = getattr(pet, "_api_panel", None)
+            if api_panel is not None:
+                widgets.append((api_panel, api_panel.is_pinned))
+            for widget, pinned in widgets:
                 if widget.isVisible() and pinned():
                     apply_topmost(widget, True)
         except Exception:

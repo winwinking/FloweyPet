@@ -10,8 +10,9 @@ import os
 import random
 import sys
 import time
+from datetime import datetime
 
-from PyQt6.QtCore import QPoint, Qt, QTimer, QUrl, pyqtSignal
+from PyQt6.QtCore import QPoint, QRect, Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QCursor, QDesktopServices, QIcon, QPainter
 from PyQt6.QtWidgets import (
     QApplication,
@@ -26,11 +27,17 @@ from PyQt6.QtWidgets import (
 
 import app_log
 import anticheat
+import api_key_store
 import dialogue_log
 import flirt as flirt_dialogue
+import api_chat
+from api_chat import DEFAULT_BASE_URL, DEFAULT_MODEL
+from api_settings_panel import ApiSettingsPanel
+from chat_box import ChatBox
 from dialogue_arbiter import DialogueArbiter
 from config import DEFAULT_PET_SIZE_TIERS
 from dialogue_box import DialogueBox
+from dialogue_manager import PRI_CHAT
 from error_log import log_exception
 from flirt import FlirtController
 from game_detector import GameDetector
@@ -66,6 +73,16 @@ CHASE_POPUP_BUTTONS = {
 EXIT_FRAME_MS = 125
 EXIT_FAILSAFE_MS = 15000
 UPDATE_QUIT_DEADLINE_MS = 15000  # the updater only waits 30 s for this process
+CHAT_WAIT_LINGER_MS = 40_000  # the chat "……" bubble stays up at most this long (the request itself times out at 30 s)
+CHAT_RATE_WINDOW_S = 600
+# API error category -> dialogues_chat.json pool
+CHAT_ERROR_POOLS = {
+    "auth": "chat_api_key_error",
+    "bad_request": "chat_check_settings",
+    "no_balance": "chat_no_balance",
+    "no_config": "chat_no_api",
+}
+CHAT_ERROR_DEFAULT_POOL = "chat_api_error"  # network, server, rate_limit, bad_response, no_persona, ...
 HIDE_FAILSAFE_GRACE_MS = 6000  # generous margin over any realistic escalation-line playback time
 
 
@@ -98,6 +115,26 @@ def _guarded_menu_action(context):
         return wrapper
 
     return decorator
+
+
+def _chat_visible(pet):
+    """True while the chat box (行动 -> 聊天) is open. A module-level helper,
+    not a method, so lightweight stand-ins for PetWindow (tests) that lack
+    the attribute simply count as "closed"."""
+    box = getattr(pet, "_chat_box", None)
+    return box is not None and box.isVisible()
+
+
+def _close_chat(pet):
+    if _chat_visible(pet):
+        pet._chat_box.close()
+
+
+def _close_api_panel(pet):
+    """Closes the 「API 设置」 panel if it is open (lock / hide / quit)."""
+    panel = getattr(pet, "_api_panel", None)
+    if panel is not None and panel.isVisible():
+        panel.close()
 
 
 class State:
@@ -150,6 +187,12 @@ class PetWindow(QWidget):
         self._pomodoro_active = False
         self._current_category = None
         self._active_popup = None
+        self._chat_box = None  # created lazily by _open_chat; there is only ever one
+        self._api_panel = None  # the 「API 设置」 panel, created by _open_api_settings; only ever one open
+        self._chat_session = None  # api_chat.ChatSession, created lazily by _get_chat_session; history lives in memory only
+        self._chat_waiting = False  # a chat reply is on its way
+        self._chat_sent_times = []  # clock readings of requests actually sent (local rate limit)
+        self._chat_clock = time.monotonic  # injectable for tests
         self._last_face_key = None
         self._appear_source = "appear"
         self._last_duplicate_launch_roast = float("-inf")
@@ -172,6 +215,7 @@ class PetWindow(QWidget):
         self.dialogue_box.finished.connect(self._on_dialogue_finished)
         self.dialogue_box.hold_started.connect(self._on_dialogue_hold_started)
         self.dm.show_requested.connect(self._on_show_requested)
+        self.dm.on_urgent_queued = self._on_urgent_line_queued
         self.arbiter = DialogueArbiter(config, self.dm, self)
         self.click_detector = anticheat.AutoClickerDetector()
         self.game_detector = GameDetector(config, self.dm, self, self.stats)
@@ -239,6 +283,9 @@ class PetWindow(QWidget):
         set_click_through(self, self._locked)
 
     def _apply_click_through(self, on):
+        if on:
+            _close_chat(self)  # locking closes the chat box (it would otherwise be a live input on a locked pet)
+            _close_api_panel(self)
         for w in (self, self.dialogue_box, self.pomodoro_display):
             set_click_through(w, on)
         # The tooltip's "（已锁定）" suffix follows the lock. Deferred to the event
@@ -262,6 +309,12 @@ class PetWindow(QWidget):
         apply_topmost(self, checked)
         self.dialogue_box.set_always_on_top(checked)
         self.pomodoro_display.set_always_on_top(checked)
+        chat = getattr(self, "_chat_box", None)
+        if chat is not None:
+            chat.set_always_on_top(checked)
+        api_panel = getattr(self, "_api_panel", None)
+        if api_panel is not None:
+            api_panel.set_always_on_top(checked)
         self.arbiter.finish_feature("pin", lambda: self.dm.trigger_menu_flavor("pin_on" if checked else "pin_off"))
 
     def _resolve_start_position(self, w, h):
@@ -361,6 +414,7 @@ class PetWindow(QWidget):
             self.state == State.IDLE
             and not self._dragging
             and not self._pomodoro_active
+            and not _chat_visible(self)
             and not self.reminders.is_awaiting_response()
             and not self.flirt.is_confronting()
             and not self.game_detector.is_any_game_running()
@@ -376,7 +430,8 @@ class PetWindow(QWidget):
         if self._pending_quit:
             return
         if (
-            not self.reminders.is_awaiting_response()
+            not _chat_visible(self)
+            and not self.reminders.is_awaiting_response()
             and not self.flirt.is_confronting()
             and not self.game_detector.is_any_game_running()
         ):
@@ -415,6 +470,9 @@ class PetWindow(QWidget):
         anchor_y = self.pomodoro_display.y() if self.pomodoro_display.isVisible() else self.y()
         pet_bottom = self.y() + self.height()
         self.dialogue_box.follow(self.x(), anchor_y, self.pet_display_width, pet_bottom)
+        if _chat_visible(self):
+            # the bubble may have just flipped below the pet: keep the chat box clear of it
+            self._position_chat_box(self.dialogue_box.geometry())
 
     # ------------------------------------------------------------- dialogue
     def _on_show_requested(self, segments, category):
@@ -439,6 +497,12 @@ class PetWindow(QWidget):
         self._position_dialogue_box()
         options = CHASE_POPUP_BUTTONS.get(category)
         hold_ms = self.reminders.chase.hold_ms_for_category(category) if options else None
+        if category == "chat_wait":
+            # the "……" while the API answers: stays up (see DialogueBox linger_ms)
+            self.dialogue_box.start(
+                segments, self._on_segment_face, choice_options=options, hold_ms=hold_ms, linger_ms=CHAT_WAIT_LINGER_MS
+            )
+            return
         self.dialogue_box.start(
             segments, self._on_segment_face, choice_options=options, hold_ms=hold_ms
         )
@@ -454,8 +518,16 @@ class PetWindow(QWidget):
         bubble (with its buttons) stays on screen; only the sprite state
         changes. Guarded so a hold can never yank the pet out of the exit
         burrow animation."""
+        if self._current_category == "chat_wait" and self.dm.has_queued_above(PRI_CHAT):
+            # a reminder / pomodoro line queued up behind the waiting "……": let it through
+            self.dialogue_box.end_linger()
+            return
         if self.state == State.TALKING and not self._dragging:
             self._enter_idle()
+
+    def _on_urgent_line_queued(self):
+        if self._current_category == "chat_wait" and self.dialogue_box.is_lingering():
+            self.dialogue_box.end_linger()
 
     def _on_dialogue_finished(self):
         cat = self._current_category
@@ -546,6 +618,8 @@ class PetWindow(QWidget):
             self._position_pomodoro_display()
         if self.dialogue_box.isVisible():
             self._position_dialogue_box()
+        elif _chat_visible(self):
+            self._position_chat_box()
 
     def mouseReleaseEvent(self, event):
         if event.button() != Qt.MouseButton.LeftButton or not self._dragging:
@@ -824,6 +898,8 @@ class PetWindow(QWidget):
         self.stats.record_interaction()
         self._close_active_popup()
         if self.isVisible():
+            _close_chat(self)
+            _close_api_panel(self)
             self._hide_with_flavor()
         else:
             self._start_emerge(lambda: self.arbiter.finish_feature("hide", lambda: self.dm.trigger_menu_flavor("show")))
@@ -1142,9 +1218,27 @@ class PetWindow(QWidget):
             scale,
             self.config.get("bubble_min_font_size", 15),
         )
+        chat = getattr(self, "_chat_box", None)
+        if chat is not None:
+            chat.reconfigure(
+                self.pet_display_width,
+                self.config.get("font_scale", 1.75),
+                scale,
+                self.config.get("bubble_min_font_size", 15),
+            )
+        api_panel = getattr(self, "_api_panel", None)
+        if api_panel is not None:
+            api_panel.reconfigure(
+                self.pet_display_width,
+                self.config.get("font_scale", 1.75),
+                scale,
+                self.config.get("bubble_min_font_size", 15),
+            )
         self.pomodoro_display.reconfigure(self.pet_display_width)
         if self.dialogue_box.isVisible():
             self._position_dialogue_box()
+        elif _chat_visible(self):
+            self._position_chat_box()
         if self.pomodoro_display.isVisible():
             self._position_pomodoro_display()
 
@@ -1211,6 +1305,259 @@ class PetWindow(QWidget):
         self._active_popup = panel
         panel.show()
         panel.setFocus()
+
+    # ------------------------------------------------------------------ chat
+    def is_chat_open(self):
+        return _chat_visible(self)
+
+    @_guarded_menu_action("聊天")
+    def _open_chat(self):
+        """行动 -> 聊天. One ChatBox for the whole session: already open
+        just means "focus it again", never a second box."""
+        self._close_active_popup()
+        if self._pending_quit:
+            return
+        self.stats.record_interaction()
+        box = self._chat_box
+        if box is None:
+            box = ChatBox(
+                self.pet_display_width,
+                self.config.get("font_scale", 1.75),
+                self._always_on_top,
+                self.pet_scale,
+                self.config.get("bubble_min_font_size", 15),
+            )
+            box.submitted.connect(self._on_chat_submitted)
+            box.set_waiting(self._chat_waiting)
+            self._chat_box = box
+        if not box.isVisible():
+            box.show()  # needs a size on screen before it can be placed
+        self._position_chat_box()
+        box.open_and_focus()
+        # The menu popup that triggered us is still closing and may hand
+        # keyboard focus back to the pet window as it goes; take it again
+        # on the next event-loop turn.
+        QTimer.singleShot(0, lambda: box.open_and_focus() if box.isVisible() else None)
+
+    def _position_chat_box(self, bubble_rect=None):
+        """Under the pet, centred. If that spot doesn't fit the screen (with
+        bubble_screen_margin) or would overlap the pet or the dialogue
+        bubble: right of the pet, then left, then above it, and as a last
+        resort the screen-clamped spot below."""
+        from dialogue_box import GAP_ABOVE_PET
+        from undertale_ui import clamp_rect_to_screen, screen_available_rect
+
+        box = getattr(self, "_chat_box", None)
+        if box is None:
+            return
+        margin = self.config.get("bubble_screen_margin", 8)
+        pet_rect = QRect(self.x(), self.y(), self.width(), self.height())
+        screen = screen_available_rect(pet_rect.x(), pet_rect.y(), pet_rect.width(), pet_rect.height())
+        if bubble_rect is None and self.dialogue_box.isVisible():
+            bubble_rect = self.dialogue_box.geometry()
+        bw, bh = box.width(), box.height()
+        gap = GAP_ABOVE_PET
+        pet_bottom = pet_rect.y() + pet_rect.height()
+        cx = pet_rect.x() + (pet_rect.width() - bw) // 2
+        inner = screen.adjusted(margin, margin, -margin, -margin)
+
+        def clear(r):
+            return inner.contains(r) and not r.intersects(pet_rect) and (bubble_rect is None or not r.intersects(bubble_rect))
+
+        below = clamp_rect_to_screen(QRect(cx, pet_bottom + gap, bw, bh), screen, margin)
+        candidates = [
+            below,
+            QRect(pet_rect.x() + pet_rect.width() + gap, pet_bottom - bh, bw, bh),
+            QRect(pet_rect.x() - gap - bw, pet_bottom - bh, bw, bh),
+            clamp_rect_to_screen(QRect(cx, pet_rect.y() - gap - bh, bw, bh), screen, margin),
+        ]
+        chosen = next((r for r in candidates if clear(r)), below)
+        box.move(chosen.x(), chosen.y())
+
+    # ------------------------------------------------------------ chat <-> API
+    def _make_chat_session(self):
+        """Factory for the one ChatSession (tests replace it to inject a fake
+        fetcher)."""
+        return api_chat.ChatSession(
+            self._api_settings,
+            self.dm._substitute,
+            self._chat_context,
+        )
+
+    def _get_chat_session(self):
+        session = self._chat_session
+        if session is None:
+            session = self._make_chat_session()
+            session.replied.connect(self._on_chat_replied)
+            session.failed.connect(self._on_chat_failed)
+            session.probed.connect(self._on_api_probed)
+            self._chat_session = session
+        return session
+
+    def _api_settings(self):
+        """Read fresh on every request: address/model from config, the key
+        straight from api_key.txt (never cached anywhere else)."""
+        cfg = self.config.get("api_chat")
+        cfg = cfg if isinstance(cfg, dict) else {}
+        return {
+            "base_url": cfg.get("base_url") or DEFAULT_BASE_URL,
+            "model": cfg.get("model") or DEFAULT_MODEL,
+            "api_key": api_key_store.load_key(),
+        }
+
+    def _chat_context(self):
+        return {"time": datetime.now().strftime("%H:%M"), "days": self.dm.days_since_install()}
+
+    def _chat_limits(self):
+        cfg = self.config.get("api_chat")
+        cfg = cfg if isinstance(cfg, dict) else {}
+        min_interval = cfg.get("min_interval_seconds", 3)
+        max_per_window = cfg.get("max_per_10min", 30)
+        if isinstance(min_interval, bool) or not isinstance(min_interval, (int, float)) or min_interval < 0:
+            min_interval = 3
+        if isinstance(max_per_window, bool) or not isinstance(max_per_window, int) or max_per_window < 1:
+            max_per_window = 30
+        return min_interval, max_per_window
+
+    def _say_chat_line(self, category, segments):
+        """Plays a chat line (reply / error / wait). Normally it cuts in over
+        whatever is on screen (usually the waiting "……"); while a reminder
+        popup is up, or the app is quitting, it queues instead and never
+        interrupts."""
+        if not segments or not self.isVisible():
+            return
+        if self._pending_quit or self.is_reminder_popup_active():
+            self.dm.speak(category, segments, priority=PRI_CHAT, bypass_interval=True)
+        else:
+            self.dm.cut_in(category, segments)
+
+    def _say_chat_pool(self, pool):
+        self._say_chat_line(pool, self.dm.pick_chat_line(pool))
+
+    def _say_chat_wait(self):
+        """The "……" shown while the API answers. Skipped (not queued) when a
+        reminder popup is up or we are quitting."""
+        if self._pending_quit or self.is_reminder_popup_active():
+            return
+        self._say_chat_line("chat_wait", self.dm.pick_chat_line("chat_wait"))
+
+    def _restore_chat_text(self, text):
+        box = getattr(self, "_chat_box", None)
+        if box is not None:
+            box.restore_text(text)
+
+    def _set_chat_waiting(self, waiting):
+        self._chat_waiting = waiting
+        box = getattr(self, "_chat_box", None)
+        if box is not None:
+            box.set_waiting(waiting)
+
+    def _on_chat_submitted(self, text):
+        # What the user types and what comes back are never logged.
+        if self._pending_quit:
+            return
+        self.stats.record_interaction()
+        if not api_key_store.has_key():
+            self._restore_chat_text(text)  # nothing was sent: give the typed line back
+            self.dm.trigger_chat_no_api()
+            return
+        session = self._get_chat_session()
+        now = self._chat_clock()
+        min_interval, max_per_window = self._chat_limits()
+        sent = [t for t in self._chat_sent_times if now - t < CHAT_RATE_WINDOW_S]
+        self._chat_sent_times = sent
+        if session.busy or (sent and now - sent[-1] < min_interval) or len(sent) >= max_per_window:
+            self._restore_chat_text(text)  # not sent (rate limit / a request in flight): give the line back
+            self._say_chat_pool("chat_too_frequent")
+            return
+        self._chat_sent_times.append(now)
+        self._set_chat_waiting(True)
+        self._say_chat_wait()
+        session.ask(text)  # the answer arrives through replied / failed (maybe right away in tests)
+
+    def _on_chat_replied(self, reply):
+        self._set_chat_waiting(False)
+        # one segment per sentence: one bubble, one (single) face each
+        self._say_chat_line("chat_reply", [{"text": x["text"], "face": x["face"]} for x in reply["lines"]])
+
+    def _on_chat_failed(self, code):
+        self._set_chat_waiting(False)
+        self._say_chat_pool(CHAT_ERROR_POOLS.get(code, CHAT_ERROR_DEFAULT_POOL))
+
+    def _on_api_probed(self, outcome):
+        """Result of the connection test started by saving the API settings."""
+        if outcome == "ok":
+            self._say_chat_pool("api_saved")
+        else:
+            self._say_chat_pool(CHAT_ERROR_POOLS.get(outcome, CHAT_ERROR_DEFAULT_POOL))
+
+    # --------------------------------------------------------- API settings
+    @_guarded_menu_action("API 设置")
+    def _open_api_settings(self):
+        """存档点 -> API 设置. One panel at a time: already open just
+        means "focus it again"."""
+        self._close_active_popup()
+        if self._pending_quit:
+            return
+        self.stats.record_interaction()
+        panel = self._api_panel
+        if panel is not None and panel.isVisible():
+            panel.open_and_focus()
+            return
+        if panel is not None:
+            panel.deleteLater()
+        cfg = self.config.get("api_chat")
+        cfg = cfg if isinstance(cfg, dict) else {}
+        panel = ApiSettingsPanel(
+            cfg.get("base_url") or DEFAULT_BASE_URL,
+            cfg.get("model") or DEFAULT_MODEL,
+            api_key_store.has_key(),
+            self.pet_display_width,
+            self.config.get("font_scale", 1.75),
+            self._always_on_top,
+            self.pet_scale,
+            self.config.get("bubble_min_font_size", 15),
+        )
+        panel.saved.connect(self._on_api_settings_saved)
+        panel.key_deleted.connect(self._on_api_key_deleted)
+        self._api_panel = panel
+        self._place_popup(panel, ref_h=self._main_menu_height())
+        panel.open_and_focus()
+        # The menu popup that triggered us is still closing and may hand
+        # keyboard focus back to the pet window as it goes; take it again
+        # on the next event-loop turn.
+        QTimer.singleShot(0, lambda: panel.open_and_focus() if panel.isVisible() else None)
+
+    def _on_api_settings_saved(self, base_url, model, key):
+        """Panel -> save. Address and model go to config.json; the key (only
+        if one was typed) goes to api_key.txt, never to config.json. Nothing
+        typed is logged."""
+        api = self.config.get("api_chat")
+        if not isinstance(api, dict):
+            api = {}
+            self.config["api_chat"] = api
+        api["base_url"] = base_url
+        api["model"] = model
+        self.save_config(self.config)
+        if key and not api_key_store.save_key(key):
+            self._show_error_flavor()
+            return
+        if not api_key_store.has_key():
+            self._say_chat_pool("api_saved_no_key")
+            return
+        session = self._get_chat_session()
+        if session.busy:
+            # a chat request is already on its way: no connection test now
+            self.dm.trigger_api_saved()
+            return
+        self._say_chat_wait()
+        session.probe()  # the outcome arrives through probed -> _on_api_probed
+
+    def _on_api_key_deleted(self):
+        if not api_key_store.delete_key():
+            self._show_error_flavor()
+            return
+        self.dm.trigger_api_key_deleted()
 
     @_guarded_menu_action("战斗")
     def _on_fight_clicked(self):
@@ -1401,6 +1748,8 @@ class PetWindow(QWidget):
         self._exit_interrupted = False
         self._resume_exit_animation_after_interrupt = False
         self._close_active_popup()
+        _close_chat(self)
+        _close_api_panel(self)
         self.reminders.chase.lock_for_exit()
         QTimer.singleShot(EXIT_FAILSAFE_MS, self._quit_now)
 

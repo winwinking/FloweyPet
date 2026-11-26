@@ -215,6 +215,15 @@ class DialogueBox(QWidget):
         self._hold_timer.timeout.connect(self._auto_close_after_confirm_window)
         self._active_hold_ms = confirm_hold_ms
 
+        # Optional "stay up" mode (start(linger_ms=...)): after the last segment
+        # the bubble is NOT closed; it stays on screen until the next start() /
+        # stop_immediately() replaces it, or linger_ms runs out. Used by the
+        # chat "……" while waiting for the API. Off (None) for every other line.
+        self._linger_ms = None
+        self._linger_timer = QTimer(self)
+        self._linger_timer.setSingleShot(True)
+        self._linger_timer.timeout.connect(self.end_linger)
+
     # --------------------------------------------------------------- window
     def _window_flags(self):
         flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool
@@ -261,7 +270,7 @@ class DialogueBox(QWidget):
         self.setFixedSize(self.box_width, self.box_height)
 
     # ------------------------------------------------------------- lifecycle
-    def start(self, segments, on_segment_face, choice_options=None, hold_ms=None):
+    def start(self, segments, on_segment_face, choice_options=None, hold_ms=None, linger_ms=None):
         """choice_options: ordered list of (outcome_key, label) tuples --
         e.g. [("confirm", "确定"), ("等等" …)] -- shown as an Undertale
         choice bar after the last segment; None means a plain bubble that
@@ -274,6 +283,8 @@ class DialogueBox(QWidget):
         self._active_hold_ms = hold_ms if hold_ms else self._confirm_hold_ms
         self.response_outcome = None
         self._hold_timer.stop()
+        self._linger_timer.stop()
+        self._linger_ms = linger_ms if linger_ms else None
         self._hide_confirm_bar()
         self._advance_segment()
         self.show()
@@ -282,6 +293,8 @@ class DialogueBox(QWidget):
         self._typing_timer.stop()
         self._glitch_timer.stop()
         self._hold_timer.stop()
+        self._linger_timer.stop()
+        self._linger_ms = None
         self._hide_confirm_bar()
         self.hide()
 
@@ -317,6 +330,10 @@ class DialogueBox(QWidget):
             self._typing_timer.stop()
             if self._choice_options:
                 self._show_confirm_bar(self._choice_options)
+                return
+            if self._linger_ms:
+                self._linger_timer.start(self._linger_ms)
+                self.hold_started.emit()
                 return
             self.hide()
             self.finished.emit()
@@ -445,6 +462,19 @@ class DialogueBox(QWidget):
         # WindowDoesNotAcceptFocus widget without requiring activation.
         self._hold_timer.start(self._active_hold_ms)
         self.hold_started.emit()
+
+    def is_lingering(self):
+        return self._linger_timer.isActive()
+
+    def end_linger(self):
+        """Closes a lingering bubble now (timeout, or something more urgent is
+        waiting) exactly like a normal end of speech."""
+        self._linger_timer.stop()
+        if self._linger_ms is None or not self.isVisible():
+            return
+        self._linger_ms = None
+        self.hide()
+        self.finished.emit()
 
     def _on_choice_activated(self, key):
         if not self.isVisible():

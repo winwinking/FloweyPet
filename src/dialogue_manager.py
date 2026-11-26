@@ -22,13 +22,26 @@ import anticheat
 import version
 from config import read_shadow_clicks, write_shadow_clicks
 from error_log import log_exception, log_message
-from paths import DIALOGUE_ANTICHEAT_PATH, DIALOGUE_INFO_PATH, DIALOGUE_PATH, DIALOGUE_SYSTEM_PATH, FACES_DIR
+from paths import (
+    DIALOGUE_ANTICHEAT_PATH,
+    DIALOGUE_CHAT_PATH,
+    DIALOGUE_INFO_PATH,
+    DIALOGUE_PATH,
+    DIALOGUE_SYSTEM_PATH,
+    FACES_DIR,
+)
 
 PRI_REMINDER = 40
 PRI_POMODORO = 30
 PRI_NEGLECT = 20
 PRI_CHAT = 10
 PRI_CLICK = 0  # user-initiated, always shown immediately, never queued/throttled
+
+# dialogues_chat.json pools that are validated at load time
+CHAT_POOLS = (
+    "chat_no_api", "chat_wait", "chat_api_error", "chat_api_key_error", "chat_check_settings",
+    "chat_no_balance", "chat_too_frequent", "api_saved", "api_saved_no_key", "api_key_deleted",
+)
 
 OTHER_PET_KEYWORDS = ("桌宠", "桌面宠物", "shimeji", "desktop pet", "desktop mascot", "desktop buddy")
 
@@ -105,6 +118,8 @@ class DialogueManager(QObject):
             self.data = json.load(f)
         self._sanitize_flavor_pools(("lock_on", "lock_off", "lock_hint"))
         self.data.update(self._load_system_dialogues())
+        self.data.update(self._load_chat_dialogues())
+        self._sanitize_flavor_pools(CHAT_POOLS)
         self.info_data = self._load_info_dialogues()
         self._info_trigger_times = []  # monotonic timestamps, for anti-spam
         self._last_info_pick = None  # (pool_name, index) of the last entry shown
@@ -114,6 +129,8 @@ class DialogueManager(QObject):
         self._anticheat_placeholders = {}  # transient, set right before _submit(), read by _substitute()
 
         self.busy = False
+        self._current_priority = PRI_CHAT  # priority of the line on screen right now (see _show / cut_in)
+        self.on_urgent_queued = None  # callable(): something above PRI_CHAT just queued behind the current line
         self._queue = []  # list of (priority, category, segments)
         self.last_auto_speak_end = 0.0
         self.last_interaction_time = time.monotonic()
@@ -200,6 +217,24 @@ class DialogueManager(QObject):
             return {}
         except (OSError, json.JSONDecodeError):
             log_exception(f"dialogues_system: could not load {DIALOGUE_SYSTEM_PATH}")
+            return {}
+        return {k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, list)}
+
+    def _load_chat_dialogues(self):
+        """dialogues_chat.json: every chat (行动 -> 聊天) pool. Same loading
+        contract as _load_system_dialogues -- a missing/malformed file just
+        means chat has nothing to say, never a crash."""
+        try:
+            with open(DIALOGUE_CHAT_PATH, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+        except FileNotFoundError:
+            log_message(f"dialogues_chat: {DIALOGUE_CHAT_PATH} not found, chat replies will have nothing to say")
+            return {}
+        except (OSError, json.JSONDecodeError):
+            log_exception(f"dialogues_chat: could not load {DIALOGUE_CHAT_PATH}")
+            return {}
+        if not isinstance(raw, dict):
+            log_message("dialogues_chat: top level must be a JSON object")
             return {}
         return {k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, list)}
 
@@ -710,11 +745,17 @@ class DialogueManager(QObject):
                 return  # clicks never interrupt or queue
             self._queue.append((priority, category, segments))
             self._queue.sort(key=lambda t: -t[0])
+            if priority > PRI_CHAT and self.on_urgent_queued is not None:
+                try:
+                    self.on_urgent_queued()
+                except Exception:  # noqa: BLE001 - a hook must never break speaking
+                    log_exception("dialogue_manager: on_urgent_queued")
             return
-        self._show(category, segments)
+        self._show(category, segments, priority)
 
-    def _show(self, category, segments):
+    def _show(self, category, segments, priority=PRI_CHAT):
         self.busy = True
+        self._current_priority = priority
         segments = [dict(s, text=self._substitute(s.get("text", ""))) for s in segments]
         self.show_requested.emit(segments, category)
         if self.stats:
@@ -743,7 +784,29 @@ class DialogueManager(QObject):
         if segments is None:
             return False
         self._queue.clear()
-        self._show(category, segments)
+        self._show(category, segments, PRI_CHAT)
+        return True
+
+    def cut_in(self, category, segments):
+        """For chat lines (reply / error / waiting "……"). Unlike preempt():
+          * if the line on screen outranks chat (reminder, pomodoro, ...)
+            this one does NOT interrupt -- it queues at chat priority like
+            speak(bypass_interval=True);
+          * otherwise it stops the current bubble and shows at once, and
+            every queued line above chat priority is KEPT (preempt would
+            wipe the whole queue, reminders included);
+          * before any line other than the "……" itself, a still-queued
+            chat_wait is dropped: the answer is here, the "……" is moot.
+        Returns True if segments were given."""
+        if segments is None:
+            return False
+        if category != "chat_wait":
+            self._queue = [q for q in self._queue if q[1] != "chat_wait"]
+        if self.busy and self._current_priority > PRI_CHAT:
+            self._submit(category, segments, PRI_CHAT, bypass_interval=True)
+            return True
+        self._queue = [q for q in self._queue if q[0] > PRI_CHAT]
+        self._show(category, segments, PRI_CHAT)
         return True
 
     def speak(self, category, segments, priority=PRI_CLICK, bypass_interval=True):
@@ -760,7 +823,7 @@ class DialogueManager(QObject):
         self.last_auto_speak_end = time.monotonic()
         if self._queue:
             priority, category, segments = self._queue.pop(0)
-            self._show(category, segments)
+            self._show(category, segments, priority)
 
     # ---------------------------------------------------------- interaction
     def record_interaction(self):
@@ -1040,6 +1103,34 @@ class DialogueManager(QObject):
             self._submit("click_egg", rapid_multi_segments, PRI_CHAT, bypass_interval=True)
             return
         self._submit(category, self._pick(category), PRI_CHAT, bypass_interval=True)
+
+    def trigger_chat_no_api(self):
+        """The user sent something in the chat box but no API is configured
+        yet. Goes through speak(): queued behind whatever is talking, never
+        dropped by the min-interval gate. The user's text is deliberately
+        not an argument -- it never reaches any log."""
+        segments = self._pick("chat_no_api")
+        if segments:
+            self.speak("chat_no_api", segments, priority=PRI_CHAT, bypass_interval=True)
+
+    def pick_chat_line(self, pool):
+        """One normalized line from a dialogues_chat.json pool, or None."""
+        return self._pick(pool)
+
+    def has_queued_above(self, priority):
+        return any(p > priority for p, _, _ in self._queue)
+
+    def trigger_api_saved(self):
+        """「API 设置」面板点了保存。"""
+        segments = self._pick("api_saved")
+        if segments:
+            self.speak("api_saved", segments, priority=PRI_CHAT, bypass_interval=True)
+
+    def trigger_api_key_deleted(self):
+        """「API 设置」面板点了删除钥匙。"""
+        segments = self._pick("api_key_deleted")
+        if segments:
+            self.speak("api_key_deleted", segments, priority=PRI_CHAT, bypass_interval=True)
 
     def trigger_lock_hint(self):
         """Nudge line for when the pet is locked (see PetWindow._toggle_lock

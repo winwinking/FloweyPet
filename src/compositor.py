@@ -26,6 +26,7 @@ import json
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPainter, QPixmap
 
+from error_log import log_message
 from paths import (
     APPEAR_DIR,
     APPEAR_NEUTRAL_DIR,
@@ -50,6 +51,7 @@ class SpriteBank:
         with open(FACES_MANIFEST_PATH, "r", encoding="utf-8") as f:
             self.manifest = json.load(f)
         self._face_cache = {}
+        self._warned_exprs = set()
 
         self._raw_appear = self._load_raw(APPEAR_DIR, 9)
         self._raw_appear_neutral = self._load_raw(APPEAR_NEUTRAL_DIR, 9)
@@ -107,16 +109,31 @@ class SpriteBank:
             i += 1
         return frames
 
+    def _resolve_expr(self, expr):
+        """The expression name to actually draw: `expr` itself if it is a
+        string present in the manifest, else "neutral". Both the sprite
+        directory and the cache key must use this resolved name -- using
+        the raw one drew a face-less stem for unknown names (the manifest
+        entry fell back but the image path did not). An unknown name is
+        logged once per distinct value."""
+        if isinstance(expr, str) and expr in self.manifest:
+            return expr
+        key = expr if isinstance(expr, str) else repr(expr)
+        if key not in self._warned_exprs:
+            self._warned_exprs.add(key)
+            log_message(f"compositor: 未知表情名 {expr!r:.40}，改用 neutral")
+        return "neutral"
+
     def face_frame_count(self, expr: str) -> int:
-        entries = self.manifest.get(expr) or self.manifest["neutral"]
-        return len(entries)
+        return len(self.manifest[self._resolve_expr(expr)])
 
     def get_face(self, expr: str, frame_idx: int = 0) -> QPixmap:
+        expr = self._resolve_expr(expr)
         key = (expr, frame_idx)
         cached = self._face_cache.get(key)
         if cached is not None:
             return cached
-        entries = self.manifest.get(expr) or self.manifest["neutral"]
+        entries = self.manifest[expr]
         entry = entries[frame_idx % len(entries)]
         face_pm = QPixmap(str(FACES_DIR / expr / entry["file"]))
 
