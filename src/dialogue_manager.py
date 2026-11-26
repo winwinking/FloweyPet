@@ -37,6 +37,12 @@ PRI_NEGLECT = 20
 PRI_CHAT = 10
 PRI_CLICK = 0  # user-initiated, always shown immediately, never queued/throttled
 
+# dialogues_chat.json pools that are validated at load time
+CHAT_POOLS = (
+    "chat_no_api", "chat_wait", "chat_api_error", "chat_api_key_error", "chat_check_settings",
+    "chat_no_balance", "chat_too_frequent", "api_saved", "api_saved_no_key", "api_key_deleted",
+)
+
 OTHER_PET_KEYWORDS = ("桌宠", "桌面宠物", "shimeji", "desktop pet", "desktop mascot", "desktop buddy")
 
 INFO_WEIGHTED_POOLS = ("normal_intro", "fourth_wall", "nonsense", "rare")
@@ -113,7 +119,7 @@ class DialogueManager(QObject):
         self._sanitize_flavor_pools(("lock_on", "lock_off", "lock_hint"))
         self.data.update(self._load_system_dialogues())
         self.data.update(self._load_chat_dialogues())
-        self._sanitize_flavor_pools(("chat_no_api", "api_saved", "api_key_deleted"))
+        self._sanitize_flavor_pools(CHAT_POOLS)
         self.info_data = self._load_info_dialogues()
         self._info_trigger_times = []  # monotonic timestamps, for anti-spam
         self._last_info_pick = None  # (pool_name, index) of the last entry shown
@@ -123,6 +129,7 @@ class DialogueManager(QObject):
         self._anticheat_placeholders = {}  # transient, set right before _submit(), read by _substitute()
 
         self.busy = False
+        self.on_urgent_queued = None  # callable(): something above PRI_CHAT just queued behind the current line
         self._queue = []  # list of (priority, category, segments)
         self.last_auto_speak_end = 0.0
         self.last_interaction_time = time.monotonic()
@@ -737,6 +744,11 @@ class DialogueManager(QObject):
                 return  # clicks never interrupt or queue
             self._queue.append((priority, category, segments))
             self._queue.sort(key=lambda t: -t[0])
+            if priority > PRI_CHAT and self.on_urgent_queued is not None:
+                try:
+                    self.on_urgent_queued()
+                except Exception:  # noqa: BLE001 - a hook must never break speaking
+                    log_exception("dialogue_manager: on_urgent_queued")
             return
         self._show(category, segments)
 
@@ -1076,6 +1088,13 @@ class DialogueManager(QObject):
         segments = self._pick("chat_no_api")
         if segments:
             self.speak("chat_no_api", segments, priority=PRI_CHAT, bypass_interval=True)
+
+    def pick_chat_line(self, pool):
+        """One normalized line from a dialogues_chat.json pool, or None."""
+        return self._pick(pool)
+
+    def has_queued_above(self, priority):
+        return any(p > priority for p, _, _ in self._queue)
 
     def trigger_api_saved(self):
         """「API 设置」面板点了保存。"""

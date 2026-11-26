@@ -49,7 +49,12 @@ DEFAULTS = {
     # API 聊天(见 api_chat.py): 只放地址和模型。key 绝不放在这里, 单独存在 api_key.txt(见 api_key_store.py)。
     # 这两个字符串与 api_chat.DEFAULT_BASE_URL / DEFAULT_MODEL 必须一致(有测试把关); 这里不 import api_chat,
     # 因为 main.py 在导入 PyQt 之前就要读 config。
-    "api_chat": {"base_url": "https://api.deepseek.com", "model": "deepseek-flash"},
+    "api_chat": {
+        "base_url": "https://api.deepseek.com",
+        "model": "deepseek-flash",
+        "min_interval_seconds": 3,  # 聊天本地限流: 两次发送至少间隔这么多秒
+        "max_per_10min": 30,  # 聊天本地限流: 任意 10 分钟内最多发送这么多次
+    },
     "check_updates": True,  # 是否检查更新：只读取一个公开的 version.json，不发送任何数据，只提示、不自动替换
     "update_url": "https://raw.githubusercontent.com/winwinking/FloweyPet/master/version.json",  # 版本信息文件的地址
     "update_check_hours": 3,  # 启动后每隔多少小时再检查一次

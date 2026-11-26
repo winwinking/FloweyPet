@@ -117,13 +117,13 @@ check("失败的日志里没有 key", SENT not in log_text and SENT2 not in log_
 # ====================================================================== 2
 print("== 2 config 默认值 ==")
 check("config.DEFAULTS['api_chat'] 与 api_chat 的默认常量一致",
-      config_mod.DEFAULTS["api_chat"] == {"base_url": api_chat.DEFAULT_BASE_URL, "model": api_chat.DEFAULT_MODEL},
+      {k: config_mod.DEFAULTS["api_chat"][k] for k in ("base_url", "model")} == {"base_url": api_chat.DEFAULT_BASE_URL, "model": api_chat.DEFAULT_MODEL},
       str(config_mod.DEFAULTS["api_chat"]))
 check("config.DEFAULTS 里任何地方都没有 key 字段", "api_key" not in json.dumps(config_mod.DEFAULTS))
 check("config.py 没有 import api_chat(main.py 要在导入 PyQt 前读 config)",
       not any(l.strip().startswith(("import api_chat", "from api_chat")) for l in (ROOT / "src" / "config.py").read_text(encoding="utf-8").splitlines()))
 merged = config_mod._deep_merge(config_mod.DEFAULTS, {"api_chat": {"model": "x"}})
-check("老 config 只有 model: 合并后地址补默认值", merged["api_chat"] == {"base_url": api_chat.DEFAULT_BASE_URL, "model": "x"})
+check("老 config 只有 model: 合并后地址补默认值", merged["api_chat"]["base_url"] == api_chat.DEFAULT_BASE_URL and merged["api_chat"]["model"] == "x")
 
 # ====================================================================== 3
 print("== 3 面板 ==")
@@ -392,7 +392,7 @@ panel._key_edit.setText(SENT)
 press(panel._key_edit, Qt.Key.Key_Return)
 pump()
 check("保存: dm.trigger_api_saved 被调用一次", pet.dm.trigger_api_saved.call_count == 1 and pet.dm.trigger_api_key_deleted.call_count == 0)
-check("保存: 地址和模型写进 config", pet.config["api_chat"] == {"base_url": "https://api.example.com/v1", "model": "model-z"}, str(pet.config["api_chat"]))
+check("保存: 地址和模型写进 config", (pet.config["api_chat"]["base_url"], pet.config["api_chat"]["model"]) == ("https://api.example.com/v1", "model-z"), str(pet.config["api_chat"]))
 check("保存: key 写进 api_key.txt", store.load_key() == SENT)
 cfg_text = CONFIG_FILE.read_text(encoding="utf-8")
 check("config.json 已落盘且含新地址", "https://api.example.com/v1" in cfg_text)

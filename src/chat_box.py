@@ -31,6 +31,7 @@ from win_zorder import apply_topmost
 
 MAX_INPUT_CHARS = 200
 PLACEHOLDER_TEXT = "说点什么……"
+PLACEHOLDER_WAITING = "等小花回话……"
 PLACEHOLDER_COLOR = "#8a8a8a"
 CLOSE_TEXT = "×"
 
@@ -68,6 +69,7 @@ class ChatBox(QWidget):
         min_font_px: int = None,
     ):
         self._pin = always_on_top
+        self._waiting = False
         super().__init__(None, self._window_flags())
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -156,7 +158,18 @@ class ChatBox(QWidget):
         if event.isAccepted():
             self.closed.emit()
 
+    def set_waiting(self, waiting: bool):
+        """True while a reply from the API is on its way: Enter does nothing
+        (and the typed text stays put) and the placeholder says so."""
+        self._waiting = bool(waiting)
+        self._edit.setPlaceholderText(PLACEHOLDER_WAITING if self._waiting else PLACEHOLDER_TEXT)
+
+    def is_waiting(self):
+        return self._waiting
+
     def _on_return(self):
+        if self._waiting:
+            return
         text = self._edit.text().strip()
         if not text:
             return

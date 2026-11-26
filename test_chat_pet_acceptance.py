@@ -67,6 +67,7 @@ def make_pet(x=310, y=200, w=180, h=212):  # x=310: centred on the 800px-wide of
     pet.pet_display_width = w
     pet._pending_quit = False
     pet._chat_box = None
+    pet._chat_waiting = False  # a plain attribute on the real PetWindow (a MagicMock one would read as "waiting")
     pet._pomodoro_active = False
     pet._dragging = False
     pet.state = "idle"

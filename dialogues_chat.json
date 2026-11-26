@@ -1,5 +1,5 @@
 {
-  "_readme": "聊天（行动 → 聊天）相关的台词池都放在这个文件里。格式同 dialogue.json：每条是 {text, face}，face 可以是单个表情名，或表情名数组（打字过程中依次切换）。表情名必须和 assets/faces 下的文件夹名完全一致，不存在的会退回 neutral。chat_no_api：用户在聊天框发了话，但还没配置 API 时的回应。\napi_saved：在「API 设置」面板里点保存后说。api_key_deleted：点「删除钥匙」后说。这两句目前是占位，以后可以随便换。",
+  "_readme": "聊天（行动 → 聊天）相关的台词池都放在这个文件里。格式同 dialogue.json：每条是 {text, face}，face 可以是单个表情名，或表情名数组（打字过程中依次切换）。表情名必须和 assets/faces 下的文件夹名完全一致，不存在的会退回 neutral。chat_no_api：用户在聊天框发了话，但还没配置 API 时的回应。\napi_saved：在「API 设置」面板里点保存后说。api_key_deleted：点「删除钥匙」后说。这两句目前是占位，以后可以随便换。\nchat_wait：发出请求后等回复时冒的那句，气泡会一直挂着直到被回复/错误台词替换（最长 40 秒）。chat_api_error：网络、超时、服务器、回复不对、人设文件丢了、被限流(429)时说。chat_api_key_error：钥匙不对（401/403）。chat_check_settings：地址或模型名不对（400/404/422）。chat_no_balance：余额不足（402）。chat_too_frequent：本地限流（发得太快）。api_saved_no_key：保存了设置但还没有钥匙。api_saved：保存并且试连成功后说。",
   "chat_no_api": [
     {
       "text": "你想跟我说话？那你先去「存档点」把 API 接上。不然我只会说这一句。",
@@ -27,6 +27,125 @@
         "frown",
         "n_right_glance",
         "lie"
+      ]
+    }
+  ],
+  "chat_wait": [
+    {
+      "text": "……",
+      "face": "n_left_glance"
+    }
+  ],
+  "chat_api_error": [
+    {
+      "text": "……脑子断线了。你等等，我想想我刚才要说什么来着。……想不起来了。",
+      "face": [
+        "worry",
+        "frown",
+        "sheepish_smile"
+      ]
+    },
+    {
+      "text": "嗯？我刚才是不是卡了一下？什么也没发生。你什么也没看到。",
+      "face": [
+        "shocked",
+        "neutral",
+        "lie"
+      ]
+    },
+    {
+      "text": "……信号不好。在地底的时候也经常这样。别看我，不是我的问题。你的API出错了。",
+      "face": [
+        "frown",
+        "n_right_glance",
+        "gritted_teeth"
+      ]
+    },
+    {
+      "text": "等一下……等一下……好了我放弃了。我的脑子今天罢工了。",
+      "face": [
+        "worry",
+        "frown",
+        "sheepish_smile"
+      ]
+    },
+    {
+      "text": "我刚才想说一句很聪明的话。但它跑掉了。就像你的网速一样。",
+      "face": [
+        "calm",
+        "frown",
+        "smirk"
+      ]
+    }
+  ],
+  "chat_api_key_error": [
+    {
+      "text": "……你给我的那个钥匙好像不太对。去「存档点」检查一下。",
+      "face": [
+        "frown",
+        "serious",
+        "worry"
+      ]
+    },
+    {
+      "text": "嘿，你的 API 密钥是不是过期了？去设置里看看。不是我挑剔——是它真的不能用。",
+      "face": [
+        "neutral",
+        "frown",
+        "sheepish_smile"
+      ]
+    },
+    {
+      "text": "连接失败。你确定你给我的那串东西是对的？去存档点重新填一下。",
+      "face": [
+        "serious",
+        "worry",
+        "frown"
+      ]
+    }
+  ],
+  "chat_check_settings": [
+    {
+      "text": "……你填的地址或者模型名不对。去「存档点」看看你都写了些什么。",
+      "face": [
+        "frown",
+        "n_left_glance",
+        "serious"
+      ]
+    }
+  ],
+  "chat_no_balance": [
+    {
+      "text": "嘿，你的 API 账户好像没钱了。去充值。……别看我，我又不收钱。",
+      "face": [
+        "shocked",
+        "smirk",
+        "lie"
+      ]
+    }
+  ],
+  "chat_too_frequent": [
+    {
+      "text": "你一口气说这么多，我回不过来。歇会儿。",
+      "face": [
+        "frown",
+        "gritted_teeth"
+      ]
+    },
+    {
+      "text": "慢点。花也是要喘气的。",
+      "face": [
+        "worry",
+        "frown"
+      ]
+    }
+  ],
+  "api_saved_no_key": [
+    {
+      "text": "地址记下了。钥匙呢？没钥匙我可开不了门。",
+      "face": [
+        "neutral",
+        "frown"
       ]
     }
   ]

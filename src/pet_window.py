@@ -10,6 +10,7 @@ import os
 import random
 import sys
 import time
+from datetime import datetime
 
 from PyQt6.QtCore import QPoint, QRect, Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QCursor, QDesktopServices, QIcon, QPainter
@@ -29,12 +30,14 @@ import anticheat
 import api_key_store
 import dialogue_log
 import flirt as flirt_dialogue
+import api_chat
 from api_chat import DEFAULT_BASE_URL, DEFAULT_MODEL
 from api_settings_panel import ApiSettingsPanel
 from chat_box import ChatBox
 from dialogue_arbiter import DialogueArbiter
 from config import DEFAULT_PET_SIZE_TIERS
 from dialogue_box import DialogueBox
+from dialogue_manager import PRI_CHAT
 from error_log import log_exception
 from flirt import FlirtController
 from game_detector import GameDetector
@@ -70,6 +73,16 @@ CHASE_POPUP_BUTTONS = {
 EXIT_FRAME_MS = 125
 EXIT_FAILSAFE_MS = 15000
 UPDATE_QUIT_DEADLINE_MS = 15000  # the updater only waits 30 s for this process
+CHAT_WAIT_LINGER_MS = 40_000  # the chat "……" bubble stays up at most this long (the request itself times out at 30 s)
+CHAT_RATE_WINDOW_S = 600
+# API error category -> dialogues_chat.json pool
+CHAT_ERROR_POOLS = {
+    "auth": "chat_api_key_error",
+    "bad_request": "chat_check_settings",
+    "no_balance": "chat_no_balance",
+    "no_config": "chat_no_api",
+}
+CHAT_ERROR_DEFAULT_POOL = "chat_api_error"  # network, server, rate_limit, bad_response, no_persona, ...
 HIDE_FAILSAFE_GRACE_MS = 6000  # generous margin over any realistic escalation-line playback time
 
 
@@ -176,6 +189,10 @@ class PetWindow(QWidget):
         self._active_popup = None
         self._chat_box = None  # created lazily by _open_chat; there is only ever one
         self._api_panel = None  # the 「API 设置」 panel, created by _open_api_settings; only ever one open
+        self._chat_session = None  # api_chat.ChatSession, created lazily by _get_chat_session; history lives in memory only
+        self._chat_waiting = False  # a chat reply is on its way
+        self._chat_sent_times = []  # clock readings of requests actually sent (local rate limit)
+        self._chat_clock = time.monotonic  # injectable for tests
         self._last_face_key = None
         self._appear_source = "appear"
         self._last_duplicate_launch_roast = float("-inf")
@@ -198,6 +215,7 @@ class PetWindow(QWidget):
         self.dialogue_box.finished.connect(self._on_dialogue_finished)
         self.dialogue_box.hold_started.connect(self._on_dialogue_hold_started)
         self.dm.show_requested.connect(self._on_show_requested)
+        self.dm.on_urgent_queued = self._on_urgent_line_queued
         self.arbiter = DialogueArbiter(config, self.dm, self)
         self.click_detector = anticheat.AutoClickerDetector()
         self.game_detector = GameDetector(config, self.dm, self, self.stats)
@@ -479,6 +497,12 @@ class PetWindow(QWidget):
         self._position_dialogue_box()
         options = CHASE_POPUP_BUTTONS.get(category)
         hold_ms = self.reminders.chase.hold_ms_for_category(category) if options else None
+        if category == "chat_wait":
+            # the "……" while the API answers: stays up (see DialogueBox linger_ms)
+            self.dialogue_box.start(
+                segments, self._on_segment_face, choice_options=options, hold_ms=hold_ms, linger_ms=CHAT_WAIT_LINGER_MS
+            )
+            return
         self.dialogue_box.start(
             segments, self._on_segment_face, choice_options=options, hold_ms=hold_ms
         )
@@ -494,8 +518,16 @@ class PetWindow(QWidget):
         bubble (with its buttons) stays on screen; only the sprite state
         changes. Guarded so a hold can never yank the pet out of the exit
         burrow animation."""
+        if self._current_category == "chat_wait" and self.dm.has_queued_above(PRI_CHAT):
+            # a reminder / pomodoro line queued up behind the waiting "……": let it through
+            self.dialogue_box.end_linger()
+            return
         if self.state == State.TALKING and not self._dragging:
             self._enter_idle()
+
+    def _on_urgent_line_queued(self):
+        if self._current_category == "chat_wait" and self.dialogue_box.is_lingering():
+            self.dialogue_box.end_linger()
 
     def _on_dialogue_finished(self):
         cat = self._current_category
@@ -1296,6 +1328,7 @@ class PetWindow(QWidget):
                 self.config.get("bubble_min_font_size", 15),
             )
             box.submitted.connect(self._on_chat_submitted)
+            box.set_waiting(self._chat_waiting)
             self._chat_box = box
         if not box.isVisible():
             box.show()  # needs a size on screen before it can be placed
@@ -1341,13 +1374,114 @@ class PetWindow(QWidget):
         chosen = next((r for r in candidates if clear(r)), below)
         box.move(chosen.x(), chosen.y())
 
+    # ------------------------------------------------------------ chat <-> API
+    def _make_chat_session(self):
+        """Factory for the one ChatSession (tests replace it to inject a fake
+        fetcher)."""
+        return api_chat.ChatSession(
+            self._api_settings,
+            self.dm._substitute,
+            self._chat_context,
+        )
+
+    def _get_chat_session(self):
+        session = self._chat_session
+        if session is None:
+            session = self._make_chat_session()
+            session.replied.connect(self._on_chat_replied)
+            session.failed.connect(self._on_chat_failed)
+            session.probed.connect(self._on_api_probed)
+            self._chat_session = session
+        return session
+
+    def _api_settings(self):
+        """Read fresh on every request: address/model from config, the key
+        straight from api_key.txt (never cached anywhere else)."""
+        cfg = self.config.get("api_chat")
+        cfg = cfg if isinstance(cfg, dict) else {}
+        return {
+            "base_url": cfg.get("base_url") or DEFAULT_BASE_URL,
+            "model": cfg.get("model") or DEFAULT_MODEL,
+            "api_key": api_key_store.load_key(),
+        }
+
+    def _chat_context(self):
+        return {"time": datetime.now().strftime("%H:%M"), "days": self.dm.days_since_install()}
+
+    def _chat_limits(self):
+        cfg = self.config.get("api_chat")
+        cfg = cfg if isinstance(cfg, dict) else {}
+        min_interval = cfg.get("min_interval_seconds", 3)
+        max_per_window = cfg.get("max_per_10min", 30)
+        if isinstance(min_interval, bool) or not isinstance(min_interval, (int, float)) or min_interval < 0:
+            min_interval = 3
+        if isinstance(max_per_window, bool) or not isinstance(max_per_window, int) or max_per_window < 1:
+            max_per_window = 30
+        return min_interval, max_per_window
+
+    def _say_chat_line(self, category, segments):
+        """Plays a chat line (reply / error / wait). Normally it cuts in over
+        whatever is on screen (usually the waiting "……"); while a reminder
+        popup is up, or the app is quitting, it queues instead and never
+        interrupts."""
+        if not segments or not self.isVisible():
+            return
+        if self._pending_quit or self.is_reminder_popup_active():
+            self.dm.speak(category, segments, priority=PRI_CHAT, bypass_interval=True)
+        else:
+            self.dm.preempt(category, segments)
+
+    def _say_chat_pool(self, pool):
+        self._say_chat_line(pool, self.dm.pick_chat_line(pool))
+
+    def _say_chat_wait(self):
+        """The "……" shown while the API answers. Skipped (not queued) when a
+        reminder popup is up or we are quitting."""
+        if self._pending_quit or self.is_reminder_popup_active():
+            return
+        self._say_chat_line("chat_wait", self.dm.pick_chat_line("chat_wait"))
+
+    def _set_chat_waiting(self, waiting):
+        self._chat_waiting = waiting
+        box = getattr(self, "_chat_box", None)
+        if box is not None:
+            box.set_waiting(waiting)
+
     def _on_chat_submitted(self, text):
-        # `text` is deliberately unused: no API yet, and what the user types
-        # must never reach a log.
+        # What the user types and what comes back are never logged.
         if self._pending_quit:
             return
         self.stats.record_interaction()
-        self.dm.trigger_chat_no_api()
+        if not api_key_store.has_key():
+            self.dm.trigger_chat_no_api()
+            return
+        session = self._get_chat_session()
+        now = self._chat_clock()
+        min_interval, max_per_window = self._chat_limits()
+        sent = [t for t in self._chat_sent_times if now - t < CHAT_RATE_WINDOW_S]
+        self._chat_sent_times = sent
+        if session.busy or (sent and now - sent[-1] < min_interval) or len(sent) >= max_per_window:
+            self._say_chat_pool("chat_too_frequent")
+            return
+        self._chat_sent_times.append(now)
+        self._set_chat_waiting(True)
+        self._say_chat_wait()
+        session.ask(text)  # the answer arrives through replied / failed (maybe right away in tests)
+
+    def _on_chat_replied(self, reply):
+        self._set_chat_waiting(False)
+        self._say_chat_line("chat_reply", [{"text": reply["text"], "face": reply["face"]}])
+
+    def _on_chat_failed(self, code):
+        self._set_chat_waiting(False)
+        self._say_chat_pool(CHAT_ERROR_POOLS.get(code, CHAT_ERROR_DEFAULT_POOL))
+
+    def _on_api_probed(self, outcome):
+        """Result of the connection test started by saving the API settings."""
+        if outcome == "ok":
+            self._say_chat_pool("api_saved")
+        else:
+            self._say_chat_pool(CHAT_ERROR_POOLS.get(outcome, CHAT_ERROR_DEFAULT_POOL))
 
     # --------------------------------------------------------- API settings
     @_guarded_menu_action("API 设置")
@@ -1400,7 +1534,16 @@ class PetWindow(QWidget):
         if key and not api_key_store.save_key(key):
             self._show_error_flavor()
             return
-        self.dm.trigger_api_saved()
+        if not api_key_store.has_key():
+            self._say_chat_pool("api_saved_no_key")
+            return
+        session = self._get_chat_session()
+        if session.busy:
+            # a chat request is already on its way: no connection test now
+            self.dm.trigger_api_saved()
+            return
+        self._say_chat_wait()
+        session.probe()  # the outcome arrives through probed -> _on_api_probed
 
     def _on_api_key_deleted(self):
         if not api_key_store.delete_key():
