@@ -53,7 +53,7 @@ DEFAULTS = {
         "base_url": "https://api.deepseek.com",
         "model": "deepseek-flash",
         "min_interval_seconds": 3,  # 聊天本地限流: 两次发送至少间隔这么多秒
-        "max_per_10min": 30,  # 聊天本地限流: 任意 10 分钟内最多发送这么多次
+        "max_per_10min": 80,  # 聊天本地限流: 任意 10 分钟内最多发送这么多次
     },
     "check_updates": True,  # 是否检查更新：只读取一个公开的 version.json，不发送任何数据，只提示、不自动替换
     "update_url": "https://raw.githubusercontent.com/winwinking/FloweyPet/master/version.json",  # 版本信息文件的地址

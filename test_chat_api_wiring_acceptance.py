@@ -255,15 +255,15 @@ check("满 3 秒后可以再发", len(fake.calls) == 2)
 check("被限流的请求不占用次数(最近 10 分钟只记发出的)", len(pet._chat_sent_times) == 2)
 
 pet, fake, shown, dm = rig()
-for i in range(30):
+for i in range(80):
     pet._on_chat_submitted(f"第{i + 1}句")
     pet.clock["t"] += 4
-check("连发 30 句(每句隔 4 秒)都发出了", len(fake.calls) == 30, str(len(fake.calls)))
-pet._on_chat_submitted("第31句")
-check("10 分钟内第 31 句: 说 chat_too_frequent", cats(shown)[-1] == "chat_too_frequent" and len(fake.calls) == 30, str(cats(shown)[-3:]))
+check("连发 80 句(每句隔 4 秒)都发出了", len(fake.calls) == 80, str(len(fake.calls)))
+pet._on_chat_submitted("第81句")
+check("10 分钟内第 81 句: 说 chat_too_frequent", cats(shown)[-1] == "chat_too_frequent" and len(fake.calls) == 80, str(cats(shown)[-3:]))
 pet.clock["t"] += 600
 pet._on_chat_submitted("过了十分钟")
-check("过了 10 分钟窗口: 又可以发了", len(fake.calls) == 31)
+check("过了 10 分钟窗口: 又可以发了", len(fake.calls) == 81)
 pet, fake, shown, dm = rig(config_patch={"min_interval_seconds": 10, "max_per_10min": 2})
 pet._on_chat_submitted("a")
 pet.clock["t"] += 5
@@ -274,8 +274,8 @@ pet._on_chat_submitted("c")
 pet.clock["t"] += 11
 pet._on_chat_submitted("d")
 check("可配置: max_per_10min=2 时第 3 句被限流", len(fake.calls) == 2 and cats(shown)[-1] == "chat_too_frequent")
-check("DEFAULTS: min_interval_seconds=3, max_per_10min=30",
-      config_mod.DEFAULTS["api_chat"]["min_interval_seconds"] == 3 and config_mod.DEFAULTS["api_chat"]["max_per_10min"] == 30)
+check("DEFAULTS: min_interval_seconds=3, max_per_10min=80",
+      config_mod.DEFAULTS["api_chat"]["min_interval_seconds"] == 3 and config_mod.DEFAULTS["api_chat"]["max_per_10min"] == 80)
 
 # ===================================================================== 5
 print("== 5 等待状态 (ChatBox) ==")
