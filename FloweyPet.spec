@@ -21,6 +21,7 @@ a = Analysis(
         ('dialogues_info.json', '.'),
         ('dialogues_spam.json', '.'),
         ('dialogues_system.json', '.'),
+        ('persona.md', '.'),
         ('stats_roast.json', '.'),
     ],
     hiddenimports=[],

@@ -52,6 +52,7 @@ QUIT_ANIM_DIR = ASSETS_DIR / "anim" / "quit"
 
 DIALOGUE_PATH = APP_DIR / "dialogue.json"
 DIALOGUE_INFO_PATH = APP_DIR / "dialogues_info.json"
+PERSONA_PATH = APP_DIR / "persona.md"  # Flowey persona text sent as the API chat system prompt, see api_chat.py
 DIALOGUE_CHAT_PATH = APP_DIR / "dialogues_chat.json"  # chat (行动 -> 聊天) line pools, e.g. chat_no_api
 DIALOGUE_SYSTEM_PATH = APP_DIR / "dialogues_system.json"  # app/system-lifecycle lines, e.g. duplicate_launch
 DIALOGUE_FLIRT_PATH = APP_DIR / "dialogues_flirt.json"
