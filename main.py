@@ -5,6 +5,31 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
+# "Apply update" mode (one-click update, see updater_apply.py). Must stay ABOVE
+# every project/Qt import below: this branch may not import PyQt6, config,
+# paths or anything else of the program -- it only swaps files.
+if "--apply-update" in sys.argv[1:]:
+    if not getattr(sys, "frozen", False):
+        sys.exit(2)  # source runs never apply updates
+    import updater_apply
+
+    sys.exit(updater_apply.main(sys.argv[1:]))
+
+if getattr(sys, "frozen", False):
+    # An update interrupted by a crash / power loss is rolled back here, before
+    # anything else reads the install folder. Never allowed to block start-up.
+    _update_in_progress = False
+    try:
+        import updater_apply
+
+        _update_in_progress = (
+            updater_apply.recover_if_needed(Path(sys.executable).resolve().parent) == updater_apply.RECOVER_IN_PROGRESS
+        )
+    except Exception:
+        pass
+    if _update_in_progress:
+        sys.exit(0)  # the updater is swapping files right now: don't race it
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
@@ -27,6 +52,11 @@ from stats import Stats
 from update_checker import UpdateChecker
 from user_data import autostart_exe_dir, migrate_legacy_data, pick_legacy_source
 from pet_window import PetWindow
+import updater_apply
+
+
+class _SkipStep(Exception):
+    """Raised inside a startup step's try-block to skip the step."""
 
 
 def main():
@@ -50,6 +80,13 @@ def main():
 
     config = load_config()
 
+    # An unpacked update lives under the system temp folder; it must never be
+    # mistaken for the real installation (migration would read the wrong
+    # place, the autostart entry would point into the temp folder).
+    running_from_temp = (not IS_DEV) and updater_apply.is_running_from_temp()
+    if running_from_temp:
+        app_log.log_event(f"运行在系统临时目录（{APP_DIR}）：跳过旧数据迁移和开机自启同步")
+
     # Single-instance guard: must run before any window is created. If a
     # live instance already answers, this process notifies it and exits
     # without ever constructing PetWindow -- see single_instance.py for why
@@ -67,6 +104,8 @@ def main():
     # dir. Must run only after the single-instance check above passed, so a
     # second launch never rewrites data under a running first instance.
     try:
+        if running_from_temp:
+            raise _SkipStep
         # Packaged build only: the old data may sit beside a different exe
         # (e.g. the one the autostart entry points at), not beside this one.
         fallback_dirs = [] if IS_DEV else [autostart_exe_dir(read_autostart_command())]
@@ -74,6 +113,8 @@ def main():
         result = migrate_legacy_data(USER_DATA_DIR, legacy_config, legacy_stats, read_shadow_clicks,
                                        write_shadow=write_shadow_clicks)
         app_log.log_event(f"数据迁移：{result}（数据目录 {USER_DATA_DIR}，旧数据来源 {source_dir}）")
+    except _SkipStep:
+        pass
     except Exception:
         log_exception("migrate_legacy_data")
     config = load_config()
@@ -91,9 +132,13 @@ def main():
     # migration above: migration reads the OLD autostart path to locate the
     # old data folder, and this call overwrites that path.
     try:
+        if running_from_temp:
+            raise _SkipStep
         autostart_result = sync_autostart(config)
         if autostart_result not in ("skipped_dev", "off"):
             app_log.log_event(f"开机自启同步：{autostart_result}")
+    except _SkipStep:
+        pass
     except Exception:
         log_exception("sync_autostart")
 
