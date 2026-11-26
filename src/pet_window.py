@@ -1429,7 +1429,7 @@ class PetWindow(QWidget):
         if self._pending_quit or self.is_reminder_popup_active():
             self.dm.speak(category, segments, priority=PRI_CHAT, bypass_interval=True)
         else:
-            self.dm.preempt(category, segments)
+            self.dm.cut_in(category, segments)
 
     def _say_chat_pool(self, pool):
         self._say_chat_line(pool, self.dm.pick_chat_line(pool))
@@ -1440,6 +1440,11 @@ class PetWindow(QWidget):
         if self._pending_quit or self.is_reminder_popup_active():
             return
         self._say_chat_line("chat_wait", self.dm.pick_chat_line("chat_wait"))
+
+    def _restore_chat_text(self, text):
+        box = getattr(self, "_chat_box", None)
+        if box is not None:
+            box.restore_text(text)
 
     def _set_chat_waiting(self, waiting):
         self._chat_waiting = waiting
@@ -1453,6 +1458,7 @@ class PetWindow(QWidget):
             return
         self.stats.record_interaction()
         if not api_key_store.has_key():
+            self._restore_chat_text(text)  # nothing was sent: give the typed line back
             self.dm.trigger_chat_no_api()
             return
         session = self._get_chat_session()
@@ -1461,6 +1467,7 @@ class PetWindow(QWidget):
         sent = [t for t in self._chat_sent_times if now - t < CHAT_RATE_WINDOW_S]
         self._chat_sent_times = sent
         if session.busy or (sent and now - sent[-1] < min_interval) or len(sent) >= max_per_window:
+            self._restore_chat_text(text)  # not sent (rate limit / a request in flight): give the line back
             self._say_chat_pool("chat_too_frequent")
             return
         self._chat_sent_times.append(now)

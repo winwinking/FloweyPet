@@ -134,6 +134,9 @@ def rig(mode="ok", threaded=False, key=KEY, text="好。", config_patch=None):
     dm.preempt_calls = []
     orig_preempt = dm.preempt
     dm.preempt = lambda cat, segs: (dm.preempt_calls.append(cat), orig_preempt(cat, segs))[1]
+    dm.cut_in_calls = []
+    orig_cut_in = dm.cut_in
+    dm.cut_in = lambda cat, segs: (dm.cut_in_calls.append(cat), orig_cut_in(cat, segs))[1]
     dm.speak_calls = []
     orig_speak = dm.speak
     dm.speak = lambda cat, segs, **kw: (dm.speak_calls.append(cat), orig_speak(cat, segs, **kw))[1]
@@ -187,7 +190,7 @@ check("先说 chat_wait 再说 chat_reply", cats(shown) == ["chat_wait", "chat_r
 check("chat_wait 的文字是「……」, 表情 n_left_glance", shown[0][1] == "……" and shown[0][2][0]["face"] == "n_left_glance", str(shown[0]))
 seg = shown[1][2][0]
 check("chat_reply 的 segment: text 与 face 正确", seg == {"text": "哼，知道了。", "face": ["smirk", "angry"]}, str(seg))
-check("chat_wait 与 chat_reply 都是用 preempt 说的", dm.preempt_calls == ["chat_wait", "chat_reply"], str(dm.preempt_calls))
+check("chat_wait 与 chat_reply 都是用 cut_in 说的", dm.cut_in_calls == ["chat_wait", "chat_reply"], str(dm.cut_in_calls))
 check("回复到了后 _chat_waiting 复位", pet._chat_waiting is False)
 check("历史只在内存: 会话里有一轮", pet._chat_session.history_turns() == [("你好小花", "哼，知道了。")])
 pet.clock["t"] += 10
@@ -225,7 +228,7 @@ for mode, pool in CASES:
     ok = cats(shown) == ["chat_wait", pool] and shown[1][1] in pool_texts(pool)
     check(f"{mode} -> {pool}", ok, str(cats(shown)))
     check(f"{mode}: 出错后等待状态复位", pet._chat_waiting is False)
-    check(f"{mode}: 错误台词也是 preempt 说的", dm.preempt_calls == ["chat_wait", pool], str(dm.preempt_calls))
+    check(f"{mode}: 错误台词也是 cut_in 说的", dm.cut_in_calls == ["chat_wait", pool], str(dm.cut_in_calls))
 pet, fake, shown, dm = rig()
 pet._make_chat_session = lambda: ac.ChatSession(pet._api_settings, dm._substitute, pet._chat_context, fetcher=fake,
                                                 use_thread=False, persona_path=TMP / "gone.md")
@@ -321,7 +324,7 @@ dm.busy = True  # a popup is on screen: the dm is busy with it
 check("对照: is_reminder_popup_active 为 True", pet.is_reminder_popup_active() is True)
 pet._on_chat_submitted("提醒期间说话")
 check("提醒弹窗在: 没有冒 chat_wait", "chat_wait" not in cats(shown), str(cats(shown)))
-check("提醒弹窗在: 回复用 speak 排队, 没有 preempt", dm.speak_calls == ["chat_reply"] and dm.preempt_calls == [], f"{dm.speak_calls} {dm.preempt_calls}")
+check("提醒弹窗在: 回复用 speak 排队, 没有 cut_in", dm.speak_calls == ["chat_reply"] and dm.cut_in_calls == [], f"{dm.speak_calls} {dm.cut_in_calls}")
 check("提醒弹窗在: 回复没有打断(还没有显示)", "chat_reply" not in cats(shown) and any(c == "chat_reply" for _, c, _ in dm._queue))
 dm.busy = False
 dm.on_finished()
@@ -331,7 +334,7 @@ pet._current_category = "chase_popup_first_water"
 pet.dialogue_box.isVisible.return_value = True
 dm.busy = True
 pet._on_chat_submitted("x")
-check("提醒弹窗在: 错误台词同样排队", dm.speak_calls == ["chat_api_error"] and dm.preempt_calls == [])
+check("提醒弹窗在: 错误台词同样排队", dm.speak_calls == ["chat_api_error"] and dm.cut_in_calls == [])
 pet, fake, shown, dm = rig()
 pet._pending_quit = True
 pet._on_chat_submitted("退出中")
@@ -391,7 +394,7 @@ check("有 key: 先冒 chat_wait 再说 api_saved", cats(shown) == ["chat_wait",
 check("试连发的是最小请求(只有 ping, max_tokens 1, 无 system)", len(fake.calls) == 1 and fake.calls[0]["body"]["messages"] == [{"role": "user", "content": "ping"}] and fake.calls[0]["body"]["max_tokens"] == 1)
 check("试连带 thinking disabled(DeepSeek)", fake.calls[0]["body"].get("thinking") == {"type": "disabled"})
 check("试连用刚存的 key", fake.calls[0]["headers"]["Authorization"] == f"Bearer {KEY}" and store.load_key() == KEY)
-check("试连是 preempt 说的", dm.preempt_calls == ["chat_wait", "api_saved"])
+check("试连是 cut_in 说的", dm.cut_in_calls == ["chat_wait", "api_saved"])
 pet, fake, shown, dm = rig(key=KEY)
 pet._on_api_settings_saved(NEW_URL, NEW_MODEL, "")
 check("钥匙框留空但已有 key: 照样试连", len(fake.calls) == 1 and cats(shown) == ["chat_wait", "api_saved"])

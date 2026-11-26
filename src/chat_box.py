@@ -167,6 +167,15 @@ class ChatBox(QWidget):
     def is_waiting(self):
         return self._waiting
 
+    def restore_text(self, text):
+        """Puts `text` back (the cursor goes to the end) -- only if the line
+        is empty right now; if the user has already typed something new it
+        is left alone. Used when a submitted line was not sent after all."""
+        if self._edit.text() or not isinstance(text, str) or not text:
+            return
+        self._edit.setText(text)
+        self._edit.setCursorPosition(len(self._edit.text()))
+
     def _on_return(self):
         if self._waiting:
             return

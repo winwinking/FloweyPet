@@ -129,6 +129,7 @@ class DialogueManager(QObject):
         self._anticheat_placeholders = {}  # transient, set right before _submit(), read by _substitute()
 
         self.busy = False
+        self._current_priority = PRI_CHAT  # priority of the line on screen right now (see _show / cut_in)
         self.on_urgent_queued = None  # callable(): something above PRI_CHAT just queued behind the current line
         self._queue = []  # list of (priority, category, segments)
         self.last_auto_speak_end = 0.0
@@ -750,10 +751,11 @@ class DialogueManager(QObject):
                 except Exception:  # noqa: BLE001 - a hook must never break speaking
                     log_exception("dialogue_manager: on_urgent_queued")
             return
-        self._show(category, segments)
+        self._show(category, segments, priority)
 
-    def _show(self, category, segments):
+    def _show(self, category, segments, priority=PRI_CHAT):
         self.busy = True
+        self._current_priority = priority
         segments = [dict(s, text=self._substitute(s.get("text", ""))) for s in segments]
         self.show_requested.emit(segments, category)
         if self.stats:
@@ -782,7 +784,29 @@ class DialogueManager(QObject):
         if segments is None:
             return False
         self._queue.clear()
-        self._show(category, segments)
+        self._show(category, segments, PRI_CHAT)
+        return True
+
+    def cut_in(self, category, segments):
+        """For chat lines (reply / error / waiting "……"). Unlike preempt():
+          * if the line on screen outranks chat (reminder, pomodoro, ...)
+            this one does NOT interrupt -- it queues at chat priority like
+            speak(bypass_interval=True);
+          * otherwise it stops the current bubble and shows at once, and
+            every queued line above chat priority is KEPT (preempt would
+            wipe the whole queue, reminders included);
+          * before any line other than the "……" itself, a still-queued
+            chat_wait is dropped: the answer is here, the "……" is moot.
+        Returns True if segments were given."""
+        if segments is None:
+            return False
+        if category != "chat_wait":
+            self._queue = [q for q in self._queue if q[1] != "chat_wait"]
+        if self.busy and self._current_priority > PRI_CHAT:
+            self._submit(category, segments, PRI_CHAT, bypass_interval=True)
+            return True
+        self._queue = [q for q in self._queue if q[0] > PRI_CHAT]
+        self._show(category, segments, PRI_CHAT)
         return True
 
     def speak(self, category, segments, priority=PRI_CLICK, bypass_interval=True):
@@ -799,7 +823,7 @@ class DialogueManager(QObject):
         self.last_auto_speak_end = time.monotonic()
         if self._queue:
             priority, category, segments = self._queue.pop(0)
-            self._show(category, segments)
+            self._show(category, segments, priority)
 
     # ---------------------------------------------------------- interaction
     def record_interaction(self):
