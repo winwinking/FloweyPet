@@ -33,15 +33,24 @@ FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传
 - **Undertale 战斗菜单**：右键菜单仿照游戏的「战斗 / 行动 / 物品 / 存档点 / 仁慈」，点进分类再选具体功能
 - **锁定**：锁定后鼠标直接穿透小花，玩游戏、看视频时不会误点；右键菜单和托盘都能锁定和解锁
 - **窗口化游戏也能置顶**：开着置顶时，小花会一直待在窗口化游戏上面
-- **大小调节**：4 档缩放（100/85/70/55%），小花和对话框一起缩放
+- **大小调节**：7 档缩放（200 / 150 / 125 / 100 / 75 / 50 / 25%），都是整数倍，小花和对话框一起缩放；改大小后小花不会跑到屏幕外
 - **调情系统**：专门的"调情"互动，带隐藏彩蛋，自己去发现吧
 - **数百句台词**：登场、待机闲聊、点击反应、菜单台词、隐藏彩蛋，全部写在 `dialogue*.json` 里，改台词不用碰代码
 - **番茄钟**：专注/休息时长可调，小花身上直接显示倒计时
 - **会追讨的提醒**：喝水/吃饭/睡觉提醒，你要是只划掉不理它，它会分阶段继续追问
 - **"记录"面板**：陪伴天数、点击/互动/调情次数、彩蛋收集进度
 - **游戏彩蛋**：检测到你打开 UNDERTALE / DELTARUNE 时会说话（只看进程名）
-- **检查更新**：有新版本时小花会告诉你，托盘里会出现"更新"按钮
+- **一键更新**：有新版本时小花会告诉你，托盘里会出现"更新到 vX"，点一下就会自动下载、校验、替换并重启（从 3.3.0 起可用，见[升级到 3.3.0 与一键更新](#升级到-330-与一键更新)）
 - **换版本不丢记录**：从 3.2.0 开始，设置和记录存放在固定位置，以后升级不用再手动搬
+
+### 3.3.0 更新内容
+
+- **一键自动更新**：托盘里出现"更新到 vX"时点一下，后台下载更新包、校验、替换程序文件并重启；任何一步失败都会保持旧版可用（下载、校验或解压失败时打开下载页，替换中途失败会自动回滚到旧版）
+- **大小改为 7 档整数倍**：200 / 150 / 125 / 100 / 75 / 50 / 25%，旧设置会自动吸附到最近的一档；改大小后小花会被夹回屏幕内
+- **不再跟随 Windows 的小数缩放**（125%、150% 等）：修复像素字体在这些缩放下被切掉的问题，包括"记录"面板里的字被切
+- **新的调情台词**：分层改为 1 / 2-25 / 26-70 / 71+，第四档会显示真实的调情次数。**3.3.0 起调情次数清零一次**
+- **新增更新相关的台词**：下载、更新中、更新完成、更新失败等
+- **修复反作弊误判"篡改"**：以前正常玩很久以后，点击数可能被误判成"被改过"并被打回旧数字；现在每次点击都会同步备份，老用户升级后会自动对齐一次
 
 ### 截图
 
@@ -87,13 +96,24 @@ FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传
 
 旧版本还会在 `C:\FloweyPet\` 里写日志，换上新版后这个文件夹可以直接删掉。
 
+### 升级到 3.3.0 与一键更新
+
+- **从 3.2.0 升到 3.3.0 需要手动下载一次**：3.2.0 还没有一键更新。在 [Releases 页面](../../releases/latest)下载新版 zip，退出旧版小花后解压覆盖，或解压到新文件夹都行；设置和记录在 `%APPDATA%\FloweyPet`，不会丢。
+- **从 3.3.0 起**：托盘出现"更新到 vX"时点一下即可。小花会在后台下载更新包，用 `version.json` 里的 SHA256 和大小校验，通过后才退出并替换程序文件，然后自动重新打开新版。
+- **失败了怎么办**：下载、校验或解压失败时，会保持当前版本不动并打开下载页，你可以手动更新；替换文件中途出错或被打断（比如断电），会自动回滚到旧版。
+- **安装位置**：建议不要把小花装在 `Program Files` 这类需要管理员权限的文件夹里，否则小花没有权限替换自己，"更新到 vX"只会打开下载页，需要手动更新。放在桌面、文档或自己建的文件夹里就可以。
+
 ### 杀毒软件误报
 
 打包好的 exe 是用 PyInstaller 做的，没有数字签名，少数杀毒软件可能会误报。所有代码都在这个仓库里公开，可以自己检查；不放心的话也可以[从源码运行](#从源码运行)。
 
 ### 联网与隐私
 
-- 小花唯一的联网行为是**检查更新**：定期读取本仓库里一个公开的 `version.json`，看有没有新版本。请求里除了版本号不带任何信息，不上传任何数据，也不会自动下载或替换程序。
+- 小花的联网行为有两种：
+  - **检查更新**：定期读取本仓库里一个公开的 `version.json`，看有没有新版本。请求里除了版本号不带任何信息。
+  - **一键更新**：只有你点了托盘里的"更新到 vX"才会发生。小花会从本仓库的 GitHub Releases 下载更新包，用 `version.json` 里的 SHA256 和大小校验完整性，通过后才会替换程序文件。你不点，就不会下载，也不会替换任何东西。
+- 不上传任何数据。
+- 更新时会在安装目录里留下 `.update_backup`（上一版的备份）和 `.install_manifest.json`（本次安装的文件清单）。你的设置和记录存放在 `%APPDATA%\FloweyPet`，更新不会碰它。
 - 不想联网的话，在右键菜单「存档点 → 检查更新」里关掉即可。
 - 游戏彩蛋只在本机读取正在运行的**进程名**，不读窗口标题、窗口内容，也不截图。
 
@@ -102,7 +122,8 @@ FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传
 | 内容 | 位置 |
 |---|---|
 | 设置、记录 | `%APPDATA%\FloweyPet\`（`config.json`、`stats.json`） |
-| 日志 | `%APPDATA%\FloweyPet\logs\` |
+| 日志 | `%APPDATA%\FloweyPet\logs\`（更新过程记在 `update.log`） |
+| 更新备份和安装清单 | 安装目录里的 `.update_backup\`、`.install_manifest.json` |
 | 开机自启 | 注册表 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 下的 `FloweyPet` |
 | 反作弊用的点击数备份 | 注册表 `HKCU\Software\FloweyPet` |
 
@@ -171,15 +192,24 @@ This is an unofficial fan project. Flowey and all original characters, art and s
 - **Undertale battle menu** — the right-click menu follows the game's FIGHT / ACT / ITEM / SAVE / MERCY layout
 - **Lock** — makes Flowey click-through so you can't hit him by accident while gaming or watching videos; lock/unlock from the right-click menu or the tray
 - **Stays above windowed games** when always-on-top is on
-- **Size tiers** — 100/85/70/55%, pet and dialogue bubble scale together
+- **Size tiers** — 200 / 150 / 125 / 100 / 75 / 50 / 25% (whole-number steps), pet and dialogue bubble scale together; resizing keeps Flowey on screen
 - **Flirt system** — a dedicated interaction with hidden easter eggs
 - **Hundreds of lines** — all in `dialogue*.json`, editable without touching code
 - **Pomodoro timer** with an on-pet countdown
 - **Reminders that follow up** if you dismiss them without responding
 - **Stats panel** — days together, clicks, interactions, easter-egg progress
 - **Game easter eggs** — reacts when UNDERTALE / DELTARUNE starts (process name only)
-- **Update check** — Flowey tells you when a new version is out, and the tray gets an "update" entry
+- **One-click update** — Flowey tells you when a new version is out, and the tray gets an "Update to vX" entry that downloads, verifies, replaces and restarts for you (from 3.3.0 on; see [Upgrading to 3.3.0 and one-click update](#upgrading-to-330-and-one-click-update))
 - **Data survives upgrades** — from 3.2.0 on, settings and stats live in a fixed folder
+
+### What's new in 3.3.0
+
+- **One-click update** — click "Update to vX" in the tray: the package is downloaded in the background, verified, the program files are replaced and the new version starts. Any failure leaves a working version behind (a failed download / verification / unpack opens the download page; a failure while replacing files rolls back to the old version automatically)
+- **7 size tiers in whole-number steps** — 200 / 150 / 125 / 100 / 75 / 50 / 25%; old settings snap to the nearest tier, and Flowey is kept on screen after a resize
+- **No longer follows Windows' fractional display scaling** (125%, 150% ...) — fixes the pixel font being cut off at those scales, including the text in the stats panel
+- **New flirt lines** — tiers are now 1 / 2-25 / 26-70 / 71+, and the top tier shows your real flirt count. **The flirt counter is reset once in 3.3.0**
+- **New update-related lines** — downloading, updating, done, failed
+- **Fixed the anti-cheat wrongly flagging "tampering"** — after long normal use the click count could be mistaken for an edited save and reset; the backup now follows every click, and existing users are aligned once on upgrade
 
 ### Screenshots
 
@@ -206,14 +236,25 @@ Older versions kept `config.json` and `stats.json` next to the exe; 3.2.0 moves 
 
 Old files are only copied, never moved or changed. After this one upgrade, future versions need no manual steps. The old `C:\FloweyPet\` log folder can be deleted.
 
+### Upgrading to 3.3.0 and one-click update
+
+- **3.2.0 → 3.3.0 needs one manual download**: 3.2.0 has no one-click update yet. Get the new zip from the [Releases page](../../releases/latest), quit Flowey, then extract over the old folder (or into a new one). Your settings and stats live in `%APPDATA%\FloweyPet` and are kept.
+- **From 3.3.0 on**: when the tray shows "Update to vX", click it. Flowey downloads the package in the background, checks it against the SHA256 and size in `version.json`, and only then quits, replaces the program files and starts the new version.
+- **If something fails**: a failed download, verification or unpack leaves the current version untouched and opens the download page for a manual update; an error or interruption (e.g. power loss) while replacing files is rolled back to the old version automatically.
+- **Install location**: don't put Flowey in a folder that needs administrator rights, such as `Program Files` — it can't replace itself there, and "Update to vX" will only open the download page. The desktop, Documents or any folder you created is fine.
+
 ### Antivirus false positives
 
 The exe is built with PyInstaller and is not code-signed, so a few antivirus products may flag it. All code is public in this repository; you can also run from source.
 
 ### Network & privacy
 
-- The only network access is the **update check**: it periodically reads one public `version.json` file from this repository. Nothing is sent besides the app version in the request header; nothing is downloaded or replaced automatically.
-- Turn it off under right-click menu → SAVE (存档点) → 检查更新.
+- There are two kinds of network access:
+  - **Update check** — periodically reads one public `version.json` file from this repository. Nothing is sent besides the app version in the request header.
+  - **One-click update** — only happens after you click "Update to vX" in the tray. Flowey downloads the update package from this repository's GitHub Releases, checks its integrity against the SHA256 and size in `version.json`, and only then replaces the program files. If you don't click, nothing is downloaded or replaced.
+- No data is uploaded.
+- An update leaves `.update_backup` (a backup of the previous version) and `.install_manifest.json` (the list of installed files) in the install folder. Your settings and stats live in `%APPDATA%\FloweyPet`, which updates never touch.
+- Turn the update check off under right-click menu → SAVE (存档点) → 检查更新.
 - Game easter eggs read running **process names** locally — never window titles, window contents or screenshots.
 
 ### Where data lives
@@ -221,7 +262,8 @@ The exe is built with PyInstaller and is not code-signed, so a few antivirus pro
 | What | Where |
 |---|---|
 | Settings, stats | `%APPDATA%\FloweyPet\` (`config.json`, `stats.json`) |
-| Logs | `%APPDATA%\FloweyPet\logs\` |
+| Logs | `%APPDATA%\FloweyPet\logs\` (update progress goes to `update.log`) |
+| Update backup and install list | `.update_backup\` and `.install_manifest.json` in the install folder |
 | Autostart | `FloweyPet` under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` |
 | Anti-cheat click-count backup | `HKCU\Software\FloweyPet` |
 
