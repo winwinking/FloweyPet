@@ -1,6 +1,9 @@
 {
-  "version": "3.2.0",
-  "url": "https://github.com/winwinking/FloweyPet/releases/tag/v3.2.0",
-  "line": "",
-  "face": "neutral"
+  "version": "3.3.0",
+  "url": "https://github.com/winwinking/FloweyPet/releases/tag/v3.3.0",
+  "line": "你的记录面板终于不吃字了。不用谢。",
+  "face": "smirk",
+  "zip_url": "https://github.com/winwinking/FloweyPet/releases/download/v3.3.0/FloweyPet-v3.3.0.zip",
+  "sha256": "69ee00f3490f986beb22932fb9f3850d9f5ca8dab356664396696d393bcda322",
+  "size": 40820929
 }

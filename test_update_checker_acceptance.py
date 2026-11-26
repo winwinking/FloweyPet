@@ -285,8 +285,18 @@ for evil_face in ("../faces", "..", ".", "neutral/../neutral", "a\b"):
     r = announce("9.9.9", "hi", evil_face)
     check(f"announce: 带路径的 face {evil_face!r} 不被接受,回退 neutral", r and r[0][0]["face"] == "neutral", str(r))
 pool_texts = [e["text"] for e in dm.data["update_available"]]
-check("dialogues_system.json 有 update_available 池,恰好两条占位",
-      len(pool_texts) == 2 and all("占位" in t for t in pool_texts))
+FACES_DIR_T = Path(__file__).resolve().parent / "assets" / "faces"
+
+
+def _faces_valid(face):
+    names = [face] if isinstance(face, str) else face
+    return isinstance(names, list) and bool(names) and all(
+        isinstance(n, str) and (FACES_DIR_T / n).is_dir() for n in names)
+
+
+check("dialogues_system.json 的 update_available 池恰好 8 条,无占位,face 都合法",
+      len(pool_texts) == 8 and not any("占位" in t for t in pool_texts)
+      and all(_faces_valid(e.get("face")) for e in dm.data["update_available"]))
 seen_texts = set()
 for _ in range(12):
     r = announce("4.5.6", None, None)
@@ -296,7 +306,7 @@ for _ in range(12):
     seen_texts.add(r[0][0]["text"])
 check("announce: line 为空时走 update_available 池", check_ok and seen_texts and all(t in [p.replace("{new_ver}", "4.5.6").replace("{ver}", version.VERSION) for p in pool_texts] for t in seen_texts), str(seen_texts))
 check("announce: 池里的 {new_ver} 与 {ver} 都被替换", all("{" not in t for t in seen_texts) and any("4.5.6" in t for t in seen_texts))
-check("announce: 池条目 face 是 neutral", r and r[0][0]["face"] == "neutral")
+check("announce: 池条目 face 合法", bool(r) and _faces_valid(r[0][0]["face"]))
 dm.busy = True
 emitted.clear()
 dm.trigger_update_announce("9.9.9", "排队")

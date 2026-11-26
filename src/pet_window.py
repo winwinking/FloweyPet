@@ -6,10 +6,12 @@ on-screen pixmap, so nothing can race the dialogue system for control of
 Flowey's face.
 """
 import functools
+import os
 import random
+import sys
 import time
 
-from PyQt6.QtCore import QPoint, Qt, QTimer, QUrl
+from PyQt6.QtCore import QPoint, Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QCursor, QDesktopServices, QIcon, QPainter
 from PyQt6.QtWidgets import (
     QApplication,
@@ -27,13 +29,17 @@ import anticheat
 import dialogue_log
 import flirt as flirt_dialogue
 from dialogue_arbiter import DialogueArbiter
+from config import DEFAULT_PET_SIZE_TIERS
 from dialogue_box import DialogueBox
 from error_log import log_exception
 from flirt import FlirtController
 from game_detector import GameDetector
-from paths import ICON_PATH
+from paths import APP_DIR, ICON_PATH, IS_DEV
 from pomodoro_display import PomodoroDisplay
 from topmost_keeper import TopmostKeeper
+import update_flow
+import updater_apply
+import version
 from update_checker import should_announce
 from undertale_ui import VOLUME_TIERS, ClickableLabel
 from win_zorder import apply_topmost, set_click_through
@@ -59,7 +65,17 @@ CHASE_POPUP_BUTTONS = {
 }
 EXIT_FRAME_MS = 125
 EXIT_FAILSAFE_MS = 15000
+UPDATE_QUIT_DEADLINE_MS = 15000  # the updater only waits 30 s for this process
 HIDE_FAILSAFE_GRACE_MS = 6000  # generous margin over any realistic escalation-line playback time
+
+
+def clamp_origin_into_area(x, y, w, h, area):
+    """Top-left (x, y) that keeps a w x h window inside `area` (a QRect-like
+    with x()/y()/width()/height(), typically a screen's availableGeometry).
+    A window larger than the area is pinned to the area's top-left."""
+    x = max(area.x(), min(x, area.x() + area.width() - w))
+    y = max(area.y(), min(y, area.y() + area.height() - h))
+    return x, y
 
 
 def _guarded_menu_action(context):
@@ -92,6 +108,8 @@ class State:
 
 
 class PetWindow(QWidget):
+    _update_result = pyqtSignal(object)  # one-click update worker thread -> main thread
+
     def __init__(self, config, save_config, dialogue_manager, audio, sprites, pomodoro, reminders, stats):
         self._always_on_top = config.get("always_on_top", True)
         super().__init__(None, self._window_flags())
@@ -123,6 +141,7 @@ class PetWindow(QWidget):
         self._pending_quit = False
         self._update_checker = None
         self._update_info = None  # newest version found by UpdateChecker, shown in the tray menu
+        self._init_update_flow()
         self._exit_interrupted = False  # this exit sequence's one-and-only interrupt line already used?
         self._resume_exit_animation_after_interrupt = False
         self._pending_hide = False
@@ -253,9 +272,7 @@ class PetWindow(QWidget):
             y = screen.y() + screen.height() - h - 60
         else:
             x, y = pos["x"], pos["y"]
-        x = max(screen.x(), min(x, screen.x() + screen.width() - w))
-        y = max(screen.y(), min(y, screen.y() + screen.height() - h))
-        return x, y
+        return clamp_origin_into_area(x, y, w, h, screen)
 
     def _make_singleshot(self, callback):
         t = QTimer(self)
@@ -310,6 +327,7 @@ class PetWindow(QWidget):
                 on_done()
             else:
                 self.dm.trigger_intro()
+                self._maybe_say_startup_update_line()
             return
         self._set_base_pixmap(self._appear_frames[self._appear_idx])
 
@@ -594,8 +612,12 @@ class PetWindow(QWidget):
 
         update_info = getattr(self, "_update_info", None)
         if isinstance(update_info, dict) and "version" in update_info:
-            update_action = menu.addAction(f"更新到 v{update_info['version']}")
-            update_action.triggered.connect(lambda: self._open_update_page(update_info["url"]))
+            ctl = getattr(self, "_update_ctl", None)
+            if ctl is not None and ctl.busy:
+                update_action = menu.addAction(f"正在更新到 v{ctl.version}…")
+            else:
+                update_action = menu.addAction(f"更新到 v{update_info['version']}")
+            update_action.triggered.connect(self._on_update_action)
             menu.addSeparator()
 
         visible_action = menu.addAction("隐藏" if self.isVisible() else "显示 Flowey")
@@ -872,6 +894,61 @@ class PetWindow(QWidget):
     def _open_update_page(self, url):
         QDesktopServices.openUrl(QUrl(url))
 
+    # ------------------------------------------------- one-click update
+    def _init_update_flow(self):
+        self._update_ctl = update_flow.UpdateController(
+            can_update=lambda info: update_flow.can_one_click_update(info, IS_DEV, str(APP_DIR)),
+            fetch=update_flow.fetch_package,
+            launch=updater_apply.default_launcher,
+            open_page=lambda url: self._open_update_page(url),
+            say=self._say_update_line,
+            quit_for_update=self.request_quit_for_update,
+            arm_deadline=self._arm_update_quit_deadline,
+            is_quitting=lambda: self._pending_quit,
+            post=self._update_result.emit,
+            self_info=lambda: (os.getpid(), updater_apply.get_process_creation_time(os.getpid())),
+            old_version=version.VERSION,
+            app_dir=str(APP_DIR),
+            log=app_log.log_event,
+            on_state_change=self._refresh_update_menu,
+        )
+        self._update_result.connect(self._on_update_result)
+        self._update_quit_timer = None
+        self._startup_update_category = update_flow.startup_update_category(sys.argv[1:])
+
+    def _on_update_action(self, *_checked):
+        info = self._update_info
+        if isinstance(info, dict) and "version" in info:
+            self._update_ctl.on_click(info)
+
+    def _on_update_result(self, result):
+        self._update_ctl.on_result(result)
+
+    def _refresh_update_menu(self):
+        tray = getattr(self, "_tray", None)
+        if tray is not None:
+            tray.setContextMenu(self._build_menu())
+
+    def _say_update_line(self, category):
+        if self.isVisible() and not self._pending_quit:
+            self.dm.trigger_update_line(category)
+
+    def _arm_update_quit_deadline(self):
+        """From the moment the updater is launched it only waits
+        UPDATE_QUIT_DEADLINE_MS for this process: quit no matter what."""
+        timer = QTimer(self)
+        timer.setSingleShot(True)
+        timer.timeout.connect(self._quit_now)
+        timer.start(UPDATE_QUIT_DEADLINE_MS)
+        self._update_quit_timer = timer
+
+    def _maybe_say_startup_update_line(self):
+        """After an update / failed update, said once at the first appearance."""
+        category = getattr(self, "_startup_update_category", None)
+        if category and self.isVisible() and not self._pending_quit:
+            self._startup_update_category = None
+            self.dm.trigger_update_line(category)
+
     def _on_update_available(self, info):
         # The tray menu is built once at startup and again after each tray
         # activation, so rebuild it right now to make the new entry appear.
@@ -1049,6 +1126,10 @@ class PetWindow(QWidget):
         new_w, new_h = new_size.width(), new_size.height()
         new_x = round(old_center_x - new_w / 2)
         new_y = old_bottom - new_h
+        # Growing a tier can push the pet past a screen edge: clamp back
+        # into the available area of the screen the pet is on right now.
+        screen = self.screen() or QApplication.primaryScreen()
+        new_x, new_y = clamp_origin_into_area(new_x, new_y, new_w, new_h, screen.availableGeometry())
         self.setFixedSize(new_w, new_h)
         self.move(new_x, new_y)
         self.pet_display_width = new_w
@@ -1080,7 +1161,7 @@ class PetWindow(QWidget):
         panel = SizePanel(
             lambda: self.pet_scale,
             self._apply_pet_scale,
-            self.config.get("pet_size_tiers", [1.0, 0.85, 0.7, 0.55]),
+            self.config.get("pet_size_tiers", DEFAULT_PET_SIZE_TIERS),
             audio=self.audio,
             always_on_top=self._always_on_top,
             ui_scale=self._ui_scale(),
@@ -1295,8 +1376,19 @@ class PetWindow(QWidget):
 
     # ---------------------------------------------------------------- quit
     def request_quit(self):
+        self._begin_quit(self.dm.pick_exit_segments)
+
+    def request_quit_for_update(self):
+        """Same exit as request_quit, but the goodbye line comes from the
+        update_restarting pool (the new version is about to take over)."""
+        self._begin_quit(lambda: self.dm.pick_update_segments("update_restarting"))
+
+    def _begin_quit(self, pick_segments):
         if self._pending_quit:
             return
+        ctl = getattr(self, "_update_ctl", None)
+        if ctl is not None:
+            ctl.cancel()  # a download still running is abandoned; an updater already launched is not
         # Exit lock (reg 1): from this instant on, the right-click menu
         # won't open (contextMenuEvent), idle/AFK ambient chatter can't
         # speak (_trigger_afk_unless_awaiting / dm busy-lock via
@@ -1312,7 +1404,7 @@ class PetWindow(QWidget):
         self.reminders.chase.lock_for_exit()
         QTimer.singleShot(EXIT_FAILSAFE_MS, self._quit_now)
 
-        segments = self.dm.pick_exit_segments()
+        segments = pick_segments()
         if not segments:
             self._start_burrow_animation(self._quit_now)
             return

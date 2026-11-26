@@ -237,3 +237,52 @@ class SaveTamperGuard:
             return False
         self._notified_locked_this_run = True
         return True
+
+    def note_click(self, total_clicks):
+        """每次合法的点击自增之后调用：把影子副本同步成新的 total_clicks。
+        没有这一步，影子值只会停在第一次写入的数字上，正常玩家累计点击
+        超过"影子值+1000"之后就会被误判成篡改。写失败(注册表被拒等)不
+        影响点击，也不抛异常。"""
+        try:
+            self._write_shadow(total_clicks)
+        except Exception:  # noqa: BLE001 - a click must never fail because of this
+            pass
+
+
+SHADOW_SYNC_SCHEMA = 2
+
+
+def migrate_shadow_sync(config, read_shadow, write_shadow, save=None, log=None):
+    """一次性迁移(老用户)。3.3.0 之前影子值不随点击更新，老用户的影子值
+    普遍落后于 total_clicks。必须在 SaveTamperGuard.check 之前、旧数据迁移
+    之后执行：config["shadow_sync_schema"] < 2 时——
+      * 影子值存在且小于 total_clicks：把影子值写成 total_clicks(这一次相信存档)
+      * 影子值不存在、或 >= total_clicks：不动影子值(交给原有的篡改判定)
+    然后把记号设为 2 并 save()。读写影子值的函数由调用方注入(测试用假的)。
+    写入后读回核对；没写成功就不盖章，下次启动再试。返回
+    "skipped" | "raised" | "kept" | "write_failed" | "invalid"。"""
+    if config.get("shadow_sync_schema", 1) >= SHADOW_SYNC_SCHEMA:
+        return "skipped"
+    total = config.get("total_clicks", 0)
+    result = "kept"
+    if isinstance(total, bool) or not isinstance(total, int):
+        result = "invalid"
+    else:
+        shadow = read_shadow()
+        if isinstance(shadow, int) and not isinstance(shadow, bool) and shadow < total:
+            try:
+                write_shadow(total)
+                after = read_shadow()
+            except Exception:  # noqa: BLE001
+                after = None
+            if after != total:
+                if log is not None:
+                    log(f"anticheat migrate: 影子值写入没有成功（旧影子值={shadow!r}，total_clicks={total!r}），下次启动再试")
+                return "write_failed"
+            if log is not None:
+                log(f"anticheat migrate: 影子值同步一次，旧影子值={shadow!r} -> total_clicks={total!r}")
+            result = "raised"
+    config["shadow_sync_schema"] = SHADOW_SYNC_SCHEMA
+    if save is not None:
+        save(config)
+    return result

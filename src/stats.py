@@ -30,6 +30,10 @@ DEFAULTS = {
     # migration in __init__). Default 1 so an old stats.json (which lacks
     # the key entirely) is recognized as pre-migration data.
     "reminder_stats_schema": 1,
+    # Same idea for flirt_count: schema 2 = the counter was reset to 0 once
+    # at 3.3.0 (see _migrate_flirt_schema). Default 1 so an old stats.json
+    # without the key is treated as pre-reset data.
+    "flirt_stats_schema": 1,
     "flirt_count": 0,  # persisted "调情" success counter, drives flirt_response tier selection
     "rare_seen": [],  # ids (see dialogue_manager's rare-entry id) already shown
     "latest_active_score": 0.0,  # see record_activity() for what this encodes
@@ -85,6 +89,7 @@ class Stats(QObject):
         self.data = _load()
         self._migrate_bogus_latest_active()
         self._migrate_reminder_schema()
+        self._migrate_flirt_schema()
         # _load()'s _deep_merge() already backfills any field missing from
         # an old/partial stats.json in memory; write it straight back out so
         # the file itself stops being incomplete instead of relying on some
@@ -171,6 +176,18 @@ class Stats(QObject):
             if kind in responded:
                 responded[kind] = max(0, responded.get(kind, 0) - dismissed)
         self.data["reminder_stats_schema"] = 2
+        self.save()
+
+    def _migrate_flirt_schema(self):
+        """3.3.0 re-tiered the flirt lines, so every user's flirt_count is
+        reset to 0 exactly once; the schema stamp keeps it from ever
+        happening again. Touches only flirt_count and flirt_stats_schema."""
+        if self.data.get("flirt_stats_schema", 1) >= 2:
+            return
+        old = self.data.get("flirt_count", 0)
+        log_message(f"stats migrate: 3.3.0 调情次数清零一次，原来的 flirt_count={old!r}")
+        self.data["flirt_count"] = 0
+        self.data["flirt_stats_schema"] = 2
         self.save()
 
     def record_flirt(self):

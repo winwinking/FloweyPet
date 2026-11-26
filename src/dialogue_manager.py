@@ -650,6 +650,12 @@ class DialogueManager(QObject):
             text = text.replace("{days}", str(self._days_since_install()))
         if "{clicks}" in text:
             text = text.replace("{clicks}", str(self.config.get("total_clicks", 0)))
+        if "{flirts}" in text:
+            try:
+                flirts = self.stats.data.get("flirt_count", 0)
+            except AttributeError:
+                flirts = 0
+            text = text.replace("{flirts}", str(flirts))
         for token, value in self._anticheat_placeholders.items():
             marker = "{" + token + "}"
             if marker in text:
@@ -768,6 +774,10 @@ class DialogueManager(QObject):
         self.config["total_clicks"] = self.config.get("total_clicks", 0) + 1
         self._ensure_today_tracked()
         self.save_config(self.config)
+        # keep the registry shadow copy in step with every legitimate click
+        # (otherwise a normal player drifts >1000 clicks ahead of it and is
+        # flagged as tampering); never lets a click fail
+        self.tamper_guard.note_click(self.config["total_clicks"])
 
     def seconds_since_previous_interaction(self):
         return self._gap_before_reset
@@ -1005,6 +1015,19 @@ class DialogueManager(QObject):
             return
         segments = [dict(seg, text=seg.get("text", "").replace("{new_ver}", str(new_version))) for seg in segments]
         self._submit("update_available", segments, PRI_CHAT, bypass_interval=True)
+
+    # One-click update lines (dialogues_system.json): update_downloading,
+    # update_busy, update_failed, update_done, update_rolled_back are said
+    # like any chat line; update_restarting replaces the goodbye line (see
+    # pick_update_segments / PetWindow.request_quit_for_update).
+    def trigger_update_line(self, category):
+        self._submit(category, self._pick(category), PRI_CHAT, bypass_interval=True)
+
+    def pick_update_segments(self, category):
+        segments = self._pick(category)
+        if segments is None:
+            return None
+        return [dict(s, text=self._substitute(s.get("text", ""))) for s in segments]
 
     # --------------------------------------------------------- menu flavor
     def trigger_menu_flavor(self, category):
