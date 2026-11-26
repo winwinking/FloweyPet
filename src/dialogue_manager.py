@@ -774,6 +774,10 @@ class DialogueManager(QObject):
         self.config["total_clicks"] = self.config.get("total_clicks", 0) + 1
         self._ensure_today_tracked()
         self.save_config(self.config)
+        # keep the registry shadow copy in step with every legitimate click
+        # (otherwise a normal player drifts >1000 clicks ahead of it and is
+        # flagged as tampering); never lets a click fail
+        self.tamper_guard.note_click(self.config["total_clicks"])
 
     def seconds_since_previous_interaction(self):
         return self._gap_before_reset

@@ -57,6 +57,7 @@ DEFAULTS = {
     "last_active_date": None,  # "YYYY-MM-DD", for streak tracking
     "streak_days": 0,
     "total_clicks": 0,
+    "shadow_sync_schema": 1,  # <2: the one-time catch-up of the registry shadow copy hasn't run yet, see anticheat.migrate_shadow_sync
     "tamper_detect_count": 0,  # 反作弊：累计检测到 total_clicks 被手动篡改的次数，永不清零，见 anticheat.py
     "tamper_locked": False,    # tamper_detect_count > 5 后置 True，永久生效——此后篡改只剩极简回应，不再纠缠
     "neg_tamper_count": 0,     # 反作弊：累计检测到篡改成负数的次数，用于区分 NEG01(首次)/NEG02(第二次起)
@@ -302,8 +303,13 @@ def sync_autostart(config, read_command=None, write=None, expected=None, is_dev=
 # (paths.USER_DATA_DIR) where anyone can open and hand-edit it. To detect that, we keep a second copy
 # somewhere a casual editor won't think to look or touch alongside it: the
 # registry, under the same HKCU root the autostart key above already uses.
-# Only the app's own legitimate click-increment path writes this -- see
-# anticheat.py's SaveTamperGuard, which compares the two at every startup.
+# The shadow is written (a) on every legitimate click increment
+# (DialogueManager.record_interaction -> SaveTamperGuard.note_click), (b) when
+# a startup check finds no shadow yet or corrects a tampered number
+# (SaveTamperGuard.check / resolve), (c) by the legacy-data import
+# (user_data._align_shadow), and (d) once for users upgrading from before
+# clicks were synced (anticheat.migrate_shadow_sync, config key
+# shadow_sync_schema). SaveTamperGuard compares the two at every startup.
 _ANTICHEAT_KEY = r"Software\FloweyPet"
 # Source runs and the packaged exe must not share one shadow value: they keep
 # separate config.json files, so a shared value would look like tampering.

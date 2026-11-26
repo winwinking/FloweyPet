@@ -36,11 +36,12 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
-from error_log import install_global_hook, log_exception
+from error_log import install_global_hook, log_exception, log_message
 
 install_global_hook()
 
 from config import apply_size_settings, load_config, read_autostart_command, read_shadow_clicks, save_config, sync_autostart, write_shadow_clicks
+from anticheat import migrate_shadow_sync
 from audio import AudioManager
 import app_log
 import audio_log
@@ -134,6 +135,16 @@ def main():
         apply_size_settings(config)
     except Exception:
         log_exception("apply_size_settings")
+
+    # One-time catch-up of the anti-cheat shadow value (registry) for users
+    # whose shadow lags behind total_clicks. Must stay AFTER the legacy-data
+    # migration above and BEFORE SaveTamperGuard.check (run later, from
+    # DialogueManager.trigger_intro once the pet has appeared).
+    try:
+        if not running_from_temp:  # the registry value is shared with the real installation
+            migrate_shadow_sync(config, read_shadow_clicks, write_shadow_clicks, save=save_config, log=log_message)
+    except Exception:
+        log_exception("migrate_shadow_sync")
 
     config["_session_start"] = time.time()
     save_config(config)
