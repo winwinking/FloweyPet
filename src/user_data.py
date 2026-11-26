@@ -34,11 +34,16 @@ def atomic_write_json(path, data):
     """Writes `data` as JSON to `path` via a sibling .tmp file + os.replace,
     so a crash mid-write can never leave a half-written file behind. On any
     error the .tmp is removed and the original exception is re-raised."""
+    atomic_write_text(path, json.dumps(data, ensure_ascii=False, indent=2))
+
+
+def atomic_write_text(path, text):
+    """Same guarantees as atomic_write_json, for a plain UTF-8 text file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     try:
         with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.write(text)
             f.flush()
             os.fsync(f.fileno())
         # Windows: antivirus / indexers / backup tools can briefly hold the

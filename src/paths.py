@@ -62,6 +62,7 @@ DIALOGUE_GAME_PATH = APP_DIR / "dialogues_game.json"  # UNDERTALE/DELTARUNE laun
 DIALOGUE_ANTICHEAT_PATH = APP_DIR / "dialogues_anticheat.json"  # auto-clicker + save-tamper line pools, see anticheat.py
 STATS_ROAST_PATH = APP_DIR / "stats_roast.json"
 CONFIG_PATH = USER_DATA_DIR / "config.json"
+API_KEY_PATH = USER_DATA_DIR / "api_key.txt"  # the API chat key, deliberately NOT in config.json, see api_key_store.py
 STATS_PATH = USER_DATA_DIR / "stats.json"
 # Pre-migration location (next to the executable); read-only, see user_data.py
 LEGACY_CONFIG_PATH = APP_DIR / "config.json"

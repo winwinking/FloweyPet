@@ -26,8 +26,11 @@ from PyQt6.QtWidgets import (
 
 import app_log
 import anticheat
+import api_key_store
 import dialogue_log
 import flirt as flirt_dialogue
+from api_chat import DEFAULT_BASE_URL, DEFAULT_MODEL
+from api_settings_panel import ApiSettingsPanel
 from chat_box import ChatBox
 from dialogue_arbiter import DialogueArbiter
 from config import DEFAULT_PET_SIZE_TIERS
@@ -114,6 +117,13 @@ def _close_chat(pet):
         pet._chat_box.close()
 
 
+def _close_api_panel(pet):
+    """Closes the 「API 设置」 panel if it is open (lock / hide / quit)."""
+    panel = getattr(pet, "_api_panel", None)
+    if panel is not None and panel.isVisible():
+        panel.close()
+
+
 class State:
     APPEARING = "appearing"
     IDLE = "idle"
@@ -165,6 +175,7 @@ class PetWindow(QWidget):
         self._current_category = None
         self._active_popup = None
         self._chat_box = None  # created lazily by _open_chat; there is only ever one
+        self._api_panel = None  # the 「API 设置」 panel, created by _open_api_settings; only ever one open
         self._last_face_key = None
         self._appear_source = "appear"
         self._last_duplicate_launch_roast = float("-inf")
@@ -256,6 +267,7 @@ class PetWindow(QWidget):
     def _apply_click_through(self, on):
         if on:
             _close_chat(self)  # locking closes the chat box (it would otherwise be a live input on a locked pet)
+            _close_api_panel(self)
         for w in (self, self.dialogue_box, self.pomodoro_display):
             set_click_through(w, on)
         # The tooltip's "（已锁定）" suffix follows the lock. Deferred to the event
@@ -282,6 +294,9 @@ class PetWindow(QWidget):
         chat = getattr(self, "_chat_box", None)
         if chat is not None:
             chat.set_always_on_top(checked)
+        api_panel = getattr(self, "_api_panel", None)
+        if api_panel is not None:
+            api_panel.set_always_on_top(checked)
         self.arbiter.finish_feature("pin", lambda: self.dm.trigger_menu_flavor("pin_on" if checked else "pin_off"))
 
     def _resolve_start_position(self, w, h):
@@ -852,6 +867,7 @@ class PetWindow(QWidget):
         self._close_active_popup()
         if self.isVisible():
             _close_chat(self)
+            _close_api_panel(self)
             self._hide_with_flavor()
         else:
             self._start_emerge(lambda: self.arbiter.finish_feature("hide", lambda: self.dm.trigger_menu_flavor("show")))
@@ -1178,6 +1194,14 @@ class PetWindow(QWidget):
                 scale,
                 self.config.get("bubble_min_font_size", 15),
             )
+        api_panel = getattr(self, "_api_panel", None)
+        if api_panel is not None:
+            api_panel.reconfigure(
+                self.pet_display_width,
+                self.config.get("font_scale", 1.75),
+                scale,
+                self.config.get("bubble_min_font_size", 15),
+            )
         self.pomodoro_display.reconfigure(self.pet_display_width)
         if self.dialogue_box.isVisible():
             self._position_dialogue_box()
@@ -1324,6 +1348,65 @@ class PetWindow(QWidget):
             return
         self.stats.record_interaction()
         self.dm.trigger_chat_no_api()
+
+    # --------------------------------------------------------- API settings
+    @_guarded_menu_action("API 设置")
+    def _open_api_settings(self):
+        """存档点 -> API 设置. One panel at a time: already open just
+        means "focus it again"."""
+        self._close_active_popup()
+        if self._pending_quit:
+            return
+        self.stats.record_interaction()
+        panel = self._api_panel
+        if panel is not None and panel.isVisible():
+            panel.open_and_focus()
+            return
+        if panel is not None:
+            panel.deleteLater()
+        cfg = self.config.get("api_chat")
+        cfg = cfg if isinstance(cfg, dict) else {}
+        panel = ApiSettingsPanel(
+            cfg.get("base_url") or DEFAULT_BASE_URL,
+            cfg.get("model") or DEFAULT_MODEL,
+            api_key_store.has_key(),
+            self.pet_display_width,
+            self.config.get("font_scale", 1.75),
+            self._always_on_top,
+            self.pet_scale,
+            self.config.get("bubble_min_font_size", 15),
+        )
+        panel.saved.connect(self._on_api_settings_saved)
+        panel.key_deleted.connect(self._on_api_key_deleted)
+        self._api_panel = panel
+        self._place_popup(panel, ref_h=self._main_menu_height())
+        panel.open_and_focus()
+        # The menu popup that triggered us is still closing and may hand
+        # keyboard focus back to the pet window as it goes; take it again
+        # on the next event-loop turn.
+        QTimer.singleShot(0, lambda: panel.open_and_focus() if panel.isVisible() else None)
+
+    def _on_api_settings_saved(self, base_url, model, key):
+        """Panel -> save. Address and model go to config.json; the key (only
+        if one was typed) goes to api_key.txt, never to config.json. Nothing
+        typed is logged."""
+        api = self.config.get("api_chat")
+        if not isinstance(api, dict):
+            api = {}
+            self.config["api_chat"] = api
+        api["base_url"] = base_url
+        api["model"] = model
+        self.save_config(self.config)
+        if key and not api_key_store.save_key(key):
+            self._show_error_flavor()
+            return
+        self.dm.trigger_api_saved()
+
+    def _on_api_key_deleted(self):
+        if not api_key_store.delete_key():
+            self._show_error_flavor()
+            return
+        self.dm.trigger_api_key_deleted()
 
     @_guarded_menu_action("战斗")
     def _on_fight_clicked(self):
@@ -1515,6 +1598,7 @@ class PetWindow(QWidget):
         self._resume_exit_animation_after_interrupt = False
         self._close_active_popup()
         _close_chat(self)
+        _close_api_panel(self)
         self.reminders.chase.lock_for_exit()
         QTimer.singleShot(EXIT_FAILSAFE_MS, self._quit_now)
 

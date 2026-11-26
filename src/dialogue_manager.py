@@ -113,7 +113,7 @@ class DialogueManager(QObject):
         self._sanitize_flavor_pools(("lock_on", "lock_off", "lock_hint"))
         self.data.update(self._load_system_dialogues())
         self.data.update(self._load_chat_dialogues())
-        self._sanitize_flavor_pools(("chat_no_api",))
+        self._sanitize_flavor_pools(("chat_no_api", "api_saved", "api_key_deleted"))
         self.info_data = self._load_info_dialogues()
         self._info_trigger_times = []  # monotonic timestamps, for anti-spam
         self._last_info_pick = None  # (pool_name, index) of the last entry shown
@@ -1076,6 +1076,18 @@ class DialogueManager(QObject):
         segments = self._pick("chat_no_api")
         if segments:
             self.speak("chat_no_api", segments, priority=PRI_CHAT, bypass_interval=True)
+
+    def trigger_api_saved(self):
+        """「API 设置」面板点了保存。"""
+        segments = self._pick("api_saved")
+        if segments:
+            self.speak("api_saved", segments, priority=PRI_CHAT, bypass_interval=True)
+
+    def trigger_api_key_deleted(self):
+        """「API 设置」面板点了删除钥匙。"""
+        segments = self._pick("api_key_deleted")
+        if segments:
+            self.speak("api_key_deleted", segments, priority=PRI_CHAT, bypass_interval=True)
 
     def trigger_lock_hint(self):
         """Nudge line for when the pet is locked (see PetWindow._toggle_lock

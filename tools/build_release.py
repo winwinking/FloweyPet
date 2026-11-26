@@ -38,7 +38,7 @@ REQUIRED = [
     "assets/faces_manifest.json",
     "assets/sfx/menu_move.wav",
 ]
-FORBIDDEN_NAMES = {"config.json", "stats.json", "migration.json"}
+FORBIDDEN_NAMES = {"config.json", "stats.json", "migration.json", "api_key.txt"}
 
 
 def die(msg):

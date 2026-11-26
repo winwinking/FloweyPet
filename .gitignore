@@ -12,6 +12,7 @@ dist/
 # Runtime-generated user data (recreated automatically on first launch)
 config.json
 stats.json
+api_key.txt
 dev_data/
 
 # Ad-hoc local logs

@@ -16,6 +16,7 @@ a one-line addition here, not new widget plumbing.
 """
 from PyQt6.QtCore import QTimer, Qt
 
+import api_key_store
 from undertale_ui import (
     UndertalePopup,
     make_action_row,
@@ -116,6 +117,12 @@ def _build_menu_spec(pet):
                     "label": "检查更新",
                     "get": lambda: pet.config.get("check_updates", True),
                     "set": lambda checked: pet._toggle_update_check(checked),  # looked up on click, not at menu build
+                },
+                {
+                    "type": "value_action",
+                    "label": "API 设置",
+                    "get_value": lambda: "已接入" if api_key_store.has_key() else "未接入",
+                    "action": lambda: pet._open_api_settings(),  # looked up on click, not at menu build
                 },
             ],
         },
