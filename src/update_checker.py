@@ -25,9 +25,12 @@ DEFAULT_RELEASE_URL = "https://github.com/winwinking/FloweyPet/releases/latest"
 ALLOWED_URL_PREFIX = "https://github.com/winwinking/FloweyPet/"
 MAX_READ_BYTES = 64 * 1024
 MAX_LINE_CHARS = 200
+ALLOWED_ZIP_URL_PREFIX = "https://github.com/winwinking/FloweyPet/releases/download/"
+MAX_ZIP_BYTES = 200 * 1024 * 1024
 ENABLE_RECHECK_DELAY_S = 5
 
 _VERSION_RE = re.compile(r"[0-9]+(?:\.[0-9]+)*")
+_SHA256_RE = re.compile(r"[0-9a-fA-F]{64}")
 
 
 def parse_version(s):
@@ -47,8 +50,25 @@ def is_newer(remote, local):
     return r > l
 
 
+def _parse_package_fields(data):
+    """(zip_url, sha256, size) for one-click update, or (None, None, None) if
+    any of the three is missing/invalid -- never a partial set."""
+    zip_url = data.get("zip_url")
+    sha256 = data.get("sha256")
+    size = data.get("size")
+    if not (isinstance(zip_url, str) and zip_url.startswith(ALLOWED_ZIP_URL_PREFIX)):
+        return None, None, None
+    if not (isinstance(sha256, str) and _SHA256_RE.fullmatch(sha256)):
+        return None, None, None
+    if isinstance(size, bool) or not isinstance(size, int) or not (0 < size <= MAX_ZIP_BYTES):
+        return None, None, None
+    return zip_url, sha256.lower(), size
+
+
 def parse_manifest(raw_bytes):
-    """version.json -> {"version", "url", "line", "face"} or None. Never raises."""
+    """version.json -> {"version", "url", "line", "face", "zip_url", "sha256",
+    "size"} or None. The last three are all None unless all three are valid
+    (None = this version has no one-click update). Never raises."""
     try:
         data = json.loads(raw_bytes)
         if not isinstance(data, dict):
@@ -67,7 +87,9 @@ def parse_manifest(raw_bytes):
         face = data.get("face")
         if not (isinstance(face, str) and face):
             face = None
-        return {"version": ver, "url": url, "line": line, "face": face}
+        zip_url, sha256, size = _parse_package_fields(data)
+        return {"version": ver, "url": url, "line": line, "face": face,
+                "zip_url": zip_url, "sha256": sha256, "size": size}
     except Exception:  # noqa: BLE001 - arbitrary remote bytes must never raise
         return None
 

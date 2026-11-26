@@ -139,6 +139,9 @@ def main():
         "url": "https://github.com/winwinking/FloweyPet/releases/tag/v%s" % version,
         "line": "",
         "face": "neutral",
+        "zip_url": "https://github.com/winwinking/FloweyPet/releases/download/v%s/%s" % (version, zip_name),
+        "sha256": digest,
+        "size": os.path.getsize(zip_path),
     }
     with open(os.path.join(RELEASE_DIR, "version.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(draft, f, ensure_ascii=False, indent=2)
