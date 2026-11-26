@@ -23,7 +23,7 @@
 
 ### 这是什么
 
-FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传说之下 / Undertale》）。点它、拖它，它会理你——有几百句手写台词、会记住你们的"关系进展"（连续陪伴天数、冷落、重逢等），还有点实际用途：内置番茄钟和喝水/吃饭/睡觉提醒，毕竟连 Flowey 都不想看你忘记喝水。
+FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传说之下 / Undertale》）。点他、拖他，他会理你——有几百句手写台词、会记住你们的"关系进展"（连续陪伴天数、冷落、重逢等），还有点实际用途：内置番茄钟和喝水/吃饭/睡觉提醒，毕竟连 Flowey 都不想看你忘记喝水。
 
 这是一个非官方的粉丝作品。Flowey 及原作角色、美术、音效的版权归 Toby Fox /《Undertale》所有。本仓库开源的是**代码**部分，非商业用途，详见下方[鸣谢与免责声明](#鸣谢与免责声明)。
 
@@ -37,11 +37,20 @@ FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传
 - **调情系统**：专门的"调情"互动，带隐藏彩蛋，自己去发现吧
 - **数百句台词**：登场、待机闲聊、点击反应、菜单台词、隐藏彩蛋，全部写在 `dialogue*.json` 里，改台词不用碰代码
 - **番茄钟**：专注/休息时长可调，小花身上直接显示倒计时
-- **会追讨的提醒**：喝水/吃饭/睡觉提醒，你要是只划掉不理它，它会分阶段继续追问
+- **会追讨的提醒**：喝水/吃饭/睡觉提醒，你要是只划掉不理他，他会分阶段继续追问
 - **"记录"面板**：陪伴天数、点击/互动/调情次数、彩蛋收集进度
 - **游戏彩蛋**：检测到你打开 UNDERTALE / DELTARUNE 时会说话（只看进程名）
+- **聊天**（3.4.0 起）：右键「行动 → 聊天」，打字回车就能跟小花说话，他一句一个对话框、一个表情地回你。需要你自己的 API key，见[3.4.0 更新内容](#340-更新内容)
 - **一键更新**：有新版本时小花会告诉你，托盘里会出现"更新到 vX"，点一下就会自动下载、校验、替换并重启（从 3.3.0 起可用，见[升级到 3.3.0 与一键更新](#升级到-330-与一键更新)）
 - **换版本不丢记录**：从 3.2.0 开始，设置和记录存放在固定位置，以后升级不用再手动搬
+
+### 3.4.0 更新内容
+
+- **小花能聊天了**：右键「行动 → 聊天」打开输入框，打字后回车发送，Esc 或输入框右边的 × 关闭。他会一句一个对话框、一个表情地回你，记得最近 6 轮对话（只存在内存里，退出小花就忘了）
+- **存档点新增「API 设置」**：聊天需要你自己的 API key。默认用 DeepSeek，也可以填其他 OpenAI 兼容服务商的地址（必须以 `https://` 开头）和模型名。保存时小花会试连一次，告诉你填对没有；没配 key 时，他只会让你去存档点接 API
+- **怎么拿 DeepSeek 的 key**：去 [DeepSeek 开放平台](https://platform.deepseek.com/api_keys)注册、充值、创建 key，然后粘贴进「API 设置」面板。聊天的费用从你自己的账户扣，和作者无关
+- **防误刷**：两句话之间至少隔 3 秒，10 分钟内最多 80 句
+- **修复**：表情名写错时小花会没有脸，现在会退回默认表情
 
 ### 3.3.0 更新内容
 
@@ -109,19 +118,24 @@ FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传
 
 ### 联网与隐私
 
-- 小花的联网行为有两种：
+- 小花的联网行为有三种：
   - **检查更新**：定期读取本仓库里一个公开的 `version.json`，看有没有新版本。请求里除了版本号不带任何信息。
   - **一键更新**：只有你点了托盘里的"更新到 vX"才会发生。小花会从本仓库的 GitHub Releases 下载更新包，用 `version.json` 里的 SHA256 和大小校验完整性，通过后才会替换程序文件。你不点，就不会下载，也不会替换任何东西。
-- 不上传任何数据。
+  - **API 聊天**（3.4.0 起）：只有配了 key 之后，你给小花发消息，或者在「API 设置」面板里点保存时才会联网。发出去的是：你打的话、小花的人设（`persona.md`）、最近几轮对话、现在几点、陪伴了几天，以及程序自己加的几条回复格式要求。这些直接发到你自己填的服务商地址（默认是 DeepSeek），不经过作者的任何服务器；只使用 https。
+- 除了上面这三种，小花不上传任何东西；API 聊天发出的内容只会发给你选的那个服务商。
+- 你的 API key 存在 `%APPDATA%\FloweyPet\api_key.txt`，是纯文本，不在 `config.json` 里。请不要把这个文件发给别人。想删掉，在「存档点 → API 设置」里点「删除钥匙」即可。
+- 聊天内容不会保存到任何文件，退出小花就忘了。日志里不记聊天内容，也不记 key。
 - 更新时会在安装目录里留下 `.update_backup`（上一版的备份）和 `.install_manifest.json`（本次安装的文件清单）。你的设置和记录存放在 `%APPDATA%\FloweyPet`，更新不会碰它。
-- 不想联网的话，在右键菜单「存档点 → 检查更新」里关掉即可。
+- 不想联网的话，在右键菜单「存档点 → 检查更新」里关掉更新检查，并且不要配置 API key 即可。
 - 游戏彩蛋只在本机读取正在运行的**进程名**，不读窗口标题、窗口内容，也不截图。
+- 另外，个别隐藏彩蛋会在本机扫一遍可见窗口的标题，只为看有没有别的桌宠程序在运行（找「桌宠」「shimeji」之类的关键词）。只在本机比对，不存储，也不发送。
 
 ### 数据存放在哪
 
 | 内容 | 位置 |
 |---|---|
 | 设置、记录 | `%APPDATA%\FloweyPet\`（`config.json`、`stats.json`） |
+| API key | `%APPDATA%\FloweyPet\api_key.txt`（纯文本，不要发给别人） |
 | 日志 | `%APPDATA%\FloweyPet\logs\`（更新过程记在 `update.log`） |
 | 更新备份和安装清单 | 安装目录里的 `.update_backup\`、`.install_manifest.json` |
 | 开机自启 | 注册表 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 下的 `FloweyPet` |
@@ -161,6 +175,7 @@ src/               应用代码（台词引擎、番茄钟、提醒、界面、�
 assets/            美术素材、字体、音效
 dialogue*.json     台词（打包后在 exe 旁边，可以直接改）
 stats_roast.json   "记录"面板的吐槽台词
+persona.md         聊天时小花的人设（打包后在 exe 旁边，可以直接改）
 main.py            程序入口
 FloweyPet.spec     打包配置
 tools/             测试运行脚本
@@ -199,8 +214,17 @@ This is an unofficial fan project. Flowey and all original characters, art and s
 - **Reminders that follow up** if you dismiss them without responding
 - **Stats panel** — days together, clicks, interactions, easter-egg progress
 - **Game easter eggs** — reacts when UNDERTALE / DELTARUNE starts (process name only)
+- **Chat** (from 3.4.0) — right-click → ACT → 聊天, type and press Enter to talk to Flowey; he answers one sentence per bubble, one expression per sentence. Needs your own API key, see [What's new in 3.4.0](#whats-new-in-340)
 - **One-click update** — Flowey tells you when a new version is out, and the tray gets an "Update to vX" entry that downloads, verifies, replaces and restarts for you (from 3.3.0 on; see [Upgrading to 3.3.0 and one-click update](#upgrading-to-330-and-one-click-update))
 - **Data survives upgrades** — from 3.2.0 on, settings and stats live in a fixed folder
+
+### What's new in 3.4.0
+
+- **Flowey can chat now** — right-click → ACT (行动) → 聊天 opens an input box; type and press Enter to send, Esc or the × to close it. He replies one sentence per bubble with one expression each, and remembers the last 6 rounds of the conversation (in memory only — he forgets when you quit)
+- **New "API 设置" entry under SAVE (存档点)** — chat needs your own API key. DeepSeek is the default; you can also enter the address (must start with `https://`) and model name of any other OpenAI-compatible provider. When you save, Flowey tests the connection once and tells you whether it worked; with no key configured he only tells you to go set up the API
+- **Getting a DeepSeek key** — sign up at the [DeepSeek platform](https://platform.deepseek.com/api_keys), top up, create a key and paste it into the "API 设置" panel. Chat costs are charged to your own account and have nothing to do with the author
+- **Anti-spam** — at least 3 seconds between two messages, at most 80 messages per 10 minutes
+- **Fixed** — a wrong expression name used to leave Flowey without a face; it now falls back to the default expression
 
 ### What's new in 3.3.0
 
@@ -249,19 +273,24 @@ The exe is built with PyInstaller and is not code-signed, so a few antivirus pro
 
 ### Network & privacy
 
-- There are two kinds of network access:
+- There are three kinds of network access:
   - **Update check** — periodically reads one public `version.json` file from this repository. Nothing is sent besides the app version in the request header.
   - **One-click update** — only happens after you click "Update to vX" in the tray. Flowey downloads the update package from this repository's GitHub Releases, checks its integrity against the SHA256 and size in `version.json`, and only then replaces the program files. If you don't click, nothing is downloaded or replaced.
-- No data is uploaded.
+  - **API chat** (from 3.4.0) — only after you have configured a key, and only when you send Flowey a message or press save in the "API 设置" panel. What is sent: what you typed, Flowey's persona text (`persona.md`), the last few rounds of the conversation, the current time, how many days you have been together, plus a few reply-format instructions added by the program. It goes straight to the provider address you entered (DeepSeek by default), never through any server of the author's, and only over https.
+- Apart from these three, nothing is uploaded; what API chat sends goes only to the provider you chose.
+- Your API key is stored in `%APPDATA%\FloweyPet\api_key.txt` as plain text, not in `config.json`. Don't send that file to anyone. To remove it, click "删除钥匙" (delete key) in SAVE → API 设置.
+- Chat contents are not saved to any file; Flowey forgets them when you quit. Logs contain neither chat contents nor the key.
 - An update leaves `.update_backup` (a backup of the previous version) and `.install_manifest.json` (the list of installed files) in the install folder. Your settings and stats live in `%APPDATA%\FloweyPet`, which updates never touch.
-- Turn the update check off under right-click menu → SAVE (存档点) → 检查更新.
+- Turn the update check off under right-click menu → SAVE (存档点) → 检查更新, and don't configure an API key, to stay fully offline.
 - Game easter eggs read running **process names** locally — never window titles, window contents or screenshots.
+- Separately, a few hidden easter eggs scan the titles of visible windows once, only to see whether another desktop-pet program is running (looking for keywords such as 桌宠 or "shimeji"). The comparison happens locally; nothing is stored or sent.
 
 ### Where data lives
 
 | What | Where |
 |---|---|
 | Settings, stats | `%APPDATA%\FloweyPet\` (`config.json`, `stats.json`) |
+| API key | `%APPDATA%\FloweyPet\api_key.txt` (plain text; don't share it) |
 | Logs | `%APPDATA%\FloweyPet\logs\` (update progress goes to `update.log`) |
 | Update backup and install list | `.update_backup\` and `.install_manifest.json` in the install folder |
 | Autostart | `FloweyPet` under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` |
