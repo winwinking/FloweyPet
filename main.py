@@ -18,17 +18,19 @@ if "--apply-update" in sys.argv[1:]:
 if getattr(sys, "frozen", False):
     # An update interrupted by a crash / power loss is rolled back here, before
     # anything else reads the install folder. Never allowed to block start-up.
-    _update_in_progress = False
+    # empty_trash() first (files moved aside by an earlier recovery), then
+    # recover_if_needed(); if either an update is running or recovery just
+    # touched the files, this process exits with 0 (see startup_hook).
+    _exit_now = False
     try:
         import updater_apply
 
-        _update_in_progress = (
-            updater_apply.recover_if_needed(Path(sys.executable).resolve().parent) == updater_apply.RECOVER_IN_PROGRESS
-        )
+        _exe_dir = Path(sys.executable).resolve().parent
+        _exit_now = updater_apply.startup_hook(_exe_dir, sys.argv[1:])
     except Exception:
         pass
-    if _update_in_progress:
-        sys.exit(0)  # the updater is swapping files right now: don't race it
+    if _exit_now:
+        sys.exit(0)
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QGuiApplication

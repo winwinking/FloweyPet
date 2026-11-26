@@ -491,7 +491,15 @@ check("回滚不完整: 其他能还原的都还原了 (a.png / exe)",
       (t / "assets" / "a.png").read_bytes() == b"OLD-PNG" and (t / "FloweyPet.exe").read_bytes() == b"OLD-EXE")
 check("回滚不完整: 仍然启动旧版 --update-failed", f.launches and f.launches[-1][1] == ["--update-failed"])
 status = ua.recover_if_needed(t)  # default is_alive: pid None -> dead
-check("下次启动再试一次 -> recovered, 与更新前一致", status == "recovered" and snapshot(t) == before, status)
+check("下次启动再试一次 -> recovered", status == "recovered", status)
+_files, _dirs = snapshot(t)
+_trash_files = {k: v for k, v in _files.items() if k.startswith(".update_trash/")}
+_rest_files = {k: v for k, v in _files.items() if not k.startswith(".update_trash/")}
+_rest_dirs = {d for d in _dirs if d != ".update_trash" and not d.startswith(".update_trash/")}
+check("除 .update_trash 外与更新前逐字节一致", (_rest_files, _rest_dirs) == before, repr(set(_rest_files) ^ set(before[0])))
+check(".update_trash 里正好是被挪走的新版 dialogue.json", _trash_files == {".update_trash/dialogue.json": b"NEW-DIALOGUE"}, repr(_trash_files))
+ua.empty_trash(t)
+check("empty_trash 之后整个目录与更新前完全一致", snapshot(t) == before and not (t / ".update_trash").exists())
 
 # ------------------------------------------------------------------ 8
 print("== 8 等待旧进程 ==")

@@ -55,8 +55,9 @@ from datetime import datetime
 EXE_NAME = "FloweyPet.exe"
 MARKER_NAME = ".update_pending.json"
 BACKUP_NAME = ".update_backup"
+TRASH_NAME = ".update_trash"
 MANIFEST_NAME = ".install_manifest.json"
-PROTECTED_TOP_LEVEL = frozenset(["config.json", "stats.json", BACKUP_NAME, MARKER_NAME, MANIFEST_NAME])
+PROTECTED_TOP_LEVEL = frozenset(["config.json", "stats.json", BACKUP_NAME, TRASH_NAME, MARKER_NAME, MANIFEST_NAME])
 
 WAIT_TIMEOUT_S = 30.0
 POST_WAIT_S = 1.0
@@ -276,6 +277,7 @@ class _Ctx:
     def __init__(self, target, retries=RETRIES, delay=RETRY_DELAY_S, sleep=time.sleep):
         self.target = target
         self.backup = os.path.join(target, BACKUP_NAME)
+        self.trash = os.path.join(target, TRASH_NAME)
         self.marker = os.path.join(target, MARKER_NAME)
         self.retries = retries
         self.delay = delay
@@ -317,7 +319,7 @@ def _safe_rel(rel):
 
 def _is_protected(rel):
     low = rel.casefold()
-    if low.split("/")[0] == BACKUP_NAME.casefold():
+    if low.split("/")[0] in (BACKUP_NAME.casefold(), TRASH_NAME.casefold()):
         return True
     if "/" in low:
         return False
@@ -399,6 +401,77 @@ def _set_phase(ctx, state, phase):
     _log(f"阶段：{phase}")
 
 
+# ------------------------------------------------------------------ trash
+# A running program cannot have its files overwritten or deleted, but Windows
+# does let a file in use be *renamed/moved* (same volume). During recovery at
+# start-up the running exe itself holds its dlls/pyds open, so a blocking file
+# is moved into <target>\.update_trash\ and the real work is done in its
+# place; empty_trash() removes the trash on a later start.
+def _trash(ctx, rel):
+    """Moves <target>/<rel> into the trash folder (unique name). Raises OSError
+    if that is not possible."""
+    src = ctx.path(rel)
+    dst = os.path.join(ctx.trash, *rel.split("/"))
+    candidate, n = dst, 0
+    while os.path.lexists(candidate):
+        n += 1
+        candidate = f"{dst}.{n}"
+    os.makedirs(os.path.dirname(candidate), exist_ok=True)
+    ctx.run(_replace, src, candidate)
+    _log(f"被占用的文件已挪进垃圾箱：{rel}")
+
+
+def _restore_file(ctx, src, rel):
+    """backup file -> its place, moving a blocking file out of the way if needed."""
+    dst = ctx.path(rel)
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    try:
+        ctx.run(_replace, src, dst)
+    except PermissionError:
+        if not os.path.lexists(dst):
+            raise
+        _trash(ctx, rel)
+        ctx.run(_replace, src, dst)
+
+
+def _remove_file(ctx, rel):
+    """Deletes <target>/<rel>, moving it to the trash if it is in use."""
+    p = ctx.path(rel)
+    try:
+        ctx.run(_remove, p)
+    except PermissionError:
+        _trash(ctx, rel)
+
+
+def empty_trash(target):
+    """Best-effort removal of <target>\.update_trash. Never raises; files
+    that are still in use are skipped (and removed on a later start)."""
+    try:
+        trash = os.path.join(os.path.abspath(os.fspath(target)), TRASH_NAME)
+        if not os.path.lexists(trash):
+            return
+        removed = skipped = 0
+        for dirpath, dirnames, filenames in os.walk(trash, topdown=False):
+            for name in filenames:
+                try:
+                    os.remove(os.path.join(dirpath, name))
+                    removed += 1
+                except OSError:
+                    skipped += 1
+            for name in dirnames:
+                try:
+                    os.rmdir(os.path.join(dirpath, name))
+                except OSError:
+                    pass
+        try:
+            os.rmdir(trash)
+        except OSError:
+            pass
+        _log(f"清理垃圾箱：删除 {removed} 个文件，{skipped} 个仍被占用，留待下次")
+    except Exception as e:  # noqa: BLE001
+        _log(f"清理垃圾箱出错（{type(e).__name__}），已忽略")
+
+
 # --------------------------------------------------------------- rollback
 def _rollback(ctx, state):
     """Undoes a partial update using the marker's lists and the backup
@@ -412,10 +485,10 @@ def _rollback(ctx, state):
         rel = _safe_rel(rel)
         if rel is None:
             continue
-        tmp = ctx.path(rel) + ".new"
-        if os.path.lexists(tmp):
+        tmp_rel = rel + ".new"
+        if os.path.lexists(ctx.path(tmp_rel)):
             try:
-                ctx.run(_remove, tmp)
+                _remove_file(ctx, tmp_rel)
             except OSError as e:
                 errors += 1
                 _log(f"回滚：删除临时文件失败 {rel}.new（{type(e).__name__}）")
@@ -424,10 +497,9 @@ def _rollback(ctx, state):
         rel = _safe_rel(rel)
         if rel is None:
             continue
-        p = ctx.path(rel)
-        if os.path.lexists(p):
+        if os.path.lexists(ctx.path(rel)):
             try:
-                ctx.run(_remove, p)
+                _remove_file(ctx, rel)
             except OSError as e:
                 errors += 1
                 _log(f"回滚：删除新增文件失败 {rel}（{type(e).__name__}）")
@@ -443,10 +515,8 @@ def _rollback(ctx, state):
                     errors += 1
                     _log("回滚：备份里有不安全的路径，已跳过")
                     continue
-                dst = ctx.path(rel)
                 try:
-                    os.makedirs(os.path.dirname(dst), exist_ok=True)
-                    ctx.run(_replace, src, dst)
+                    _restore_file(ctx, src, rel)
                     restored += 1
                 except OSError as e:
                     errors += 1
@@ -720,6 +790,35 @@ def recover_if_needed(target, *, is_alive=None, retries=RECOVER_RETRIES, retry_d
     _log(f"发现被中断的更新（阶段 {state['phase']}，{state.get('old_version')} -> {state.get('new_version')}），开始恢复")
     complete = _rollback(ctx, state)
     return RECOVER_RECOVERED if complete else RECOVER_INCOMPLETE
+
+
+def startup_hook(exe_dir, argv, launcher=None):
+    """Packaged-build start-up step (main.py, before any Qt import). Returns
+    True if this process must exit with code 0 instead of starting up:
+      - an update is being applied right now (don't race it), or
+      - recovery just moved files around: this process was loaded from the
+        old file set, so start a fresh one (--update-failed --after-recovery)
+        and let this one go. With --after-recovery already present nothing is
+        relaunched (no restart loop).
+    The caller wraps this in try/except and starts up normally on any error."""
+    exe_dir = os.path.abspath(os.fspath(exe_dir))
+    launcher = default_launcher if launcher is None else launcher
+    empty_trash(exe_dir)
+    status = recover_if_needed(exe_dir)
+    if status == RECOVER_IN_PROGRESS:
+        return True
+    if status in (RECOVER_RECOVERED, RECOVER_INCOMPLETE):
+        if "--after-recovery" in list(argv):
+            _log("恢复后的第二次启动：不再重开，继续正常启动")
+            return False
+        try:
+            launcher(os.path.join(exe_dir, EXE_NAME), ["--update-failed", "--after-recovery"], exe_dir)
+        except Exception as e:  # noqa: BLE001
+            _log(f"恢复后重开失败（{type(e).__name__}），继续用当前进程启动")
+            return False
+        _log("恢复动过文件：已重开一个新进程，当前进程退出")
+        return True
+    return False
 
 
 # ----------------------------------------------------------- command line
