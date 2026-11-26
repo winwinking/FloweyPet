@@ -47,6 +47,9 @@ MAX_FACES = 4
 MAX_TEXT_CHARS = 150
 SENTENCE_END = "。！？…!?"
 DEEPSEEK_HOST = "api.deepseek.com"
+# Face folders that must never show up in chat: drag_face is the face shown
+# only while the pet is being dragged.
+EXCLUDED_FACES = ("drag_face",)
 
 # Error categories handed to the caller.
 ERR_NO_CONFIG = "no_config"
@@ -121,10 +124,14 @@ def is_deepseek_host(url):
 
 # ------------------------------------------------------------------ messages
 def list_faces(faces_dir=None):
-    """Face names = folder names under assets/faces, read at call time."""
+    """Face names = folder names under assets/faces (minus EXCLUDED_FACES),
+    read at call time."""
     base = paths.FACES_DIR if faces_dir is None else faces_dir
     try:
-        return sorted(name for name in os.listdir(base) if os.path.isdir(os.path.join(base, name)))
+        return sorted(
+            name for name in os.listdir(base)
+            if name not in EXCLUDED_FACES and os.path.isdir(os.path.join(base, name))
+        )
     except OSError:
         return []
 
