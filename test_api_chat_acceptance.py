@@ -93,6 +93,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send(500, b"{}")
             elif route.endswith("/e404"):
                 self._send(404, b"{}")
+            elif route.endswith("/e402"):
+                self._send(402, b"{}")
+            elif route.endswith("/e400"):
+                self._send(400, b"{}")
+            elif route.endswith("/e422"):
+                self._send(422, b"{}")
+            elif route.endswith("/e418"):
+                self._send(418, b"{}")
+            elif route.endswith("/nomessage"):
+                self._send(200, b'{"choices":[{"finish_reason":"stop"}]}')
+            elif route.endswith("/probeempty"):
+                self._send(200, completion(""))
             elif route.endswith("/nonjson"):
                 self._send(200, b"<html>not json</html>")
             elif route.endswith("/nochoices"):
@@ -353,7 +365,7 @@ print("== 6 错误分类 ==")
 REPLY["content"] = '{"text": "好。", "face": ["neutral"]}'
 for prefix, expect in (("/v1/e401", "auth"), ("/v1/e403", "auth"), ("/v1/e429", "rate_limit"), ("/v1/e500", "server"),
                        ("/v1/nonjson", "bad_response"), ("/v1/nochoices", "bad_response"), ("/v1/emptychoices", "bad_response"),
-                       ("/v1/e404", "bad_response"), ("/v1/redirect", "bad_response")):
+                       ("/v1/e404", "bad_request"), ("/v1/redirect", "bad_response")):
     s = make(prefix=prefix)
     s.ask("x")
     check(f"{prefix.split('/')[-1]} -> {expect}", s.errs == [expect] and s.got == [], str(s.errs))
@@ -397,6 +409,88 @@ s.ask("x")
 check("线程模式: 失败经信号回到主线程(auth)", wait_for(lambda: s.errs == ["auth"]), str(s.errs))
 
 # ======================================================================= 7
+print("== 6b 新增分类: no_balance / bad_request ==")
+for prefix, expect in (("/v1/e402", "no_balance"), ("/v1/e400", "bad_request"), ("/v1/e422", "bad_request"),
+                       ("/v1/e404", "bad_request"), ("/v1/e418", "bad_response"), ("/v1/redirect", "bad_response"),
+                       ("/v1/e429", "rate_limit"), ("/v1/e401", "auth")):
+    s = make(prefix=prefix)
+    s.ask("x")
+    check(f"{prefix.split('/')[-1]} -> {expect}", s.errs == [expect] and s.got == [], str(s.errs))
+
+print("== 6c probe ==")
+REPLY["content"] = '{"text": "不该被解析。", "face": ["neutral"]}'
+
+
+def make_probe(prefix="/v1/ok", **kw):
+    s = make(prefix=prefix, **kw)
+    s.outs = []
+    s.probed.connect(s.outs.append)
+    return s
+
+
+REQS.clear()
+s = make_probe()
+check("probe() 返回 True", s.probe() is True)
+r = last_req()
+b = r["body"]
+check("probe 请求体: messages 只有一条 ping", b["messages"] == [{"role": "user", "content": "ping"}], str(b["messages"]))
+check("probe 请求体: 没有 system / 人设", "system" not in json.dumps(b["messages"]) and "PERSONA" not in json.dumps(b))
+check("probe 请求体: max_tokens == 1, stream False, model 正确", b["max_tokens"] == 1 and b["stream"] is False and b["model"] == "test-model")
+check("probe 请求体: 非 DeepSeek 不带 thinking", "thinking" not in b)
+check("probe: Authorization 头正确, key 不在 URL", r["headers"].get("authorization") == f"Bearer {KEY}" and KEY not in r["path"] and r["path"] == "/v1/ok/chat/completions")
+check("probe 成功: probed('ok'), 不发 replied / failed", s.outs == ["ok"] and s.got == [] and s.errs == [], str(s.outs))
+check("probe 不进历史", s.history_turns() == [])
+s.ask("先聊一句")
+n = len(s.history_turns())
+REQS.clear()
+s.probe()
+check("probe 不带历史、不进历史", len(REQS) == 1 and len(REQS[0]["body"]["messages"]) == 1 and len(s.history_turns()) == n)
+# DeepSeek body (built directly, not sent)
+ds = make_probe(settings={"base_url": "https://api.deepseek.com"}, url_validator=ac.default_url_validator)
+prep = ds._prepare_probe()
+pb = json.loads(prep["body"])
+check("probe 请求体: DeepSeek 带 thinking disabled", pb.get("thinking") == {"type": "disabled"} and pb["max_tokens"] == 1 and pb["messages"] == [{"role": "user", "content": "ping"}], str(pb))
+check("probe 请求地址: DeepSeek", prep["url"] == "https://api.deepseek.com/chat/completions")
+for prefix, expect in (("/v1/e401", "auth"), ("/v1/e402", "no_balance"), ("/v1/e404", "bad_request"), ("/v1/e429", "rate_limit"),
+                       ("/v1/e500", "server"), ("/v1/nonjson", "bad_response"), ("/v1/nochoices", "bad_response"),
+                       ("/v1/nomessage", "bad_response"), ("/v1/redirect", "bad_response")):
+    s = make_probe(prefix=prefix)
+    s.probe()
+    check(f"probe {prefix.split('/')[-1]} -> {expect}", s.outs == [expect], str(s.outs))
+s = make_probe(prefix="/v1/probeempty")
+s.probe()
+check("probe: 回复内容为空也算成功(只要 choices[0].message 存在)", s.outs == ["ok"], str(s.outs))
+s = make_probe(settings={"base_url": "http://127.0.0.1:1/v1"})
+s.probe()
+check("probe 连不上 -> network", s.outs == ["network"])
+s = make_probe(prefix="/v1/stall", timeout=0.4)
+s.probe()
+check("probe 超时 -> network", s.outs == ["network"])
+for field in ("base_url", "model", "api_key"):
+    s = make_probe(settings={field: ""})
+    REQS.clear()
+    s.probe()
+    check(f"probe {field} 为空 -> no_config 且不发请求", s.outs == ["no_config"] and REQS == [], str(s.outs))
+s = make_probe(persona_path=TMP / "nope.md")
+s.probe()
+check("probe: persona 文件不存在不影响(照样成功)", s.outs == ["ok"], str(s.outs))
+s = make_probe(url_validator=ac.default_url_validator)
+REQS.clear()
+s.probe()
+check("probe 也受 https 校验: http 地址 -> no_config 且不发请求", s.outs == ["no_config"] and REQS == [])
+s = make_probe(prefix="/v1/slow", use_thread=True)
+check("probe 在途: busy 为 True", s.probe() is True and s.busy is True)
+check("probe 在途时 ask 返回 False", s.ask("x") is False)
+check("probe 在途时 comment 返回 False", s.comment("x") is False)
+check("probe 在途时再 probe 返回 False", s.probe() is False)
+check("probe 的结果回到主线程", wait_for(lambda: s.outs == ["ok"]), str(s.outs))
+s2 = make_probe(prefix="/v1/slow", use_thread=True)
+s2.ask("先问")
+check("ask 在途时 probe 返回 False", s2.probe() is False)
+wait_for(lambda: len(s2.got) == 1)
+check("ask 结束后 probe 可用", s2.probe() is True)
+wait_for(lambda: s2.outs == ["ok"])
+
 print("== 7 https 校验 ==")
 check("生产默认 validator 接受 https://", ac.default_url_validator("https://api.deepseek.com/chat/completions") is None)
 for bad in ("http://api.deepseek.com/chat/completions", "http://127.0.0.1:9/x", "ftp://a.example/x", "file:///C:/x", "https:///x", "https://user:pw@a.example/x", "//a.example/x"):
@@ -440,6 +534,15 @@ s.ask(USER_SECRET)
 s.comment("机密应用名")
 s = make(fetcher=lambda *a: (_ for _ in ()).throw(RuntimeError(f"leaky {KEY} {USER_SECRET}")))
 s.ask(USER_SECRET)
+for prefix in ("/v1/ok", "/v1/e401", "/v1/e402", "/v1/e404", "/v1/e500", "/v1/nonjson", "/v1/e418"):
+    s = make(prefix=prefix)
+    s.probe()
+s = make(settings={"base_url": "http://127.0.0.1:1/v1"})
+s.probe()
+s = make(url_validator=ac.default_url_validator)
+s.probe()
+s = make(fetcher=lambda *a: (_ for _ in ()).throw(RuntimeError(f"leaky {KEY} {USER_SECRET}")))
+s.probe()
 all_logs = [p for p in TMP.rglob("*") if p.is_file() and p.suffix in (".log", ".txt")]
 text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in all_logs)
 check("app.log 里有失败记录(测试不是空转)", app_log.LOG_PATH.exists() and "API 聊天失败" in app_log.LOG_PATH.read_text(encoding="utf-8"))

@@ -59,6 +59,9 @@ ERR_RATE_LIMIT = "rate_limit"
 ERR_SERVER = "server"
 ERR_NETWORK = "network"
 ERR_BAD_RESPONSE = "bad_response"
+ERR_NO_BALANCE = "no_balance"  # HTTP 402: the account is out of credit (DeepSeek uses it)
+ERR_BAD_REQUEST = "bad_request"  # HTTP 400/404/422: wrong address / model name / parameters
+PROBE_MESSAGE = "ping"
 
 _FENCE_RE = re.compile(r"^\s*```[A-Za-z0-9_-]*\s*(.*?)\s*```\s*$", re.DOTALL)
 
@@ -309,6 +312,15 @@ def fetch(url, headers, body, timeout=REQUEST_TIMEOUT_S):
         return response.read(MAX_READ_BYTES)
 
 
+def _has_message(raw_bytes):
+    """True if a /chat/completions reply has choices[0].message (a probe
+    only needs the call to have worked; the content is not looked at)."""
+    try:
+        return isinstance(json.loads(raw_bytes)["choices"][0]["message"], dict)
+    except (ValueError, KeyError, IndexError, TypeError):
+        return False
+
+
 def classify_exception(exc):
     """(category, http_status_or_None) for an exception from the fetcher."""
     if isinstance(exc, ApiChatError):
@@ -319,6 +331,10 @@ def classify_exception(exc):
             return ERR_AUTH, status
         if status == 429:
             return ERR_RATE_LIMIT, status
+        if status == 402:
+            return ERR_NO_BALANCE, status
+        if status in (400, 404, 422):
+            return ERR_BAD_REQUEST, status
         if status >= 500:
             return ERR_SERVER, status
         return ERR_BAD_RESPONSE, status
@@ -346,6 +362,7 @@ def _log_failure(code, status, exc, host):
 class ChatSession(QObject):
     replied = pyqtSignal(dict)  # {"text": str, "face": [str, ...]}
     failed = pyqtSignal(str)  # one of the ERR_* categories
+    probed = pyqtSignal(str)  # probe() outcome: "ok" or one of the ERR_* categories
     _result = pyqtSignal(object)  # worker thread -> main thread
 
     def __init__(
@@ -388,6 +405,15 @@ class ChatSession(QObject):
         note = f"（用户现在正在用：{label}。你主动说一句，不要提问。）"
         return self._start(note, record=False)
 
+    def probe(self):
+        """Connection test (used when the settings are saved): one minimal
+        request -- just {"role": "user", "content": "ping"}, max_tokens 1, no
+        persona, no history, nothing remembered. Success = HTTP 200 and a
+        choices[0].message; the content is not parsed. Shares the "one
+        request at a time" lock with ask()/comment(); False if one is in
+        flight. The outcome arrives on probed ("ok" or an error category)."""
+        return self._start("", record=False, kind="probe")
+
     def clear_history(self):
         self._history = []
 
@@ -399,13 +425,13 @@ class ChatSession(QObject):
         return self._busy
 
     # ------------------------------------------------------------ internals
-    def _start(self, user_message, record):
+    def _start(self, user_message, record, kind="chat"):
         if self._busy:
             return False
         self._busy = True
-        job = {"user_text": user_message, "record": record}
+        job = {"user_text": user_message, "record": record, "kind": kind}
         try:
-            prepared = self._prepare(user_message)
+            prepared = self._prepare_probe() if kind == "probe" else self._prepare(user_message)
         except ApiChatError as e:
             _log_failure(e.code, None, None, "")
             self._result.emit(dict(job, ok=False, code=e.code))
@@ -421,8 +447,8 @@ class ChatSession(QObject):
             self._work(job)
         return True
 
-    def _prepare(self, user_message):
-        """Main thread: settings check, persona, prompt. Raises ApiChatError."""
+    def _settings(self):
+        """(base_url, model, api_key, url) or ApiChatError(no_config)."""
         settings = self._get_settings() or {}
         base_url = _clean(settings.get("base_url"))
         model = _clean(settings.get("model"))
@@ -431,6 +457,31 @@ class ChatSession(QObject):
             raise ApiChatError(ERR_NO_CONFIG)
         url = build_url(base_url)
         self._url_validator(url)
+        return base_url, model, api_key, url
+
+    @staticmethod
+    def _headers(api_key):
+        return {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "User-Agent": f"FloweyPet/{version.VERSION}",
+        }
+
+    def _prepare_probe(self):
+        base_url, model, api_key, url = self._settings()
+        body = build_request_body({"base_url": base_url, "model": model}, [{"role": "user", "content": PROBE_MESSAGE}])
+        body["max_tokens"] = 1
+        return {
+            "url": url,
+            "headers": self._headers(api_key),
+            "body": json.dumps(body, ensure_ascii=False).encode("utf-8"),
+            "faces": [],
+        }
+
+    def _prepare(self, user_message):
+        """Main thread: settings check, persona, prompt. Raises ApiChatError."""
+        base_url, model, api_key, url = self._settings()
         persona = read_persona(self._persona_path, self._substitute)
         if persona is None:
             raise ApiChatError(ERR_NO_PERSONA)
@@ -442,15 +493,9 @@ class ChatSession(QObject):
         system_prompt = build_system_prompt(persona, faces, context)
         messages = build_messages(system_prompt, self._history, user_message)
         body = build_request_body({"base_url": base_url, "model": model}, messages)
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": f"Bearer {api_key}",
-            "User-Agent": f"FloweyPet/{version.VERSION}",
-        }
         return {
             "url": url,
-            "headers": headers,
+            "headers": self._headers(api_key),
             "body": json.dumps(body, ensure_ascii=False).encode("utf-8"),
             "faces": faces,
         }
@@ -461,8 +506,11 @@ class ChatSession(QObject):
         host = host_of(job["url"])
         try:
             raw = self._fetcher(job["url"], job["headers"], job["body"], self._timeout)
-            content = extract_content(raw)
-            reply = parse_reply(content, job["faces"]) if content is not None else None
+            if job.get("kind") == "probe":
+                reply = {} if _has_message(raw) else None
+            else:
+                content = extract_content(raw)
+                reply = parse_reply(content, job["faces"]) if content is not None else None
             if reply is None:
                 _log_failure(ERR_BAD_RESPONSE, None, None, host)
                 result = dict(job, ok=False, code=ERR_BAD_RESPONSE)
@@ -479,6 +527,9 @@ class ChatSession(QObject):
 
     def _on_result(self, result):
         self._busy = False
+        if result.get("kind") == "probe":
+            self.probed.emit("ok" if result.get("ok") else result.get("code", ERR_NETWORK))
+            return
         if result.get("ok"):
             reply = result["reply"]
             if result.get("record"):
