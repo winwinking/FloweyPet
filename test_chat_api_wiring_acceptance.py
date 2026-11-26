@@ -195,7 +195,7 @@ seg = shown[1][2][0]
 check("chat_reply 的 segment: text 与 face 正确", seg == {"text": "哼，知道了。", "face": "smirk"}, str(seg))
 check("chat_wait 与 chat_reply 都是用 cut_in 说的", dm.cut_in_calls == ["chat_wait", "chat_reply"], str(dm.cut_in_calls))
 check("回复到了后 _chat_waiting 复位", pet._chat_waiting is False)
-check("历史只在内存: 会话里有一轮", pet._chat_session.history_turns() == [("你好小花", "哼，知道了。")])
+check("历史只在内存: 会话里有一轮", pet._chat_session.history_turns() == [("你好小花", '{"lines":[{"text":"哼，知道了。","face":"smirk"}]}')], str(pet._chat_session.history_turns()))
 pet.clock["t"] += 10
 pet._on_chat_submitted("第二句")
 check("第二句的请求带上了历史", len(fake.calls[1]["body"]["messages"]) == 4, str(len(fake.calls[1]["body"]["messages"])))
@@ -218,7 +218,11 @@ check("回复的每一句做成一个 segment", shown[-1][0] == "chat_reply" and
 check("每个 segment 的 face 是单个字符串(不是数组)", [x["face"] for x in segs] == ["smirk", "angry", "worry"] and all(isinstance(x["face"], str) for x in segs), str(segs))
 check("整组 segments 一次交给 cut_in(category chat_reply)", dm.cut_in_calls == ["chat_wait", "chat_reply"], str(dm.cut_in_calls))
 check("segment 里只有 text 和 face 两个键", all(set(x) == {"text", "face"} for x in segs))
-check("历史里小花那一句是各句 text 直接拼起来", pet._chat_session.history_turns() == [("说三句", "甲。乙！丙……")], str(pet._chat_session.history_turns()))
+check("历史里小花那一句是解析后的完整结构(紧凑 json)", pet._chat_session.history_turns() == [("说三句", '{"lines":[{"text":"甲。","face":"smirk"},{"text":"乙！","face":"angry"},{"text":"丙……","face":"worry"}]}')], str(pet._chat_session.history_turns()))
+pet.clock["t"] += 10
+pet._on_chat_submitted("第二次")
+second_req = fake.calls[1]["body"]["messages"]
+check("第二次请求里带着上一次回复的 json(含 face)", json.loads(second_req[-2]["content"])["lines"][0]["face"] == "smirk" and second_req[-2]["role"] == "assistant", str(second_req[-2]))
 pet, fake, shown, dm = rig()
 fake.content = json.dumps({"lines": [{"text": f"第{i}句。", "face": "smirk"} for i in range(1, 7)]}, ensure_ascii=False)
 pet._on_chat_submitted("说六句")
@@ -342,6 +346,15 @@ fake.gate.set()
 wait_for(lambda: "chat_reply" in cats(shown))
 
 # ===================================================================== 6
+print("== 5b 播放: 真实 DialogueBox 一句一个表情 ==")
+box_real = DialogueBox(180, 1.75, MagicMock(), True, pet_scale=1.0, min_font_px=15)
+face_calls, done = [], []
+box_real.finished.connect(lambda: done.append(1))
+box_real.start([{"text": "甲", "face": "smirk"}, {"text": "乙", "face": "angry"}, {"text": "丙", "face": "grin"}], face_calls.append)
+check("3 个 segment 播完(finished 发出)", wait_for(lambda: done == [1], 12), str(face_calls))
+check("on_segment_face 被按顺序调用了 3 次, 拿到的就是这 3 个表情", face_calls == ["smirk", "angry", "grin"], str(face_calls))
+check("播完后气泡关闭", not box_real.isVisible())
+
 print("== 6 提醒弹窗时排队 / 关框后回复照样说 ==")
 pet, fake, shown, dm = rig()
 pet._current_category = "chase_popup_first_water"

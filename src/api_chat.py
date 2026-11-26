@@ -35,6 +35,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 import app_log
 import paths
 import version
+from paths import IS_DEV
 
 DEFAULT_BASE_URL = "https://api.deepseek.com"
 DEFAULT_MODEL = "deepseek-flash"
@@ -165,7 +166,7 @@ def build_rules(faces):
         "1. 你的整个回复只能是一个 json 对象（JSON 格式），不要任何别的文字，不要使用代码块，格式严格为："
         '{"lines": [{"text": "小花说的一句话", "face": "表情名"}, {"text": "下一句", "face": "表情名"}]}\n'
         f"2. lines 里每一项是小花说的一句话，加上这一句话的一个表情（face 是单个表情名，不是数组），"
-        f"共 1 到 {MAX_LINES} 句，按说话顺序排列，每说完一句就换下一个表情。表情只能从下面的清单里选。表情清单：{face_list}\n"
+        f"共 1 到 {MAX_LINES} 句，按说话顺序排列，每说完一句就换下一个表情。表情只能从下面的清单里选。每一句的表情要跟着这一句的情绪来选，情绪变了就换表情，不要每句都用同一个表情。表情清单：{face_list}\n"
         "3. 上面人设示范里，一行台词下面那一行「表情 → 表情 → 表情」，表示这行台词里的几句话依次用的表情。"
         "你要把那行台词拆成几句，拆开放进 lines，每一句配上对应的那一个表情。\n"
         "4. text 里绝对不能出现任何表情名、箭头（→ 或 ->）、方括号或圆括号标注，只写小花真正说出口的话。不要使用 emoji。\n"
@@ -263,10 +264,10 @@ def _mark_patterns(valid):
         name = f"(?<![A-Za-z0-9_])(?:{alt})(?![A-Za-z0-9_])"
         sep = r"(?:[ \t]*(?:→|⟶|->|=>|＞|>|,|，|、)[ \t]*|[ \t]+)"
         pats = {
-            "name": re.compile(name),
-            "chain": re.compile(rf"{_OPEN}?[ \t]*{name}(?:[ \t]*{_ARROW}[ \t]*{name})+[ \t]*{_CLOSE}?"),
-            "bracket": re.compile(rf"{_OPEN}[ \t]*{name}[ \t]*{_CLOSE}"),
-            "line": re.compile(rf"^[ \t]*{_OPEN}?[ \t]*{name}(?:{sep}{name}){{0,3}}[ \t]*{_CLOSE}?[ \t]*$"),
+            "name": re.compile(name, re.IGNORECASE),
+            "chain": re.compile(rf"{_OPEN}?[ \t]*{name}(?:[ \t]*{_ARROW}[ \t]*{name})+[ \t]*{_CLOSE}?", re.IGNORECASE),
+            "bracket": re.compile(rf"{_OPEN}[ \t]*{name}[ \t]*{_CLOSE}", re.IGNORECASE),
+            "line": re.compile(rf"^[ \t]*{_OPEN}?[ \t]*{name}(?:{sep}{name}){{0,3}}[ \t]*{_CLOSE}?[ \t]*$", re.IGNORECASE),
         }
         _mark_cache[key] = pats
     return pats
@@ -281,9 +282,13 @@ def _strip_face_marks(text, valid):
         return text, []
     pats = _mark_patterns(valid)
     found = []
+    canon = {v.lower(): v for v in valid}
+
+    def names_in(chunk):
+        return [canon[n.lower()] for n in pats["name"].findall(chunk) if n.lower() in canon]
 
     def take(match):
-        found.extend(pats["name"].findall(match.group(0)))
+        found.extend(names_in(match.group(0)))
         return ""
 
     text = pats["chain"].sub(take, text)
@@ -291,7 +296,7 @@ def _strip_face_marks(text, valid):
     kept = []
     for line in text.split("\n"):
         if pats["line"].match(line):
-            found.extend(pats["name"].findall(line))
+            found.extend(names_in(line))
             continue
         kept.append(line)
     text = "\n".join(kept)
@@ -331,34 +336,53 @@ def split_sentences(text):
     return out
 
 
-def _one_face(face, valid, fallback=None):
-    """A single valid face name: a string as it is, from a list the first
-    valid one; otherwise `fallback` if valid, otherwise neutral."""
+def _canon(name, valid):
+    """The valid face a model-written `name` stands for -- surrounding
+    whitespace ignored, case-insensitive ("Smirk", " smirk " -> smirk) --
+    or None. Only names on the list count, so drag_face (not on it) stays out."""
+    if not isinstance(name, str):
+        return None
+    key = name.strip().lower()
+    for v in valid:
+        if v.lower() == key:
+            return v
+    return None
+
+
+def _pick_face(face, valid):
+    """The single valid face a face field stands for (a string; from a list
+    the first valid one), or None."""
     cands = [face] if isinstance(face, str) else list(face) if isinstance(face, list) else []
     for c in cands:
-        if isinstance(c, str) and c in valid:
-            return c
-    if isinstance(fallback, str) and fallback in valid:
-        return fallback
-    return "neutral"
+        hit = _canon(c, valid)
+        if hit:
+            return hit
+    return None
+
+
+def _one_face(face, valid, fallback=None):
+    """_pick_face, else `fallback` if valid, else neutral."""
+    return _pick_face(face, valid) or _canon(fallback, valid) or "neutral"
 
 
 def _finish_lines(pairs):
-    """[(text, face)] -> {"lines": [...]} with the reply-wide limits applied:
-    empty sentences dropped, at most MAX_LINES, total <= MAX_TEXT_CHARS by
-    dropping whole sentences from the end (a first sentence that is itself
-    too long was already cut by _limit)."""
-    lines = [{"text": t, "face": f} for t, f in pairs if t]
-    if not lines:
-        return None, REASON_ALL_LINES_EMPTY
-    lines = lines[:MAX_LINES]
-    while len(lines) > 1 and sum(len(x["text"]) for x in lines) > MAX_TEXT_CHARS:
-        lines.pop()
-    if len(lines[0]["text"]) > MAX_TEXT_CHARS:
-        lines[0]["text"] = _limit(lines[0]["text"])
-    if not lines[0]["text"]:
-        return None, REASON_ALL_LINES_EMPTY
-    return {"lines": lines}, None
+    """[(text, face, given)] -> ({"lines": [...]}, reason, gave_face) with the
+    reply-wide limits applied: empty sentences dropped, at most MAX_LINES,
+    total <= MAX_TEXT_CHARS by dropping whole sentences from the end (a
+    first sentence that is itself too long was already cut by _limit).
+    gave_face: did the model give at least one valid face for the sentences
+    kept (False = every face is the neutral fallback)."""
+    kept = [(t, f, g) for t, f, g in pairs if t]
+    if not kept:
+        return None, REASON_ALL_LINES_EMPTY, False
+    kept = kept[:MAX_LINES]
+    while len(kept) > 1 and sum(len(t) for t, _, _ in kept) > MAX_TEXT_CHARS:
+        kept.pop()
+    if len(kept[0][0]) > MAX_TEXT_CHARS:
+        kept[0] = (_limit(kept[0][0]), kept[0][1], kept[0][2])
+    if not kept[0][0]:
+        return None, REASON_ALL_LINES_EMPTY, False
+    return {"lines": [{"text": t, "face": f} for t, f, _ in kept]}, None, any(g for _, _, g in kept)
 
 
 def _lines_from_items(items, valid):
@@ -373,10 +397,10 @@ def _lines_from_items(items, valid):
         if not isinstance(raw, str):
             continue
         text, found = _clean_text(raw, valid)
-        one = _one_face(face, valid)
-        if one == "neutral" and found:  # no real face given: use the one written into the text
-            one = _one_face(found[0], valid)
-        pairs.append((text, one))
+        one = _pick_face(face, valid)
+        if (one is None or one == "neutral") and found:  # no real face given: use the one written into the text
+            one = _canon(found[0], valid)
+        pairs.append((text, one or "neutral", one is not None))
     return _finish_lines(pairs)
 
 
@@ -392,12 +416,10 @@ def _lines_from_text(raw_text, faces, valid):
     sentences = [s for s in sentences if s]
     pairs = []
     for i, s in enumerate(sentences):
-        face = "neutral"
-        if seq:
-            face = _one_face(seq[min(i, len(seq) - 1)], valid)
-        if face == "neutral" and found:
-            face = _one_face(found[min(i, len(found) - 1)], valid)
-        pairs.append((s, face))
+        face = _pick_face(seq[min(i, len(seq) - 1)], valid) if seq else None
+        if (face is None or face == "neutral") and found:
+            face = _canon(found[min(i, len(found) - 1)], valid)
+        pairs.append((s, face or "neutral", face is not None))
     return _finish_lines(pairs)
 
 
@@ -419,8 +441,15 @@ def parse_reply_ex(content, valid_faces):
     """(reply, reason). reply = {"lines": [{"text", "face"}, ...]} (1-4
     sentences, one face each) or None, in which case `reason` is a code
     (REASON_*, never any content) for the log."""
+    reply, reason, _ = parse_reply_full(content, valid_faces)
+    return reply, reason
+
+
+def parse_reply_full(content, valid_faces):
+    """(reply, reason, gave_face): parse_reply_ex plus whether the model
+    gave at least one valid face at all."""
     if not isinstance(content, str) or not content.strip():
-        return None, REASON_EMPTY_CONTENT
+        return None, REASON_EMPTY_CONTENT, False
     valid = set(valid_faces or ())
     stripped = content.strip()
     fence = _FENCE_RE.match(stripped)
@@ -433,13 +462,13 @@ def parse_reply_ex(content, valid_faces):
             items = data.get(key)
             if isinstance(items, list):
                 if not items:
-                    return None, REASON_NO_LINES
+                    return None, REASON_NO_LINES, False
                 return _lines_from_items(items, valid)
         if "text" in data:  # c. the old {"text", "face"} shape
             if not isinstance(data.get("text"), str):
-                return None, REASON_NOT_JSON_OBJECT
+                return None, REASON_NOT_JSON_OBJECT, False
             return _lines_from_text(data["text"], data.get("face"), valid)
-        return None, REASON_NO_LINES
+        return None, REASON_NO_LINES, False
     return _lines_from_text(stripped, None, valid)  # d. plain text
 
 
@@ -506,6 +535,19 @@ def classify_exception(exc):
     if isinstance(exc, (urllib.error.URLError, http.client.HTTPException, OSError)):
         return ERR_NETWORK, None
     return ERR_NETWORK, None
+
+
+def _log_reply(reply, gave_face):
+    """Diagnostic line, ONLY when running from source (IS_DEV): how many
+    sentences and which faces -- never any text. The packaged build logs
+    nothing here."""
+    if not IS_DEV:
+        return
+    try:
+        faces = ",".join(x["face"] for x in reply["lines"])
+        app_log.log_event(f"API 聊天回复：{len(reply['lines'])} 句，表情 {faces}" + ("" if gave_face else "（模型没给表情）"))
+    except Exception:  # noqa: BLE001 - logging must never break chat
+        pass
 
 
 def _log_failure(code, status, exc, host, reason=None):
@@ -688,15 +730,18 @@ class ChatSession(QObject):
                     # more, this time without response_format. Nothing else is retried.
                     raw = self._fetcher(job["url"], job["headers"], job["retry_body"], self._timeout)
                     content = extract_content(raw)
+                gave_face = True
                 if content is None:
                     reply, reason = None, REASON_NO_CHOICES
                 else:
-                    reply, reason = parse_reply_ex(content, job["faces"])
+                    reply, reason, gave_face = parse_reply_full(content, job["faces"])
             if reply is None:
                 _log_failure(ERR_BAD_RESPONSE, None, None, host, reason)
                 result = dict(job, ok=False, code=ERR_BAD_RESPONSE)
             else:
                 result = dict(job, ok=True, reply=reply)
+                if job.get("kind") != "probe":
+                    _log_reply(reply, gave_face)
         except Exception as e:  # noqa: BLE001
             code, status = classify_exception(e)
             _log_failure(code, status, e, host)
@@ -714,7 +759,9 @@ class ChatSession(QObject):
         if result.get("ok"):
             reply = result["reply"]
             if result.get("record"):
-                self._history.append((result["user_text"], "".join(x["text"] for x in reply["lines"])))
+                # Keep her whole reply (sentences AND faces) as JSON: if the model only ever
+                # sees its past answers without faces it learns to stop writing them.
+                self._history.append((result["user_text"], json.dumps({"lines": reply["lines"]}, ensure_ascii=False, separators=(",", ":"))))
                 del self._history[:-MAX_TURNS]
             self.replied.emit(reply)
         else:

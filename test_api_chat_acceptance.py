@@ -256,11 +256,11 @@ check("第 9 次请求: system + 6 轮(12 条) + 本次 user = 14 条", len(m) =
 users = [x["content"] for x in m if x["role"] == "user"]
 assistants = [x["content"] for x in m if x["role"] == "assistant"]
 check("历史里 user 是最近 6 轮(问3..问8) + 本次问9", users == ["问3", "问4", "问5", "问6", "问7", "问8", "问9"], str(users))
-check("历史里 assistant 只有小花的 text(没有 JSON/face)", all(a.startswith("答") and "{" not in a for a in assistants), str(assistants))
+check("历史里 assistant 是她那次回复的 json(带 lines 和 face)", all(json.loads(a)["lines"][0]["text"].startswith("答") and json.loads(a)["lines"][0]["face"] == "neutral" for a in assistants), str(assistants))
 REPLY["content"] = json.dumps({"lines": [{"text": "第一句。", "face": "smirk"}, {"text": "第二句！", "face": "angry"}]}, ensure_ascii=False)
 sj = make()
 sj.ask("分句")
-check("历史里小花那一句存各句 text 直接拼起来", sj.history_turns() == [("分句", "第一句。第二句！")], str(sj.history_turns()))
+check("历史里小花那一句存解析后的完整结构(紧凑 json)", sj.history_turns() == [("分句", '{"lines":[{"text":"第一句。","face":"smirk"},{"text":"第二句！","face":"angry"}]}')], str(sj.history_turns()))
 REPLY["content"] = '{"text": "好的。", "face": ["smirk"]}'
 check("最后一条是本次 user, system 仍在最前", m[-1]["content"] == "问9" and m[0]["role"] == "system")
 
@@ -696,7 +696,7 @@ check("第一次带 response_format, 重试不带", f.bodies[0].get("response_fo
 check("重试的请求体其余部分与第一次相同(同样的 messages / model / max_tokens / thinking)",
       all(f.bodies[0][k] == f.bodies[1][k] for k in ("model", "messages", "max_tokens", "stream", "thinking")))
 check("重试成功: 正常 replied, 没有 failed", sx.got == [{"lines": [{"text": "重试成功。", "face": "smirk"}]}] and sx.errs == [], str(sx.got))
-check("重试成功: 这一轮进历史(只一轮)", sx.history_turns() == [("x", "重试成功。")], str(sx.history_turns()))
+check("重试成功: 这一轮进历史(只一轮)", sx.history_turns() == [("x", '{"lines":[{"text":"重试成功。","face":"smirk"}]}')], str(sx.history_turns()))
 f = SeqFetcher("  \n", "")
 sx = ds_session(f)
 if app_log.LOG_PATH.exists():
@@ -741,6 +741,94 @@ check("没有 choices: 日志原因代号 no_choices", "reason=no_choices" in ap
 log_now = app_log.LOG_PATH.read_text(encoding="utf-8")
 check("原因代号的日志里没有回复内容 / 用户输入 / key", BAD_SECRET not in log_now and USER_SECRET not in log_now and KEY not in log_now)
 check("日志行格式: 只有分类 + 原因代号 + host", all(("API 聊天失败：bad_response" in ln and "host=" in ln and "reason=" in ln) for ln in log_now.splitlines() if "bad_response" in ln))
+
+print("== 6g 历史保留表情 / 表情名大小写 / 诊断行 ==")
+two = {"lines": [{"text": "第一句。", "face": "smirk"}, {"text": "第二句！", "face": "angry"}]}
+REPLY["content"] = json.dumps(two, ensure_ascii=False)
+sh = make()
+sh.ask("问一")
+REQS.clear()
+sh.ask("问二")
+msgs_h = last_req()["body"]["messages"]
+asst = [x["content"] for x in msgs_h if x["role"] == "assistant"]
+check("历史里 assistant 的 content 是合法 json", len(asst) == 1 and isinstance(json.loads(asst[0]), dict), str(asst))
+check("解析出来的 lines 和上次回复一致", json.loads(asst[0]) == two == sh.got[0], f"{asst} {sh.got[0]}")
+check("content 是紧凑格式、不转义中文", asst[0] == json.dumps(two, ensure_ascii=False, separators=(",", ":")) and "\\u" not in asst[0], asst[0])
+check("用户那一句照旧存原文", [x["content"] for x in msgs_h if x["role"] == "user"][-2] == "问一")
+for i in range(8):
+    sh.ask(f"再问{i}")
+check("超过 6 轮仍然只留 6 轮", len(sh.history_turns()) == 6, str(len(sh.history_turns())))
+n_h = len(sh.history_turns())
+sh.comment("某应用")
+check("comment 不进历史", len(sh.history_turns()) == n_h and all("某应用" not in u for u, _ in sh.history_turns()))
+for i, (u, a) in enumerate(sh.history_turns()):
+    assert json.loads(a)["lines"]
+check("历史里每一轮的 assistant 都是 lines 结构", all("lines" in json.loads(a) for _, a in sh.history_turns()))
+
+VC = set(FACES)
+for written in ("Smirk", " smirk ", "SMIRK", "sMiRk\t"):
+    r = ac.parse_reply(json.dumps({"lines": [{"text": "好。", "face": written}]}), VC)
+    check(f"表情名 {written!r} -> smirk", r["lines"][0]["face"] == "smirk", str(r))
+r = ac.parse_reply(json.dumps({"lines": [{"text": "好。", "face": [" Bogus ", " ANGRY "]}]}), VC)
+check("face 数组里取第一个合法的(大小写不敏感)", r["lines"][0]["face"] == "angry", str(r))
+r = ac.parse_reply('{"text": "好。再见。", "face": ["Smirk", " WINK "]}', VC)
+check("旧格式的表情名也大小写不敏感", [x["face"] for x in r["lines"]] == ["smirk", "wink"], str(r))
+r = ac.parse_reply("好。\nSmile → WINK", VC)
+check("文本里写的标注也大小写不敏感(并被移走)", r == {"lines": [{"text": "好。", "face": "smile"}]}, str(r))
+for written in ("Drag_Face", "drag_face", " DRAG_FACE "):
+    r = ac.parse_reply(json.dumps({"lines": [{"text": "拖。", "face": written}]}), VC)
+    check(f"{written!r} 仍然是 neutral(drag_face 不在清单里)", r["lines"][0]["face"] == "neutral", str(r))
+check("合法名字回写成清单里的规范写法", ac.parse_reply('{"lines": [{"text": "好。", "face": "N_Left_Glance"}]}', VC)["lines"][0]["face"] == "n_left_glance")
+check("I Smile at you 这种普通句子仍然不动", ac.parse_reply("I Smile at you", VC)["lines"][0]["text"] == "I Smile at you")
+rules = ac.build_rules(FACES)
+check("build_rules 有新那句: 表情跟着情绪选, 情绪变了就换, 不要每句都一样", "跟着这一句的情绪来选" in rules and "情绪变了就换表情" in rules and "不要每句都用同一个表情" in rules)
+
+import paths  # noqa: E402
+
+check("IS_DEV 来自 paths(源码运行为真)", ac.IS_DEV is paths.IS_DEV)
+if app_log.LOG_PATH.exists():
+    app_log.LOG_PATH.unlink()
+DIAG_SECRET = "SENTINEL_台词内容_424242"
+REPLY["content"] = json.dumps({"lines": [{"text": DIAG_SECRET + "一。", "face": "smirk"}, {"text": "二。", "face": "Angry"}, {"text": "三。", "face": "smirk"}]}, ensure_ascii=False)
+make().ask(USER_SECRET)
+diag = [ln for ln in app_log.LOG_PATH.read_text(encoding="utf-8").splitlines() if "API 聊天回复" in ln]
+check("IS_DEV 时每次成功回复写一行诊断", len(diag) == 1, str(diag))
+check("诊断行格式: 「API 聊天回复：3 句，表情 smirk,angry,smirk」", diag and diag[0].endswith("API 聊天回复：3 句，表情 smirk,angry,smirk"), str(diag))
+check("诊断行里只有句数和表情名, 没有台词内容", diag and DIAG_SECRET not in diag[0] and "一。" not in diag[0] and USER_SECRET not in diag[0] and "host" not in diag[0], str(diag))
+check("给了合法表情时没有「模型没给表情」", "模型没给表情" not in diag[0])
+if app_log.LOG_PATH.exists():
+    app_log.LOG_PATH.unlink()
+for content in (json.dumps({"lines": [{"text": DIAG_SECRET + "。"}, {"text": "二。", "face": "no_such_face"}]}, ensure_ascii=False),
+                json.dumps({"text": DIAG_SECRET + "。二。"}, ensure_ascii=False), DIAG_SECRET + "。"):
+    REPLY["content"] = content
+    make().ask("x")
+diag = [ln for ln in app_log.LOG_PATH.read_text(encoding="utf-8").splitlines() if "API 聊天回复" in ln]
+check("模型一句合法表情都没给: 行末加「（模型没给表情）」", len(diag) == 3 and all(ln.endswith("（模型没给表情）") for ln in diag), str(diag))
+check("没给表情时行里的表情全是 neutral", all("表情 neutral" in ln for ln in diag), str(diag))
+check("没给表情的诊断行里也没有台词内容", all(DIAG_SECRET not in ln for ln in diag))
+if app_log.LOG_PATH.exists():
+    app_log.LOG_PATH.unlink()
+REPLY["content"] = '{"lines": [{"text": "好。", "face": "neutral"}]}'
+make().ask("x")
+diag = [ln for ln in app_log.LOG_PATH.read_text(encoding="utf-8").splitlines() if "API 聊天回复" in ln]
+check("模型明确写了 neutral(合法表情): 不算「没给」", len(diag) == 1 and "模型没给表情" not in diag[0], str(diag))
+if app_log.LOG_PATH.exists():
+    app_log.LOG_PATH.unlink()
+ac.IS_DEV = False
+try:
+    REPLY["content"] = json.dumps(two, ensure_ascii=False)
+    make().ask(USER_SECRET)
+    make().probe()
+    ac_log = app_log.LOG_PATH.read_text(encoding="utf-8") if app_log.LOG_PATH.exists() else ""
+finally:
+    ac.IS_DEV = paths.IS_DEV
+check("IS_DEV 为假(打包版): 完全不写诊断行", "API 聊天回复" not in ac_log, ac_log)
+if app_log.LOG_PATH.exists():
+    app_log.LOG_PATH.unlink()
+make().probe()
+make(prefix="/v1/e500").ask("x")
+check("probe 和失败不写「API 聊天回复」", "API 聊天回复" not in (app_log.LOG_PATH.read_text(encoding="utf-8") if app_log.LOG_PATH.exists() else ""))
+REPLY["content"] = '{"text": "好的。", "face": ["smirk"]}'
 
 print("== 7 https 校验 ==")
 check("生产默认 validator 接受 https://", ac.default_url_validator("https://api.deepseek.com/chat/completions") is None)
