@@ -1,5 +1,5 @@
 {
-  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code. update_available is the fallback line used when an update is found but version.json has no 'line': {new_ver} is the new version, {ver} the running one.\nno_update 是“已经是最新版”时的台词，目前代码还没有用到，留给以后的手动检查更新。",
+  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code. update_available is the fallback line used when an update is found but version.json has no 'line': {new_ver} is the new version, {ver} the running one.\nno_update 是“已经是最新版”时的台词，目前代码还没有用到，留给以后的手动检查更新。\nupdate_downloading：点托盘“更新到 vX”开始一键更新、后台下载时说。update_busy：更新已在进行中又点了一次时说。update_restarting：下载校验解压都完成、小花退出让新版接管时说（代替告别台词）。update_failed：一键更新任何一步失败、改为打开下载页时说。update_done：更新后第一次启动（--updated-from）时说，{ver} 是新版本。update_rolled_back：更新失败并回滚、旧版重新启动（--update-failed）时说。以上六个池目前都是【占位】文案。",
   "duplicate_launch": [
     {
       "text": "一个我还不够吗？",
@@ -160,6 +160,42 @@
         "calm",
         "sheepish_smile"
       ]
+    }
+  ],
+  "update_downloading": [
+    {
+      "text": "【占位】正在下载新版本，请稍等。",
+      "face": "neutral"
+    }
+  ],
+  "update_busy": [
+    {
+      "text": "【占位】已经在更新了，别急。",
+      "face": "neutral"
+    }
+  ],
+  "update_restarting": [
+    {
+      "text": "【占位】我先退下，马上换上新版本。",
+      "face": "neutral"
+    }
+  ],
+  "update_failed": [
+    {
+      "text": "【占位】自动更新没成功，我带你去下载页。",
+      "face": "neutral"
+    }
+  ],
+  "update_done": [
+    {
+      "text": "【占位】更新完成了，现在是 {ver}。",
+      "face": "neutral"
+    }
+  ],
+  "update_rolled_back": [
+    {
+      "text": "【占位】更新没成功，已经退回旧版本。",
+      "face": "neutral"
     }
   ]
 }

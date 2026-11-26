@@ -54,6 +54,7 @@ from stats import Stats
 from update_checker import UpdateChecker
 from user_data import autostart_exe_dir, migrate_legacy_data, pick_legacy_source
 from pet_window import PetWindow
+import update_flow
 import updater_apply
 
 
@@ -88,6 +89,9 @@ def main():
     running_from_temp = (not IS_DEV) and updater_apply.is_running_from_temp()
     if running_from_temp:
         app_log.log_event(f"运行在系统临时目录（{APP_DIR}）：跳过旧数据迁移和开机自启同步")
+    elif not IS_DEV:
+        # leftovers of earlier one-click updates (never touches other folders)
+        update_flow.cleanup_old_update_dirs(log=app_log.log_event)
 
     # Single-instance guard: must run before any window is created. If a
     # live instance already answers, this process notifies it and exits

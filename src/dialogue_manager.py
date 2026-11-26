@@ -1012,6 +1012,19 @@ class DialogueManager(QObject):
         segments = [dict(seg, text=seg.get("text", "").replace("{new_ver}", str(new_version))) for seg in segments]
         self._submit("update_available", segments, PRI_CHAT, bypass_interval=True)
 
+    # One-click update lines (dialogues_system.json): update_downloading,
+    # update_busy, update_failed, update_done, update_rolled_back are said
+    # like any chat line; update_restarting replaces the goodbye line (see
+    # pick_update_segments / PetWindow.request_quit_for_update).
+    def trigger_update_line(self, category):
+        self._submit(category, self._pick(category), PRI_CHAT, bypass_interval=True)
+
+    def pick_update_segments(self, category):
+        segments = self._pick(category)
+        if segments is None:
+            return None
+        return [dict(s, text=self._substitute(s.get("text", ""))) for s in segments]
+
     # --------------------------------------------------------- menu flavor
     def trigger_menu_flavor(self, category):
         """One-off flavor line for a direct right-click-menu action (pin,
