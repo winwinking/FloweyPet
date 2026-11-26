@@ -49,6 +49,7 @@ def _build_menu_spec(pet):
             "items": [
                 {"type": "action", "label": "查看信息", "action": pet._view_info},
                 {"type": "action", "label": "调情", "action": pet._on_flirt_clicked, "key": "flirt"},
+                {"type": "action", "label": "聊天", "action": lambda: pet._open_chat()},  # looked up on click, not at menu build
             ],
         },
         {

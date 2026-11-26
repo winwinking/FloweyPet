@@ -11,7 +11,7 @@ import random
 import sys
 import time
 
-from PyQt6.QtCore import QPoint, Qt, QTimer, QUrl, pyqtSignal
+from PyQt6.QtCore import QPoint, QRect, Qt, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QCursor, QDesktopServices, QIcon, QPainter
 from PyQt6.QtWidgets import (
     QApplication,
@@ -28,6 +28,7 @@ import app_log
 import anticheat
 import dialogue_log
 import flirt as flirt_dialogue
+from chat_box import ChatBox
 from dialogue_arbiter import DialogueArbiter
 from config import DEFAULT_PET_SIZE_TIERS
 from dialogue_box import DialogueBox
@@ -100,6 +101,19 @@ def _guarded_menu_action(context):
     return decorator
 
 
+def _chat_visible(pet):
+    """True while the chat box (行动 -> 聊天) is open. A module-level helper,
+    not a method, so lightweight stand-ins for PetWindow (tests) that lack
+    the attribute simply count as "closed"."""
+    box = getattr(pet, "_chat_box", None)
+    return box is not None and box.isVisible()
+
+
+def _close_chat(pet):
+    if _chat_visible(pet):
+        pet._chat_box.close()
+
+
 class State:
     APPEARING = "appearing"
     IDLE = "idle"
@@ -150,6 +164,7 @@ class PetWindow(QWidget):
         self._pomodoro_active = False
         self._current_category = None
         self._active_popup = None
+        self._chat_box = None  # created lazily by _open_chat; there is only ever one
         self._last_face_key = None
         self._appear_source = "appear"
         self._last_duplicate_launch_roast = float("-inf")
@@ -239,6 +254,8 @@ class PetWindow(QWidget):
         set_click_through(self, self._locked)
 
     def _apply_click_through(self, on):
+        if on:
+            _close_chat(self)  # locking closes the chat box (it would otherwise be a live input on a locked pet)
         for w in (self, self.dialogue_box, self.pomodoro_display):
             set_click_through(w, on)
         # The tooltip's "（已锁定）" suffix follows the lock. Deferred to the event
@@ -262,6 +279,9 @@ class PetWindow(QWidget):
         apply_topmost(self, checked)
         self.dialogue_box.set_always_on_top(checked)
         self.pomodoro_display.set_always_on_top(checked)
+        chat = getattr(self, "_chat_box", None)
+        if chat is not None:
+            chat.set_always_on_top(checked)
         self.arbiter.finish_feature("pin", lambda: self.dm.trigger_menu_flavor("pin_on" if checked else "pin_off"))
 
     def _resolve_start_position(self, w, h):
@@ -361,6 +381,7 @@ class PetWindow(QWidget):
             self.state == State.IDLE
             and not self._dragging
             and not self._pomodoro_active
+            and not _chat_visible(self)
             and not self.reminders.is_awaiting_response()
             and not self.flirt.is_confronting()
             and not self.game_detector.is_any_game_running()
@@ -376,7 +397,8 @@ class PetWindow(QWidget):
         if self._pending_quit:
             return
         if (
-            not self.reminders.is_awaiting_response()
+            not _chat_visible(self)
+            and not self.reminders.is_awaiting_response()
             and not self.flirt.is_confronting()
             and not self.game_detector.is_any_game_running()
         ):
@@ -415,6 +437,9 @@ class PetWindow(QWidget):
         anchor_y = self.pomodoro_display.y() if self.pomodoro_display.isVisible() else self.y()
         pet_bottom = self.y() + self.height()
         self.dialogue_box.follow(self.x(), anchor_y, self.pet_display_width, pet_bottom)
+        if _chat_visible(self):
+            # the bubble may have just flipped below the pet: keep the chat box clear of it
+            self._position_chat_box(self.dialogue_box.geometry())
 
     # ------------------------------------------------------------- dialogue
     def _on_show_requested(self, segments, category):
@@ -546,6 +571,8 @@ class PetWindow(QWidget):
             self._position_pomodoro_display()
         if self.dialogue_box.isVisible():
             self._position_dialogue_box()
+        elif _chat_visible(self):
+            self._position_chat_box()
 
     def mouseReleaseEvent(self, event):
         if event.button() != Qt.MouseButton.LeftButton or not self._dragging:
@@ -824,6 +851,7 @@ class PetWindow(QWidget):
         self.stats.record_interaction()
         self._close_active_popup()
         if self.isVisible():
+            _close_chat(self)
             self._hide_with_flavor()
         else:
             self._start_emerge(lambda: self.arbiter.finish_feature("hide", lambda: self.dm.trigger_menu_flavor("show")))
@@ -1142,9 +1170,19 @@ class PetWindow(QWidget):
             scale,
             self.config.get("bubble_min_font_size", 15),
         )
+        chat = getattr(self, "_chat_box", None)
+        if chat is not None:
+            chat.reconfigure(
+                self.pet_display_width,
+                self.config.get("font_scale", 1.75),
+                scale,
+                self.config.get("bubble_min_font_size", 15),
+            )
         self.pomodoro_display.reconfigure(self.pet_display_width)
         if self.dialogue_box.isVisible():
             self._position_dialogue_box()
+        elif _chat_visible(self):
+            self._position_chat_box()
         if self.pomodoro_display.isVisible():
             self._position_pomodoro_display()
 
@@ -1211,6 +1249,81 @@ class PetWindow(QWidget):
         self._active_popup = panel
         panel.show()
         panel.setFocus()
+
+    # ------------------------------------------------------------------ chat
+    def is_chat_open(self):
+        return _chat_visible(self)
+
+    @_guarded_menu_action("聊天")
+    def _open_chat(self):
+        """行动 -> 聊天. One ChatBox for the whole session: already open
+        just means "focus it again", never a second box."""
+        self._close_active_popup()
+        if self._pending_quit:
+            return
+        self.stats.record_interaction()
+        box = self._chat_box
+        if box is None:
+            box = ChatBox(
+                self.pet_display_width,
+                self.config.get("font_scale", 1.75),
+                self._always_on_top,
+                self.pet_scale,
+                self.config.get("bubble_min_font_size", 15),
+            )
+            box.submitted.connect(self._on_chat_submitted)
+            self._chat_box = box
+        if not box.isVisible():
+            box.show()  # needs a size on screen before it can be placed
+        self._position_chat_box()
+        box.open_and_focus()
+        # The menu popup that triggered us is still closing and may hand
+        # keyboard focus back to the pet window as it goes; take it again
+        # on the next event-loop turn.
+        QTimer.singleShot(0, lambda: box.open_and_focus() if box.isVisible() else None)
+
+    def _position_chat_box(self, bubble_rect=None):
+        """Under the pet, centred. If that spot doesn't fit the screen (with
+        bubble_screen_margin) or would overlap the pet or the dialogue
+        bubble: right of the pet, then left, then above it, and as a last
+        resort the screen-clamped spot below."""
+        from dialogue_box import GAP_ABOVE_PET
+        from undertale_ui import clamp_rect_to_screen, screen_available_rect
+
+        box = getattr(self, "_chat_box", None)
+        if box is None:
+            return
+        margin = self.config.get("bubble_screen_margin", 8)
+        pet_rect = QRect(self.x(), self.y(), self.width(), self.height())
+        screen = screen_available_rect(pet_rect.x(), pet_rect.y(), pet_rect.width(), pet_rect.height())
+        if bubble_rect is None and self.dialogue_box.isVisible():
+            bubble_rect = self.dialogue_box.geometry()
+        bw, bh = box.width(), box.height()
+        gap = GAP_ABOVE_PET
+        pet_bottom = pet_rect.y() + pet_rect.height()
+        cx = pet_rect.x() + (pet_rect.width() - bw) // 2
+        inner = screen.adjusted(margin, margin, -margin, -margin)
+
+        def clear(r):
+            return inner.contains(r) and not r.intersects(pet_rect) and (bubble_rect is None or not r.intersects(bubble_rect))
+
+        below = clamp_rect_to_screen(QRect(cx, pet_bottom + gap, bw, bh), screen, margin)
+        candidates = [
+            below,
+            QRect(pet_rect.x() + pet_rect.width() + gap, pet_bottom - bh, bw, bh),
+            QRect(pet_rect.x() - gap - bw, pet_bottom - bh, bw, bh),
+            clamp_rect_to_screen(QRect(cx, pet_rect.y() - gap - bh, bw, bh), screen, margin),
+        ]
+        chosen = next((r for r in candidates if clear(r)), below)
+        box.move(chosen.x(), chosen.y())
+
+    def _on_chat_submitted(self, text):
+        # `text` is deliberately unused: no API yet, and what the user types
+        # must never reach a log.
+        if self._pending_quit:
+            return
+        self.stats.record_interaction()
+        self.dm.trigger_chat_no_api()
 
     @_guarded_menu_action("战斗")
     def _on_fight_clicked(self):
@@ -1401,6 +1514,7 @@ class PetWindow(QWidget):
         self._exit_interrupted = False
         self._resume_exit_animation_after_interrupt = False
         self._close_active_popup()
+        _close_chat(self)
         self.reminders.chase.lock_for_exit()
         QTimer.singleShot(EXIT_FAILSAFE_MS, self._quit_now)
 

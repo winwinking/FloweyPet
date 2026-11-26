@@ -1,0 +1,9 @@
+{
+  "_readme": "聊天（行动 → 聊天）相关的台词池都放在这个文件里。格式同 dialogue.json：每条是 {text, face}，face 可以是单个表情名，或表情名数组（打字过程中依次切换）。表情名必须和 assets/faces 下的文件夹名完全一致，不存在的会退回 neutral。chat_no_api：用户在聊天框发了话，但还没配置 API 时的回应。",
+  "chat_no_api": [
+    {
+      "text": "你想跟我说话？那你先去「存档点」把 API 接上。不然我只会说这一句。",
+      "face": ["frown", "smirk", "serious"]
+    }
+  ]
+}

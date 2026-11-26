@@ -23,6 +23,7 @@ REQUIRED = [
     "dialogue.json",
     "dialogues_anticheat.json",
     "dialogues_chase.json",
+    "dialogues_chat.json",
     "dialogues_flirt.json",
     "dialogues_game.json",
     "dialogues_info.json",
