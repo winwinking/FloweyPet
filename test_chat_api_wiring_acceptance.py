@@ -94,6 +94,7 @@ class Fake:
         self.mode = mode
         self.text = text
         self.gate = None  # threading.Event: hold the answer until set
+        self.content = None  # when set (and mode "ok"): the raw message content to answer with
 
     def __call__(self, url, headers, body, timeout):
         self.calls.append({"url": url, "headers": dict(headers), "body": json.loads(body)})
@@ -108,6 +109,8 @@ class Fake:
             raise socket.timeout("timed out")
         if m == "junk":
             return b"not json"
+        if self.content is not None:
+            return completion(self.content)
         return completion(json.dumps({"text": self.text, "face": ["smirk", "angry"]}, ensure_ascii=False))
 
 
@@ -189,7 +192,7 @@ check("用户的话是请求里的最后一条 user 消息", fake.calls[0]["body
 check("先说 chat_wait 再说 chat_reply", cats(shown) == ["chat_wait", "chat_reply"], str(cats(shown)))
 check("chat_wait 的文字是「……」, 表情 n_left_glance", shown[0][1] == "……" and shown[0][2][0]["face"] == "n_left_glance", str(shown[0]))
 seg = shown[1][2][0]
-check("chat_reply 的 segment: text 与 face 正确", seg == {"text": "哼，知道了。", "face": ["smirk", "angry"]}, str(seg))
+check("chat_reply 的 segment: text 与 face 正确", seg == {"text": "哼，知道了。", "face": "smirk"}, str(seg))
 check("chat_wait 与 chat_reply 都是用 cut_in 说的", dm.cut_in_calls == ["chat_wait", "chat_reply"], str(dm.cut_in_calls))
 check("回复到了后 _chat_waiting 复位", pet._chat_waiting is False)
 check("历史只在内存: 会话里有一轮", pet._chat_session.history_turns() == [("你好小花", "哼，知道了。")])
@@ -205,6 +208,29 @@ check("config 里的地址/模型被用上", fake2.calls[0]["url"] == "https://o
 pet3, fake3, shown3, dm3 = rig(config_patch={"base_url": "", "model": ""})
 pet3._on_chat_submitted("x")
 check("config 里地址/模型为空: 用默认值", fake3.calls[0]["url"].startswith("https://api.deepseek.com/") and fake3.calls[0]["body"]["model"] == "deepseek-flash")
+
+print("== 1b 分句回复: 一句一个 segment, 一个表情 ==")
+pet, fake, shown, dm = rig()
+fake.content = json.dumps({"lines": [{"text": "甲。", "face": "smirk"}, {"text": "乙！", "face": "angry"}, {"text": "丙……", "face": "worry"}]}, ensure_ascii=False)
+pet._on_chat_submitted("说三句")
+segs = shown[-1][2]
+check("回复的每一句做成一个 segment", shown[-1][0] == "chat_reply" and len(segs) == 3 and [x["text"] for x in segs] == ["甲。", "乙！", "丙……"], str(segs))
+check("每个 segment 的 face 是单个字符串(不是数组)", [x["face"] for x in segs] == ["smirk", "angry", "worry"] and all(isinstance(x["face"], str) for x in segs), str(segs))
+check("整组 segments 一次交给 cut_in(category chat_reply)", dm.cut_in_calls == ["chat_wait", "chat_reply"], str(dm.cut_in_calls))
+check("segment 里只有 text 和 face 两个键", all(set(x) == {"text", "face"} for x in segs))
+check("历史里小花那一句是各句 text 直接拼起来", pet._chat_session.history_turns() == [("说三句", "甲。乙！丙……")], str(pet._chat_session.history_turns()))
+pet, fake, shown, dm = rig()
+fake.content = json.dumps({"lines": [{"text": f"第{i}句。", "face": "smirk"} for i in range(1, 7)]}, ensure_ascii=False)
+pet._on_chat_submitted("说六句")
+check("超过 4 句: 只播前 4 句", [x["text"] for x in shown[-1][2]] == ["第1句。", "第2句。", "第3句。", "第4句。"], str(shown[-1][2]))
+pet, fake, shown, dm = rig()
+fake.content = '{"text": "旧格式一。旧格式二。", "face": ["wink", "grin"]}'
+pet._on_chat_submitted("旧格式")
+check("模型回了旧格式: 拆成多个 segment, 各一个表情", [(x["text"], x["face"]) for x in shown[-1][2]] == [("旧格式一。", "wink"), ("旧格式二。", "grin")], str(shown[-1][2]))
+pet, fake, shown, dm = rig()
+fake.content = '{"lines": []}'
+pet._on_chat_submitted("空的")
+check("lines 为空: bad_response -> chat_api_error", cats(shown) == ["chat_wait", "chat_api_error"], str(cats(shown)))
 
 # ===================================================================== 2
 print("== 2 没 key ==")
@@ -524,8 +550,14 @@ pet._make_chat_session = lambda: ac.ChatSession(pet._api_settings, dm._substitut
                                                 use_thread=False, persona_path=PERSONA)
 pet._on_chat_submitted(USER_SECRET)
 store.delete_key()
+for body in ('{"lines": [{"text": "😀", "note": "' + REPLY_SECRET + '"}]}', '{"lines": [], "note": "' + REPLY_SECRET + '"}',
+             '{"text": "' + REPLY_SECRET + '", "face": ["smirk"]}', ""):
+    pet, fake, shown, dm = rig(key=KEY, text=REPLY_SECRET)
+    fake.content = body
+    pet._on_chat_submitted(USER_SECRET)
 texts = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in TMP.rglob("*.log"))
 check("日志不是空的(失败路径确实写了日志)", "API 聊天失败" in texts, texts[:200])
+check("日志里有 bad_response 的原因代号(只有代号)", "reason=all_lines_empty" in texts and "reason=no_lines" in texts and "reason=empty_content" in texts)
 check("所有日志里没有 key", KEY not in texts and KEY2 not in texts)
 check("所有日志里没有用户输入", USER_SECRET not in texts)
 check("所有日志里没有回复正文", REPLY_SECRET not in texts)

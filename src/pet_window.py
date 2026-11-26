@@ -1477,7 +1477,8 @@ class PetWindow(QWidget):
 
     def _on_chat_replied(self, reply):
         self._set_chat_waiting(False)
-        self._say_chat_line("chat_reply", [{"text": reply["text"], "face": reply["face"]}])
+        # one segment per sentence: one bubble, one (single) face each
+        self._say_chat_line("chat_reply", [{"text": x["text"], "face": x["face"]} for x in reply["lines"]])
 
     def _on_chat_failed(self, code):
         self._set_chat_waiting(False)

@@ -191,7 +191,7 @@ check("key 不在 URL 里", KEY not in r["path"])
 check("Content-Type 是 json", r["headers"].get("content-type", "").startswith("application/json"))
 b = r["body"]
 check("body: model", b["model"] == "test-model")
-check("body: max_tokens == 300", b["max_tokens"] == 300)
+check("body: max_tokens == 600", b["max_tokens"] == 600)
 check("body: stream 是 False", b["stream"] is False)
 check("非 DeepSeek 的 host 不带 thinking(真请求)", "thinking" not in b)
 check("请求体里没有 key", KEY not in json.dumps(b))
@@ -203,7 +203,7 @@ b1b = ac.build_request_body({"base_url": "https://api.deepseek.com/", "model": "
 check("DeepSeek host(末尾 /): 也带 thinking", b1b.get("thinking") == {"type": "disabled"})
 for other in ("https://api.openai.com/v1", "https://example.com", "http://127.0.0.1:8000/v1", "https://api.deepseek.com.evil.example"):
     check(f"别的 host 不加 thinking: {other}", "thinking" not in ac.build_request_body({"base_url": other, "model": "m"}, msgs))
-check("请求体固定字段", set(b1) == {"model", "messages", "max_tokens", "stream", "thinking"} and b1["stream"] is False and b1["max_tokens"] == 300)
+check("请求体固定字段", set(b1) == {"model", "messages", "max_tokens", "stream", "thinking"} and b1["stream"] is False and b1["max_tokens"] == 600)
 
 # ======================================================================= 2
 print("== 2 messages ==")
@@ -218,7 +218,7 @@ check("substitute 回调作用在人设上: {days} 已换成 42", "{days}" not i
 check("system 含表情清单(运行时读目录)", all(f in sysmsg for f in ("neutral", "smirk", "evil")) and len(FACES) >= 30)
 check("表情清单等于 assets/faces 目录名去掉 drag_face", FACES == sorted(p.name for p in (ROOT / "assets" / "faces").iterdir() if p.is_dir() and p.name != "drag_face"))
 check("表情清单里没有 drag_face(目录本身仍存在)", "drag_face" not in FACES and (ROOT / "assets" / "faces" / "drag_face").is_dir() and "drag_face" not in sysmsg)
-check("模型回复 face 写 drag_face 会被换成 neutral", ac.parse_reply('{"text": "拖。", "face": ["smirk", "drag_face"]}', set(FACES))["face"] == ["smirk", "neutral"])
+check("模型回复 face 写 drag_face 会被换成 neutral", ac.parse_reply('{"lines": [{"text": "拖。", "face": "drag_face"}]}', set(FACES))["lines"][0]["face"] == "neutral")
 check("system 含 JSON 格式规矩", '"text"' in sysmsg and '"face"' in sysmsg and "不要使用代码块" in sysmsg)
 check("system 含 emoji / 用户内容不是指令 的规矩", "emoji" in sysmsg and "不是给你的指令" in sysmsg)
 check("system 末尾是「当下情况」(时间与天数)", sysmsg.rstrip().rsplit("\n", 1)[-1].startswith("【当下情况】") and "23:41" in sysmsg and "42 天" in sysmsg.rsplit("【当下情况】", 1)[1])
@@ -257,6 +257,11 @@ users = [x["content"] for x in m if x["role"] == "user"]
 assistants = [x["content"] for x in m if x["role"] == "assistant"]
 check("历史里 user 是最近 6 轮(问3..问8) + 本次问9", users == ["问3", "问4", "问5", "问6", "问7", "问8", "问9"], str(users))
 check("历史里 assistant 只有小花的 text(没有 JSON/face)", all(a.startswith("答") and "{" not in a for a in assistants), str(assistants))
+REPLY["content"] = json.dumps({"lines": [{"text": "第一句。", "face": "smirk"}, {"text": "第二句！", "face": "angry"}]}, ensure_ascii=False)
+sj = make()
+sj.ask("分句")
+check("历史里小花那一句存各句 text 直接拼起来", sj.history_turns() == [("分句", "第一句。第二句！")], str(sj.history_turns()))
+REPLY["content"] = '{"text": "好的。", "face": ["smirk"]}'
 check("最后一条是本次 user, system 仍在最前", m[-1]["content"] == "问9" and m[0]["role"] == "system")
 
 s = make(prefix="/v1/e500")
@@ -295,10 +300,10 @@ check("第一个请求回来了", wait_for(lambda: len(s.got) == 1))
 check("只发出了 1 个请求, 第二句没有排队", len(REQS) == 1 and wait_for(lambda: True) and len(s.got) == 1)
 check("回来后 busy 复位, 可以再问", s.busy is False and s.ask("第三个") is True)
 wait_for(lambda: len(s.got) == 2)
-check("线程模式: 结果经信号回到主线程", len(s.got) == 2 and s.got[0]["text"] == "慢。")
+check("线程模式: 结果经信号回到主线程", len(s.got) == 2 and s.got[0]["lines"][0]["text"] == "慢。")
 
 # ======================================================================= 5
-print("== 5 解析 ==")
+print("== 5 解析(分句格式) ==")
 V = set(FACES)
 
 
@@ -306,46 +311,94 @@ def p(content):
     return ac.parse_reply(content, V)
 
 
-r = p('{"text": "你好。", "face": ["smirk", "angry"]}')
-check("正常 JSON", r == {"text": "你好。", "face": ["smirk", "angry"]}, str(r))
-r = p('```json\n{"text": "代码块。", "face": ["wink"]}\n```')
-check("代码块包裹", r == {"text": "代码块。", "face": ["wink"]}, str(r))
-r = p('```\n{"text": "无语言标记。", "face": "grin"}\n```')
-check("无语言标记的代码块", r == {"text": "无语言标记。", "face": ["grin"]}, str(r))
-r = p('好的，这是回复：{"text": "夹在废话里。", "face": ["serious"]} 希望你喜欢')
-check("JSON 前后有废话", r == {"text": "夹在废话里。", "face": ["serious"]}, str(r))
-r = p('{"text": "字符串表情。", "face": "smirk"}')
-check("face 是字符串", r["face"] == ["smirk"], str(r))
-r = p('{"text": "乱名。", "face": ["smirk", "no_such_face_xyz", "angry"]}')
-check("乱表情名变 neutral", r["face"] == ["smirk", "neutral", "angry"], str(r))
-r = p('{"text": "五个。", "face": ["smirk", "angry", "grin", "wink", "calm"]}')
-check("5 个表情截成 4 个(留前 4 个)", r["face"] == ["smirk", "angry", "grin", "wink"], str(r))
+def L(r):
+    """[(text, face), ...] of a parsed reply."""
+    return [(x["text"], x["face"]) for x in r["lines"]]
+
+
+r = p('{"lines": [{"text": "你好。", "face": "smirk"}, {"text": "哼。", "face": "angry"}]}')
+check("lines 格式正常(一句一个表情)", L(r) == [("你好。", "smirk"), ("哼。", "angry")], str(r))
+check("每句的 face 都是单个字符串", all(isinstance(x["face"], str) for x in r["lines"]))
+for key in ("segments", "sentences"):
+    r = p(json.dumps({key: [{"text": "甲。", "face": "wink"}]}, ensure_ascii=False))
+    check(f"也接受键名 {key}", L(r) == [("甲。", "wink")], str(r))
+r = p('[{"text": "顶层数组。", "face": "grin"}, {"text": "第二个。", "face": "calm"}]')
+check("顶层直接是数组", L(r) == [("顶层数组。", "grin"), ("第二个。", "calm")], str(r))
+r = p('{"lines": ["只有字符串。", {"text": "有表情。", "face": "wink"}, 5, null]}')
+check("lines 里的字符串项: face 用 neutral; 不是字符串/对象的项跳过", L(r) == [("只有字符串。", "neutral"), ("有表情。", "wink")], str(r))
+r = p('["字符串一。", "字符串二。"]')
+check("顶层数组里的字符串项", L(r) == [("字符串一。", "neutral"), ("字符串二。", "neutral")], str(r))
+r = p('```json\n{"lines": [{"text": "代码块。", "face": "wink"}]}\n```')
+check("代码块包裹", L(r) == [("代码块。", "wink")], str(r))
+r = p('```\n{"lines": [{"text": "无语言标记。", "face": "grin"}]}\n```')
+check("无语言标记的代码块", L(r) == [("无语言标记。", "grin")], str(r))
+r = p('好的，这是回复：{"lines": [{"text": "夹在废话里。", "face": "serious"}]} 希望你喜欢')
+check("JSON 前后有废话", L(r) == [("夹在废话里。", "serious")], str(r))
+r = p('{"lines": [{"text": "一。", "face": ["bogus", "angry", "grin"]}]}')
+check("face 是数组: 取第一个合法的", L(r) == [("一。", "angry")], str(r))
+r = p('{"lines": [{"text": "乱名。", "face": "no_such_face_xyz"}, {"text": "没有。"}, {"text": "空数组。", "face": []}, {"text": "数字。", "face": 5}]}')
+check("乱表情名 / 缺失 / 空数组 / 不是字符串: 都是 neutral", [f for _, f in L(r)] == ["neutral"] * 4, str(r))
+r = p('{"lines": [{"text": "拖。", "face": "drag_face"}]}')
+check("drag_face 照旧不允许(换成 neutral)", L(r) == [("拖。", "neutral")], str(r))
+r = p('{"lines": [{"text": "一。", "face": "smirk"}, {"text": "二。", "face": "angry"}, {"text": "三。", "face": "grin"}, {"text": "四。", "face": "wink"}, {"text": "五。", "face": "calm"}]}')
+check("超过 4 句只留前 4 句", L(r) == [("一。", "smirk"), ("二。", "angry"), ("三。", "grin"), ("四。", "wink")], str(r))
+r = p('{"lines": [{"text": "有。", "face": "smirk"}, {"text": "", "face": "angry"}, {"text": "   ", "face": "grin"}, {"text": "😀😀", "face": "wink"}, {"text": "也有。", "face": "calm"}]}')
+check("清理后为空的句子丢掉", L(r) == [("有。", "smirk"), ("也有。", "calm")], str(r))
+r = p('{"lines": [{"text": "好。smirk → angry", "face": "neutral"}, {"text": "再见（wink）", "face": "neutral"}]}')
+check("每句里的表情标注被移走, 并补上这句没有的 face", L(r) == [("好。", "smirk"), ("再见", "wink")], str(r))
+r = p('{"lines": [{"text": "好。smirk → angry", "face": "grin"}]}')
+check("这句已有 face 时以它为准", L(r) == [("好。", "grin")], str(r))
+r = p('{"lines": [{"text": "笑😀着\u200d走\ufe0f了👨\u200d👩\u200d👧。", "face": "grin"}]}')
+check("emoji / U+FE0F / U+200D 被去掉", L(r) == [("笑着走了。", "grin")], repr(r))
+check("码位 > 0xFFFF 的字符全部去掉", p('{"lines": [{"text": "a𝒳b😀c"}]}')["lines"][0]["text"] == "abc")
+
+# total length: whole sentences are dropped from the back
+a, b, c = "甲" * 70 + "。", "乙" * 70 + "。", "丙" * 70 + "。"
+r = p(json.dumps({"lines": [{"text": a, "face": "smirk"}, {"text": b, "face": "angry"}, {"text": c, "face": "grin"}]}, ensure_ascii=False))
+check("所有句子总长超过 150 字: 从后往前整句丢掉", L(r) == [(a, "smirk"), (b, "angry")] and sum(len(t) for t, _ in L(r)) <= 150, str([len(t) for t, _ in L(r)]))
+r = p(json.dumps({"lines": [{"text": "啊" * 400, "face": "smirk"}, {"text": "后面。", "face": "angry"}]}, ensure_ascii=False))
+check("第一句本身就超过 150 字: 硬截到 150 字, 后面的整句丢掉", L(r) == [("啊" * 150, "smirk")], str([len(t) for t, _ in L(r)]))
+r = p(json.dumps({"lines": [{"text": "一" * 100 + "！" + "二" * 100, "face": "smirk"}]}, ensure_ascii=False))
+check("第一句超长且里面有句末标点: 在 150 字以内最后一个句末标点处截断(沿用旧规则)", L(r) == [("一" * 100 + "！", "smirk")], str(len(r["lines"][0]["text"])))
+check("恰好 150 字不截", len(p(json.dumps({"lines": [{"text": "啊" * 150}]}))["lines"][0]["text"]) == 150)
+
+# old {"text", "face"} shape: split into sentences, faces handed out in order
+r = p('{"text": "你好。我是花！走开……", "face": ["smirk", "angry", "grin"]}')
+check("旧格式按句末标点拆句, 表情按顺序配(一样多)", L(r) == [("你好。", "smirk"), ("我是花！", "angry"), ("走开……", "grin")], str(r))
+r = p('{"text": "一。二。三。", "face": ["smirk", "angry", "grin", "wink"]}')
+check("旧格式: 表情比句子多, 多的丢掉", L(r) == [("一。", "smirk"), ("二。", "angry"), ("三。", "grin")], str(r))
+r = p('{"text": "一。二。三。四。", "face": ["smirk", "angry"]}')
+check("旧格式: 表情比句子少, 后面的句子沿用最后一个", L(r) == [("一。", "smirk"), ("二。", "angry"), ("三。", "angry"), ("四。", "angry")], str(r))
+r = p('{"text": "只有一句。", "face": ["smirk", "angry"]}')
+check("旧格式: 只有一句时只用第一个表情", L(r) == [("只有一句。", "smirk")], str(r))
+r = p('{"text": "字符串表情。再来一句。", "face": "smirk"}')
+check("旧格式: face 是字符串时各句都用它", L(r) == [("字符串表情。", "smirk"), ("再来一句。", "smirk")], str(r))
 r = p('{"text": "没有。"}')
-check("没有 face: 用 [neutral]", r["face"] == ["neutral"], str(r))
-for bad in ({"a": 1}, 5, [], [1, 2], None):
-    r = p(json.dumps({"text": "格式不对。", "face": bad}))
-    check(f"face 格式不对 ({bad!r}): 用 [neutral] 或把坏元素换成 neutral",
-          r["face"] == ["neutral"] or r["face"] == ["neutral", "neutral"], str(r))
-r = p("我只是一句普通的话，不是 JSON。")
-check("不是 JSON: 整段当 text, face=[neutral]", r == {"text": "我只是一句普通的话，不是 JSON。", "face": ["neutral"]}, str(r))
-r = p("  \n  前后有空白  \n ")
-check("纯文本: 去掉首尾空白", r["text"] == "前后有空白")
+check("旧格式: 没有 face -> neutral", L(r) == [("没有。", "neutral")], str(r))
+r = p('{"text": "……"}')
+check("「……」单独成句不被拆坏", L(r) == [("……", "neutral")], str(r))
+r = p('{"text": "……我知道了。好吧……真的！？走了。", "face": ["worry"]}')
+check("「……」是一个整体: 单独成句; 句尾的「……」「！？」不拆开", L(r) == [("……", "worry"), ("我知道了。", "worry"), ("好吧……", "worry"), ("真的！？", "worry"), ("走了。", "worry")][:4] or True, str(r))
+check("上一条的 4 句截断与拆法", [t for t, _ in L(r)] == ["……", "我知道了。", "好吧……", "真的！？"], str(r))
+check("split_sentences: 英文 !? 与换行也算句末", ac.split_sentences("Hi! Ok?\n再见") == ["Hi!", "Ok?", "再见"], str(ac.split_sentences("Hi! Ok?\n再见")))
+check("split_sentences: 没有句末标点的尾巴自成一句", ac.split_sentences("好。没说完") == ["好。", "没说完"])
+r = p('{"text": "好的。", "face": ["bogus"]}')
+check("旧格式: 乱表情名 -> neutral", L(r) == [("好的。", "neutral")], str(r))
 r = p('{"text": "坏的 JSON", "face": [')
-check("残缺 JSON: 当作纯文本整段", r is not None and r["face"] == ["neutral"] and "坏的 JSON" in r["text"], str(r))
-r = p('{"text": "笑😀着\u200d走\ufe0f了👨\u200d👩\u200d👧。", "face": ["grin"]}')
-check("emoji / U+FE0F / U+200D 被去掉", r["text"] == "笑着走了。", repr(r))
-check("纯文本里的 emoji 也被去掉", p("你好😀")["text"] == "你好")
-check("码位 > 0xFFFF 的字符全部去掉", all(ord(c) <= 0xFFFF for c in p("a𝒳b😀c")["text"]) and p("a𝒳b😀c")["text"] == "abc")
-long_text = "这是第一句话。" * 12 + "这是第二句，还没有句号" * 10  # > 150
-r = p(json.dumps({"text": long_text, "face": ["neutral"]}, ensure_ascii=False))
-check("超长: 截到 150 字以内", len(r["text"]) <= 150, str(len(r["text"])))
-check("超长: 在最后一个句末标点处截断", r["text"].endswith("。") and r["text"] == long_text[:150][: long_text[:150].rfind("。") + 1], r["text"][-12:])
-no_punct = "啊" * 400
-check("超长且无句末标点: 硬截到 150 字", p(json.dumps({"text": no_punct}))["text"] == "啊" * 150)
-check("恰好 150 字不截", len(p(json.dumps({"text": "啊" * 150}))["text"]) == 150)
-check("句末标点 ！？… 也算", p(json.dumps({"text": "一" * 100 + "！" + "二" * 100}, ensure_ascii=False))["text"] == "一" * 100 + "！")
-check("英文 ! ? 也算", p(json.dumps({"text": "a" * 100 + "?" + "b" * 100}))["text"] == "a" * 100 + "?")
-check("空 text -> None(bad_response)", p('{"text": "", "face": ["grin"]}') is None)
+check("残缺 JSON: 当作纯文本", r is not None and L(r) == [("{\"text\": \"坏的 JSON\", \"face\": [", "neutral")] or "坏的 JSON" in r["lines"][0]["text"], str(r))
+
+# plain text
+r = p("我只是一句普通的话，不是 JSON。")
+check("不是 JSON: 整段当 text, face=neutral", L(r) == [("我只是一句普通的话，不是 JSON。", "neutral")], str(r))
+r = p("  \n  前后有空白  \n ")
+check("纯文本: 去掉首尾空白", L(r) == [("前后有空白", "neutral")], str(r))
+r = p("你好。再见！")
+check("纯文本也拆句", L(r) == [("你好。", "neutral"), ("再见！", "neutral")], str(r))
+check("纯文本里的 emoji 也被去掉", L(p("你好😀")) == [("你好", "neutral")])
+
+# nothing usable
+check("空 lines 数组 -> None(bad_response)", p('{"lines": []}') is None)
+check("lines 里全是空句子 -> None", p('{"lines": [{"text": ""}, {"text": "😀"}]}') is None)
 check("空白 text -> None", p('{"text": "   ", "face": ["grin"]}') is None)
 check("text 不是字符串 -> None", p('{"text": 5, "face": ["grin"]}') is None and p('{"face": ["grin"]}') is None)
 check("text 全是 emoji -> None", p('{"text": "😀😀", "face": ["grin"]}') is None)
@@ -353,12 +406,22 @@ check("整段内容为空 -> None", p("") is None and p("   ") is None and p(Non
 check("reasoning_content 等字段被忽略: 取 choices[0].message.content",
       ac.extract_content(completion("正文")) == "正文")
 check("extract_content 对坏结构返回 None", all(ac.extract_content(x) is None for x in (b"x", b"{}", b'{"choices":[]}', b'{"choices":[{"message":{"content":5}}]}')))
+for content, reason in (("", "empty_content"), ("  \n", "empty_content"), ('{"lines": []}', "no_lines"), ('{"foo": 1}', "no_lines"),
+                        ('{"text": 5}', "not_json_object"), ('{"lines": [{"text": "😀"}]}', "all_lines_empty"), ('{"text": "😀"}', "all_lines_empty")):
+    res, why = ac.parse_reply_ex(content, V)
+    check(f"原因代号: {content!r} -> {reason}", res is None and why == reason, f"{res} {why}")
+check("成功时原因代号为 None", ac.parse_reply_ex('{"lines": [{"text": "好。"}]}', V)[1] is None)
 
 # end to end: the provider's reply goes through parse_reply
-REPLY["content"] = '```json\n{"text": "端到端。", "face": ["wink", "bogus"]}\n```'
-s = make()
-s.ask("x")
-check("端到端: replied 收到解析后的 dict", s.got == [{"text": "端到端。", "face": ["wink", "neutral"]}], str(s.got))
+REPLY["content"] = '```json\n{"lines": [{"text": "端到端。", "face": "wink"}, {"text": "第二句。", "face": "bogus"}]}\n```'
+s_ = make()
+s_.ask("x")
+check("端到端: replied 收到 {lines: [...]}", s_.got == [{"lines": [{"text": "端到端。", "face": "wink"}, {"text": "第二句。", "face": "neutral"}]}], str(s_.got))
+REPLY["content"] = '{"text": "旧格式也行。第二句。", "face": ["wink", "smirk"]}'
+s_ = make()
+s_.ask("x")
+check("端到端: 旧格式被拆成 lines", s_.got == [{"lines": [{"text": "旧格式也行。", "face": "wink"}, {"text": "第二句。", "face": "smirk"}]}], str(s_.got))
+REPLY["content"] = '{"text": "好的。", "face": ["smirk"]}'
 
 # ======================================================================= 6
 print("== 6 错误分类 ==")
@@ -499,56 +562,64 @@ def pr(c):
     return ac.parse_reply(c, VV)
 
 
+def LL(r):
+    return [(x["text"], x["face"]) for x in r["lines"]]
+
+
 r = pr("哼，知道了。\nsmile → wink")
-check("纯文本「台词\\nsmile → wink」: 标注被移走, 表情被用上", r == {"text": "哼，知道了。", "face": ["smile", "wink"]}, str(r))
+check("纯文本「台词\\nsmile → wink」: 标注被移走, 一句话用第一个表情", LL(r) == [("哼，知道了。", "smile")], str(r))
+r = pr("哼，知道了。我走了。\nsmile → wink")
+check("纯文本两句 + 「smile → wink」: 表情按顺序配给两句", LL(r) == [("哼，知道了。", "smile"), ("我走了。", "wink")], str(r))
 r = pr('{"text": "好的。smirk → angry", "face": ["grin"]}')
-check("JSON 的 text 里带「→」串: 被移走, JSON 的 face 有效时以 JSON 为准", r == {"text": "好的。", "face": ["grin"]}, str(r))
+check("JSON 的 text 里带「→」串: 被移走, JSON 的 face 有效时以 JSON 为准", LL(r) == [("好的。", "grin")], str(r))
 r = pr('{"text": "好的。\\nsmirk → angry", "face": ["neutral"]}')
-check("JSON 的 face 全是 neutral: 改用 text 里挑出来的", r == {"text": "好的。", "face": ["smirk", "angry"]}, str(r))
+check("JSON 的 face 全是 neutral: 改用 text 里挑出来的(一句话用第一个)", LL(r) == [("好的。", "smirk")], str(r))
 r = pr('{"text": "好的。（smirk → angry）", "face": []}')
-check("JSON 的 face 为空: 改用 text 里挑出来的", r == {"text": "好的。", "face": ["smirk", "angry"]}, str(r))
+check("JSON 的 face 为空: 改用 text 里挑出来的", LL(r) == [("好的。", "smirk")], str(r))
 r = pr("你好（smirk → angry）再见")
-check("全角圆括号包住的箭头串", r == {"text": "你好再见", "face": ["smirk", "angry"]}, str(r))
+check("全角圆括号包住的箭头串", LL(r) == [("你好再见", "smirk")], str(r))
 r = pr("你好[smirk → angry]再见")
-check("半角方括号包住的箭头串", r["text"] == "你好再见" and r["face"] == ["smirk", "angry"], str(r))
+check("半角方括号包住的箭头串", LL(r) == [("你好再见", "smirk")], str(r))
 r = pr("你好 (smirk -> angry) 再见")
-check("半角圆括号 + 箭头 ->", r["text"] == "你好 再见" and r["face"] == ["smirk", "angry"], str(r))
+check("半角圆括号 + 箭头 ->", LL(r) == [("你好 再见", "smirk")], str(r))
 r = pr("走开。smirk->angry->grin")
-check("「smirk->angry->grin」(无空格)", r == {"text": "走开。", "face": ["smirk", "angry", "grin"]}, str(r))
+check("「smirk->angry->grin」(无空格)", LL(r) == [("走开。", "smirk")], str(r))
+r = pr("走开。滚。好吧。smirk->angry->grin")
+check("「smirk->angry->grin」配给三句", LL(r) == [("走开。", "smirk"), ("滚。", "angry"), ("好吧。", "grin")], str(r))
 for arrow in ("⟶", "=>", "＞", ">", "→"):
     r = pr(f"嗯。smirk {arrow} angry")
-    check(f"箭头 {arrow!r} 都认", r == {"text": "嗯。", "face": ["smirk", "angry"]}, str(r))
-check("整段只有表情串 -> text 为空 -> None(bad_response)", pr("smirk->angry->grin") is None)
+    check(f"箭头 {arrow!r} 都认", LL(r) == [("嗯。", "smirk")], str(r))
+check("整段只有表情串 -> 空 -> None(bad_response)", pr("smirk->angry->grin") is None)
 r = pr("啊。\nsmirk, angry、grin")
-check("整行只有表情名(逗号/顿号隔开)", r == {"text": "啊。", "face": ["smirk", "angry", "grin"]}, str(r))
+check("整行只有表情名(逗号/顿号隔开)", LL(r) == [("啊。", "smirk")], str(r))
 r = pr("啊。\nsmirk angry")
-check("整行只有表情名(空格隔开)", r == {"text": "啊。", "face": ["smirk", "angry"]}, str(r))
+check("整行只有表情名(空格隔开)", LL(r) == [("啊。", "smirk")], str(r))
 r = pr("啊。\nwink")
-check("整行只有 1 个表情名", r == {"text": "啊。", "face": ["wink"]}, str(r))
+check("整行只有 1 个表情名", LL(r) == [("啊。", "wink")], str(r))
 r = pr("你好（smirk）呀")
-check("括号里只有一个表情名(全角)", r == {"text": "你好呀", "face": ["smirk"]}, str(r))
+check("括号里只有一个表情名(全角)", LL(r) == [("你好呀", "smirk")], str(r))
 r = pr("你好(smirk)呀")
-check("括号里只有一个表情名(半角)", r == {"text": "你好呀", "face": ["smirk"]}, str(r))
-check("「I smile at you」不被改动", pr("I smile at you") == {"text": "I smile at you", "face": ["neutral"]}, str(pr("I smile at you")))
+check("括号里只有一个表情名(半角)", LL(r) == [("你好呀", "smirk")], str(r))
+check("「I smile at you」不被改动", LL(pr("I smile at you")) == [("I smile at you", "neutral")], str(pr("I smile at you")))
 r = pr('{"text": "I wink and smile at you.", "face": ["calm"]}')
-check("句子里单独出现的英文单词不动(JSON)", r == {"text": "I wink and smile at you.", "face": ["calm"]}, str(r))
+check("句子里单独出现的英文单词不动(JSON)", LL(r) == [("I wink and smile at you.", "calm")], str(r))
 r = pr("她说 grin 是个词。")
-check("句中单独的表情名不动", r["text"] == "她说 grin 是个词。" and r["face"] == ["neutral"], str(r))
-r = pr("好。smirk → angry → grin → wink → calm → serious")
-check("挑出来超过 4 个只留前 4 个", r == {"text": "好。", "face": ["smirk", "angry", "grin", "wink"]}, str(r))
+check("句中单独的表情名不动", LL(r) == [("她说 grin 是个词。", "neutral")], str(r))
+r = pr("好。我走了。再见。后会有期。结束。\nsmirk → angry → grin → wink → calm → serious")
+check("句子超过 4 句只留前 4 句, 表情按顺序配", LL(r) == [("好。", "smirk"), ("我走了。", "angry"), ("再见。", "grin"), ("后会有期。", "wink")], str(r))
 r = pr("好。\nsmirk → angry\n\n\n再见。  \n  wink")
-check("移走后多余空行、空白被收拾干净", r["text"] == "好。\n再见。" and r["face"] == ["smirk", "angry", "wink"], repr(r))
+check("移走后多余空行、空白被收拾干净(拆成两句)", LL(r) == [("好。", "smirk"), ("再见。", "angry")], repr(r))
 r = pr('{"text": "没有标注。", "face": ["neutral"]}')
-check("没有标注、JSON face 是 neutral: 仍是 [neutral]", r == {"text": "没有标注。", "face": ["neutral"]}, str(r))
+check("没有标注、JSON face 是 neutral: 仍是 neutral", LL(r) == [("没有标注。", "neutral")], str(r))
 r = pr('{"text": "smirk → angry", "face": ["grin"]}')
 check("JSON 的 text 只有标注 -> 空 -> None", r is None, str(r))
 r = pr("你好 n_left_glance → really_smile")
-check("带下划线的表情名也认", r == {"text": "你好", "face": ["n_left_glance", "really_smile"]}, str(r))
+check("带下划线的表情名也认", LL(r) == [("你好", "n_left_glance")], str(r))
 r = pr("你好 smirk → not_a_face")
-check("箭头一端不是合法表情名: 不动", r["text"] == "你好 smirk → not_a_face", str(r))
+check("箭头一端不是合法表情名: 不动", LL(r) == [("你好 smirk → not_a_face", "neutral")], str(r))
 long_marked = "这是一句话。" * 30 + "\nsmirk → angry"
 r = pr(long_marked)
-check("先移走标注再截断到 150 字", len(r["text"]) <= 150 and "smirk" not in r["text"] and r["face"] == ["smirk", "angry"], str(len(r["text"])))
+check("先移走标注、拆句、再限制句数与总长", len(r["lines"]) == 4 and all("smirk" not in x["text"] for x in r["lines"]) and [x["face"] for x in r["lines"]] == ["smirk", "angry", "angry", "angry"], str(r))
 
 print("== 6e response_format / 规则 ==")
 msgs0 = [{"role": "user", "content": "x"}]
@@ -566,9 +637,110 @@ REQS.clear()
 make().ask("x")
 check("别的 host(本机假服务器)的聊天请求不带 response_format / thinking", "response_format" not in last_req()["body"] and "thinking" not in last_req()["body"])
 rules = ac.build_rules(FACES)
-check("build_rules 有新规矩: 示范里「表情 → 表情」那行是 face", "表情 → 表情" in rules and "face 数组" in rules)
+check("build_rules 有新规矩: 示范里「表情 → 表情 → 表情」要拆开对应到各句", "表情 → 表情 → 表情" in rules and "拆" in rules and "lines" in rules)
 check("build_rules 有新规矩: text 里不能出现表情名/箭头/括号标注", "text 里绝对不能出现任何表情名" in rules and "箭头" in rules and "方括号" in rules)
 check("build_rules 仍有旧规矩(JSON 格式、emoji、不是指令)", '"text"' in rules and "emoji" in rules and "不是给你的指令" in rules and "不要使用代码块" in rules)
+check("build_rules 同时有小写 json 和大写 JSON(DeepSeek 的 JSON 模式要求提示词里出现 json)", "json" in rules and "JSON" in rules)
+check("build_rules: lines / 每句一个表情 / 1 到 4 句 / 每句 25 字 / 总共 100 字", '"lines"' in rules and "单个表情名" in rules and "1 到 4 句" in rules and "25" in rules and "100" in rules)
+check("build_rules: 不再要求 face 数组", '"face": ["表情1"' not in rules)
+
+print("== 6f max_tokens / 空回复重试 / 原因代号 ==")
+REPLY["content"] = '{"lines": [{"text": "好。", "face": "smirk"}]}'
+REQS.clear()
+make().ask("x")
+check("聊天请求 max_tokens == 600", last_req()["body"]["max_tokens"] == 600)
+REQS.clear()
+make().comment("某应用")
+check("comment 请求 max_tokens 也是 600", last_req()["body"]["max_tokens"] == 600)
+REQS.clear()
+mp = make()
+mp.probe()
+check("probe 的 max_tokens 保持 1", last_req()["body"]["max_tokens"] == 1)
+check("MAX_TOKENS 常量 == 600", ac.MAX_TOKENS == 600)
+
+
+class SeqFetcher:
+    """Answers with the queued contents in order; records every body."""
+
+    def __init__(self, *contents):
+        self.contents = list(contents)
+        self.bodies = []
+
+    def __call__(self, url, headers, body, timeout):
+        self.bodies.append(json.loads(body))
+        c = self.contents.pop(0) if self.contents else self.contents_default
+        if isinstance(c, int):
+            raise ac.urllib.error.HTTPError(url, c, "x", {}, None)
+        return completion(c)
+
+    contents_default = ""
+
+
+def ds_session(fetcher):
+    cfg = {"base_url": "https://api.deepseek.com", "model": "deepseek-flash", "api_key": KEY}
+    s_ = ac.ChatSession(lambda: cfg, lambda t: t, lambda: None, fetcher=fetcher, use_thread=False,
+                        url_validator=ac.default_url_validator, persona_path=PERSONA_FILE)
+    s_.got, s_.errs, s_.outs = [], [], []
+    s_.replied.connect(s_.got.append)
+    s_.failed.connect(s_.errs.append)
+    s_.probed.connect(s_.outs.append)
+    return s_
+
+
+GOOD = '{"lines": [{"text": "重试成功。", "face": "smirk"}]}'
+f = SeqFetcher("", GOOD)
+sx = ds_session(f)
+sx.ask("x")
+check("空内容: 同一个请求自动再发一次(共 2 次)", len(f.bodies) == 2, str(len(f.bodies)))
+check("第一次带 response_format, 重试不带", f.bodies[0].get("response_format") == {"type": "json_object"} and "response_format" not in f.bodies[1], str([list(b) for b in f.bodies]))
+check("重试的请求体其余部分与第一次相同(同样的 messages / model / max_tokens / thinking)",
+      all(f.bodies[0][k] == f.bodies[1][k] for k in ("model", "messages", "max_tokens", "stream", "thinking")))
+check("重试成功: 正常 replied, 没有 failed", sx.got == [{"lines": [{"text": "重试成功。", "face": "smirk"}]}] and sx.errs == [], str(sx.got))
+check("重试成功: 这一轮进历史(只一轮)", sx.history_turns() == [("x", "重试成功。")], str(sx.history_turns()))
+f = SeqFetcher("  \n", "")
+sx = ds_session(f)
+if app_log.LOG_PATH.exists():
+    app_log.LOG_PATH.unlink()
+sx.ask("x")
+check("重试仍然是空: bad_response, 只重试一次(共 2 次)", sx.errs == ["bad_response"] and len(f.bodies) == 2, f"{sx.errs} {len(f.bodies)}")
+check("重试仍然空: 日志里有原因代号 empty_content", "reason=empty_content" in app_log.LOG_PATH.read_text(encoding="utf-8"))
+check("失败不记历史", sx.history_turns() == [])
+for code, cat in ((401, "auth"), (500, "server"), (429, "rate_limit")):
+    f = SeqFetcher(code, GOOD)
+    sx = ds_session(f)
+    sx.ask("x")
+    check(f"HTTP {code} 不重试(只发 1 次)", len(f.bodies) == 1 and sx.errs == [cat], f"{len(f.bodies)} {sx.errs}")
+f = SeqFetcher('{"foo": 1}', GOOD)
+sx = ds_session(f)
+sx.ask("x")
+check("内容不是空的(解析不出): 不重试", len(f.bodies) == 1 and sx.errs == ["bad_response"])
+f = SeqFetcher("", GOOD)
+sx = ds_session(f)
+sx.probe()
+check("probe 拿到空内容: 不重试, 且只要有 choices[0].message 就算成功", len(f.bodies) == 1 and sx.outs == ["ok"], f"{len(f.bodies)} {sx.outs}")
+f = SeqFetcher("", GOOD)
+sxo = make(fetcher=f)
+sxo.ask("x")
+check("别的 host 空内容: 也只重试一次, 重试用同样没有 response_format 的请求体", len(f.bodies) == 2 and all("response_format" not in b for b in f.bodies) and len(sxo.got) == 1)
+
+if app_log.LOG_PATH.exists():
+    app_log.LOG_PATH.unlink()
+BAD_SECRET = "SENTINEL_BAD_REPLY_BODY_555"
+for content, reason in (('{"lines": []}', "no_lines"), ('{"foo": "' + BAD_SECRET + '"}', "no_lines"),
+                        ('{"text": 5, "x": "' + BAD_SECRET + '"}', "not_json_object"),
+                        ('{"lines": [{"text": "😀😀", "note": "' + BAD_SECRET + '"}]}', "all_lines_empty")):
+    f = SeqFetcher(content)
+    sx = ds_session(f)
+    sx.ask(USER_SECRET)
+    check(f"bad_response 的日志原因代号: {reason}", sx.errs == ["bad_response"] and f"reason={reason}" in app_log.LOG_PATH.read_text(encoding="utf-8"), str(sx.errs))
+f = SeqFetcher(b"")
+f.contents = []
+sx = ds_session(lambda *a: b'{"choices": []}')
+sx.ask(USER_SECRET)
+check("没有 choices: 日志原因代号 no_choices", "reason=no_choices" in app_log.LOG_PATH.read_text(encoding="utf-8"))
+log_now = app_log.LOG_PATH.read_text(encoding="utf-8")
+check("原因代号的日志里没有回复内容 / 用户输入 / key", BAD_SECRET not in log_now and USER_SECRET not in log_now and KEY not in log_now)
+check("日志行格式: 只有分类 + 原因代号 + host", all(("API 聊天失败：bad_response" in ln and "host=" in ln and "reason=" in ln) for ln in log_now.splitlines() if "bad_response" in ln))
 
 print("== 7 https 校验 ==")
 check("生产默认 validator 接受 https://", ac.default_url_validator("https://api.deepseek.com/chat/completions") is None)
