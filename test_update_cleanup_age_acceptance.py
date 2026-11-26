@@ -152,6 +152,7 @@ check("min_age_seconds=0: 刚建的也删", n == 2 and not fresh1.exists() and n
 check("min_age_seconds=0: 其他名字的仍不碰", other.exists())
 root = fresh_root()
 d = make_update_dir(root)
+age_everything(d, 2)  # 2 s ago: immune to filesystem timestamps that run slightly ahead of time.time()
 check("min_age_seconds=0 不用等", uf.cleanup_old_update_dirs(root, min_age_seconds=0) == 1 and not d.exists())
 root = fresh_root()
 d = make_update_dir(root)

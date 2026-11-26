@@ -449,12 +449,16 @@ h = make_harness()
 h._on_update_action()
 check("点击 -> 说 update_downloading (经 dm 发出)", [c for _, c in h.emitted] == ["update_downloading"], repr([c for _, c in h.emitted]))
 check("点击 -> 托盘菜单被刷新 (显示'正在更新')", h.menu_builds >= 1 and h._tray.setContextMenu.called)
-check("下载文案是占位且没有网址", "占位" in h.emitted[0][0][0]["text"] and "http" not in h.emitted[0][0][0]["text"])
+SYS_POOLS = json.loads((ROOT / "dialogues_system.json").read_bytes().decode("utf-8"))
+_dl_text = h.emitted[0][0][0]["text"]
+check("下载文案来自 update_downloading 池 (三条之一)、不含【占位】、没有网址",
+      _dl_text in [e["text"] for e in SYS_POOLS["update_downloading"]] and "【占位】" not in _dl_text and "http" not in _dl_text, _dl_text)
 check("经真实 Qt 信号从工作线程回到主线程", pump(lambda: h.launches != [] and h.dialogue_box.start.called))
 check("启动参数正确", h.launches[0][1][:2] == ["--apply-update", "--target"] and h.launches[0][1][-2:] == ["--old-version", "3.3.0"]
       and "4321" in h.launches[0][1] and "8765" in h.launches[0][1], repr(h.launches))
 segs = h.dialogue_box.start.call_args[0][0]
-check("告别台词来自 update_restarting 池", segs and segs[0]["text"].startswith("【占位】我先退下"), repr(segs))
+check("告别台词来自 update_restarting 池 (文本在该池的三条之中)",
+      segs and segs[0]["text"] in [e["text"] for e in SYS_POOLS["update_restarting"]], repr(segs))
 check("走了退出锁 (和 request_quit 一样)", h._pending_quit is True and h.reminders.chase.lock_for_exit.called)
 timer = h._update_quit_timer
 check("15 秒兜底定时器存在、单次、已启动", timer is not None and timer.isSingleShot() and timer.isActive() and timer.interval() == 15000
@@ -724,17 +728,28 @@ NEW = ["update_downloading", "update_busy", "update_restarting", "update_failed"
 raw = (ROOT / "dialogues_system.json").read_bytes()
 data = json.loads(raw.decode("utf-8"))
 old = json.loads(subprocess.run(["git", "show", "HEAD:dialogues_system.json"], cwd=str(ROOT), capture_output=True).stdout.decode("utf-8"))
+FACES_DIR = ROOT / "assets" / "faces"
+
+
+def _faces_of(entry):
+    return entry["face"] if isinstance(entry["face"], list) else [entry["face"]]
+
+
 for name in NEW:
-    check(f"{name}: 池存在, 1 条, 带【占位】, 表情 neutral",
-          isinstance(data.get(name), list) and len(data[name]) == 1 and "【占位】" in data[name][0]["text"]
-          and data[name][0]["face"] == "neutral", repr(data.get(name)))
-    check(f"{name}: 没有 emoji 也没有网址", not has_emoji(data[name][0]["text"]) and "http" not in data[name][0]["text"])
-check("update_done 带 {ver}", "{ver}" in data["update_done"][0]["text"])
+    pool = data.get(name)
+    check(f"{name}: 池存在, 3 条, 都不含【占位】, 每个表情名都存在",
+          isinstance(pool, list) and len(pool) == 3 and all("【占位】" not in e["text"] for e in pool)
+          and all((FACES_DIR / f).is_dir() for e in pool for f in _faces_of(e)), repr(pool))
+    check(f"{name}: 没有 emoji 也没有网址", all(not has_emoji(e["text"]) and "http" not in e["text"] for e in pool))
+check("update_done 每条都带 {ver}", all("{ver}" in e["text"] for e in data["update_done"]))
 check("其他池条目数不变 (duplicate_launch 13 / update_available 8 / no_update 4)",
       {k: len(data[k]) for k in ("duplicate_launch", "update_available", "no_update")} == {"duplicate_launch": 13, "update_available": 8, "no_update": 4})
-check("其他池内容和 HEAD 完全一样", all(data[k] == old[k] for k in old if k != "_readme"))
+check("原有三个池 (duplicate_launch / update_available / no_update) 内容和 HEAD 完全一样",
+      all(data[k] == old[k] for k in ("duplicate_launch", "update_available", "no_update")))
 check("池名集合 = 原有 + 六个新的", set(data) - {"_readme"} == (set(old) - {"_readme"}) | set(NEW))
-check("_readme 保留原文并补了说明", data["_readme"].startswith(old["_readme"]) and all(n in data["_readme"] for n in NEW))
+_old_readme = old["_readme"].replace("以上六个池目前都是【占位】文案。", "")
+check("_readme 以去掉占位那句之后的旧 _readme 开头, 并且含六个池名",
+      data["_readme"].startswith(_old_readme) and all(n in data["_readme"] for n in NEW))
 check("_readme 说明了各池什么时候说", "--updated-from" in data["_readme"] and "--update-failed" in data["_readme"] and "告别台词" in data["_readme"])
 check("换行风格不变: 全是 CRLF, 末尾有换行", raw.count(b"\r\n") == raw.count(b"\n") and raw.endswith(b"}\r\n"))
 check("缩进仍是 2 空格", b'\r\n  "update_busy": [' in raw)
@@ -742,7 +757,10 @@ check("文件以 UTF-8 无 BOM 保存", not raw.startswith(b"\xef\xbb\xbf"))
 for name in NEW:
     dm, emitted = fresh_dm()
     dm.trigger_update_line(name)
-    check(f"{name}: 能抽到并发出", len(emitted) == 1 and emitted[0][1] == name and "【占位】" in emitted[0][0][0]["text"], repr(emitted))
+    _said = emitted[0][0][0]["text"] if emitted else ""
+    _pool_texts = [e["text"].replace("{ver}", version.VERSION) for e in data[name]]
+    check(f"{name}: 能抽到并发出 (文本属于该池三条之一, 不含【占位】)",
+          len(emitted) == 1 and emitted[0][1] == name and _said in _pool_texts and "【占位】" not in _said, repr(emitted))
 dm, emitted = fresh_dm()
 segs = dm.pick_update_segments("update_done")
 check("pick_update_segments 替换 {ver}", segs and version.VERSION in segs[0]["text"] and "{ver}" not in segs[0]["text"])

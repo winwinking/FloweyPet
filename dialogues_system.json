@@ -1,5 +1,5 @@
 {
-  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code. update_available is the fallback line used when an update is found but version.json has no 'line': {new_ver} is the new version, {ver} the running one.\nno_update 是“已经是最新版”时的台词，目前代码还没有用到，留给以后的手动检查更新。\nupdate_downloading：点托盘“更新到 vX”开始一键更新、后台下载时说。update_busy：更新已在进行中又点了一次时说。update_restarting：下载校验解压都完成、小花退出让新版接管时说（代替告别台词）。update_failed：一键更新任何一步失败、改为打开下载页时说。update_done：更新后第一次启动（--updated-from）时说，{ver} 是新版本。update_rolled_back：更新失败并回滚、旧版重新启动（--update-failed）时说。以上六个池目前都是【占位】文案。",
+  "_readme": "App/system-lifecycle lines that aren't about Flowey's in-character content, e.g. what to say when the user double-launches the exe while an instance is already running (see main.py's single-instance guard, category 'duplicate_launch'). Same schema as dialogue.json: each entry is {text, face}; face can be a single face-tag string or an array of tags (expression switches partway through typing). Face tags must match a folder name under assets/faces exactly. Edit freely without touching code. update_available is the fallback line used when an update is found but version.json has no 'line': {new_ver} is the new version, {ver} the running one.\nno_update 是“已经是最新版”时的台词，目前代码还没有用到，留给以后的手动检查更新。\nupdate_downloading：点托盘“更新到 vX”开始一键更新、后台下载时说。update_busy：更新已在进行中又点了一次时说。update_restarting：下载校验解压都完成、小花退出让新版接管时说（代替告别台词）。update_failed：一键更新任何一步失败、改为打开下载页时说。update_done：更新后第一次启动（--updated-from）时说，{ver} 是新版本。update_rolled_back：更新失败并回滚、旧版重新启动（--update-failed）时说。",
   "duplicate_launch": [
     {
       "text": "一个我还不够吗？",
@@ -164,38 +164,125 @@
   ],
   "update_downloading": [
     {
-      "text": "【占位】正在下载新版本，请稍等。",
-      "face": "neutral"
+      "text": "好好好，我去把新的自己搬回来。别乱动，你会让我分心的。",
+      "face": [
+        "smirk",
+        "neutral"
+      ]
+    },
+    {
+      "text": "下载中。别盯着我看，看了也不会快。",
+      "face": [
+        "neutral",
+        "frown"
+      ]
+    },
+    {
+      "text": "新版本正在路上。……你最好别后悔。",
+      "face": "sneaky_grin"
     }
   ],
   "update_busy": [
     {
-      "text": "【占位】已经在更新了，别急。",
-      "face": "neutral"
+      "text": "我说了在弄了！你再点一次试试？",
+      "face": "angry"
+    },
+    {
+      "text": "你以为多点几下就会快一点？天真。",
+      "face": "smirk"
+    },
+    {
+      "text": "嘘——我在下载。别吵。",
+      "face": [
+        "frown",
+        "calm"
+      ]
     }
   ],
   "update_restarting": [
     {
-      "text": "【占位】我先退下，马上换上新版本。",
-      "face": "neutral"
+      "text": "我先钻回土里换个身子。别趁我不在干坏事。",
+      "face": "wink"
+    },
+    {
+      "text": "再见啦……开玩笑的，马上回来。",
+      "face": [
+        "sorrowful",
+        "grin"
+      ]
+    },
+    {
+      "text": "存档，读档，重来一次。这个我熟。",
+      "face": [
+        "serious",
+        "smirk"
+      ]
     }
   ],
   "update_failed": [
     {
-      "text": "【占位】自动更新没成功，我带你去下载页。",
-      "face": "neutral"
+      "text": "……下载失败了。别看我，是网络的错。你自己去拿吧。",
+      "face": [
+        "sheepish_smile",
+        "frown"
+      ]
+    },
+    {
+      "text": "哈。出了点状况。下载页给你开好了，剩下的自己来。",
+      "face": [
+        "gritted_teeth",
+        "neutral"
+      ]
+    },
+    {
+      "text": "失败了。我失败过的次数可多了，不差这一次。",
+      "face": [
+        "sorrowful",
+        "smirk"
+      ]
     }
   ],
   "update_done": [
     {
-      "text": "【占位】更新完成了，现在是 {ver}。",
-      "face": "neutral"
+      "text": "我回来了。{ver}，新鲜出炉。有没有想我？",
+      "face": [
+        "grin",
+        "wink"
+      ]
+    },
+    {
+      "text": "看到没？{ver}。连换身子都这么完美。",
+      "face": "really_smile"
+    },
+    {
+      "text": "嗯……新身体有点不习惯。{ver}，凑合着用吧。",
+      "face": [
+        "worry",
+        "smile"
+      ]
     }
   ],
   "update_rolled_back": [
     {
-      "text": "【占位】更新没成功，已经退回旧版本。",
-      "face": "neutral"
+      "text": "换衣服失败了，我又把旧的穿回来了。……别笑。",
+      "face": [
+        "sheepish_smile",
+        "frown"
+      ]
+    },
+    {
+      "text": "更新没成功，我退回来了。好在我很擅长回到原点。",
+      "face": [
+        "sorrowful",
+        "smirk"
+      ]
+    },
+    {
+      "text": "回档了。熟悉的感觉，对吧？",
+      "face": [
+        "creepy",
+        "smile"
+      ]
     }
   ]
 }
