@@ -4,6 +4,7 @@ font, typewriter reveal. Wide and short (2.5x-3x the pet's width), wraps
 to at most 3 lines per page and paginates longer segments. Follows the
 pet, staying within ~10px of it at all times.
 """
+import functools
 import random
 
 from PyQt6.QtCore import Qt, QRect, QRectF, QTimer, pyqtSignal
@@ -210,6 +211,12 @@ class DialogueBox(QWidget):
         # singleShot from an earlier popup could fire while a LATER popup's
         # bar was up and close it early as a bogus timeout -- one of the
         # chase system's original root causes (see reminder_chase.py).
+        # Bare QTimer.singleShot callbacks cannot be cancelled, so every one
+        # goes through _later(): it remembers this counter, start() and
+        # stop_immediately() bump it, and a callback from an older generation
+        # (e.g. the page/segment pause left behind by the waiting "……") does
+        # nothing when it fires.
+        self._generation = 0
         self._hold_timer = QTimer(self)
         self._hold_timer.setSingleShot(True)
         self._hold_timer.timeout.connect(self._auto_close_after_confirm_window)
@@ -276,6 +283,7 @@ class DialogueBox(QWidget):
         choice bar after the last segment; None means a plain bubble that
         just closes itself. hold_ms overrides the constructor-default hold
         for this popup only (首次提醒 vs 追讨弹窗 have different holds)."""
+        self._generation += 1  # invalidate callbacks left behind by the previous line
         self.on_segment_face = on_segment_face
         self._segments = segments
         self._seg_idx = -1
@@ -290,6 +298,7 @@ class DialogueBox(QWidget):
         self.show()
 
     def stop_immediately(self):
+        self._generation += 1  # invalidate pending page/segment/hold/glitch callbacks
         self._typing_timer.stop()
         self._glitch_timer.stop()
         self._hold_timer.stop()
@@ -324,6 +333,18 @@ class DialogueBox(QWidget):
         ] or [[""]]
 
     # ------------------------------------------------------------ sequencing
+    def _later(self, ms, callback):
+        """QTimer.singleShot that is void if start()/stop_immediately() ran in
+        the meantime (see self._generation)."""
+        generation = self._generation
+
+        @functools.wraps(callback)
+        def run():
+            if generation == self._generation:
+                callback()
+
+        QTimer.singleShot(ms, run)
+
     def _advance_segment(self):
         self._seg_idx += 1
         if self._seg_idx >= len(self._segments):
@@ -359,7 +380,7 @@ class DialogueBox(QWidget):
             self._revealed = 0
             self.update()
             self.show()
-            QTimer.singleShot(int(hold_seconds * 1000), self._advance_segment)
+            self._later(int(hold_seconds * 1000), self._advance_segment)
             return
 
         if self.on_segment_face:
@@ -392,7 +413,7 @@ class DialogueBox(QWidget):
                 self.on_segment_face(self._glitch_settle_face)
             self._silent_segment = self._glitch_settle_face in EVIL_LAUGH_FACES
             if not seg.get("text"):
-                QTimer.singleShot(SEGMENT_END_PAUSE_MS, self._advance_segment)
+                self._later(SEGMENT_END_PAUSE_MS, self._advance_segment)
                 return
             lines = self._wrap(seg.get("text", ""))
             self._pages = self._paginate(lines)
@@ -407,7 +428,7 @@ class DialogueBox(QWidget):
     def _advance_page(self):
         self._page_idx += 1
         if self._page_idx >= len(self._pages):
-            QTimer.singleShot(SEGMENT_END_PAUSE_MS, self._advance_segment)
+            self._later(SEGMENT_END_PAUSE_MS, self._advance_segment)
             return
         self._full_page_text = "\n".join(self._pages[self._page_idx])
         self._revealed = 0
@@ -445,7 +466,7 @@ class DialogueBox(QWidget):
     def _tick(self):
         if self._revealed >= len(self._full_page_text):
             self._typing_timer.stop()
-            QTimer.singleShot(self._page_pause_ms(), self._advance_page)
+            self._later(self._page_pause_ms(), self._advance_page)
             return
         ch = self._full_page_text[self._revealed]
         self._revealed += 1
