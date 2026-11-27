@@ -189,7 +189,7 @@ class Fake:
 
 METHODS = (
     "_on_chat_submitted", "_get_chat_session", "_api_settings", "_chat_context", "_chat_limits", "_say_chat_line",
-    "_say_chat_pool", "_say_chat_wait", "_set_chat_waiting", "_on_chat_replied", "_on_chat_failed", "_on_api_probed",
+    "_say_chat_pool", "_say_chat_wait", "_set_chat_waiting", "_on_chat_replied", "_chat_read_pause_ms", "_chat_read_pause_params", "_on_chat_failed", "_on_api_probed",
     "is_reminder_popup_active", "_open_chat", "_position_chat_box", "_restore_chat_text",
 )
 

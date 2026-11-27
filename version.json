@@ -1,9 +1,9 @@
 {
-  "version": "3.4.0",
-  "url": "https://github.com/winwinking/FloweyPet/releases/tag/v3.4.0",
-  "line": "新版本里我能听懂你在说什么了。……你最好说点有意思的。",
-  "face": "wink",
-  "zip_url": "https://github.com/winwinking/FloweyPet/releases/download/v3.4.0/FloweyPet-v3.4.0.zip",
-  "sha256": "e7f84d46141f71b368ed54d50a0d9845c9408d5f296e52d5661227b51fbdec17",
-  "size": 40865888
+  "version": "3.4.1",
+  "url": "https://github.com/winwinking/FloweyPet/releases/tag/v3.4.1",
+  "line": "上次我说话太急了。……这次你可以慢慢看。不用谢。",
+  "face": "smirk",
+  "zip_url": "https://github.com/winwinking/FloweyPet/releases/download/v3.4.1/FloweyPet-v3.4.1.zip",
+  "sha256": "dc827dc3b4d5ac07447201874644875feeeef24295e7c4a406a666e3872d6d8f",
+  "size": 40867692
 }

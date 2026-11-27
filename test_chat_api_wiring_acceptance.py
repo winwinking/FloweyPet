@@ -116,7 +116,7 @@ class Fake:
 
 METHODS = (
     "_on_chat_submitted", "_get_chat_session", "_api_settings", "_chat_context", "_chat_limits",
-    "_say_chat_line", "_say_chat_pool", "_say_chat_wait", "_set_chat_waiting", "_on_chat_replied",
+    "_say_chat_line", "_say_chat_pool", "_say_chat_wait", "_set_chat_waiting", "_on_chat_replied", "_chat_read_pause_ms", "_chat_read_pause_params",
     "_on_chat_failed", "_on_api_probed", "is_reminder_popup_active", "_open_chat", "_position_chat_box",
     "_on_api_settings_saved", "_on_dialogue_hold_started", "_on_urgent_line_queued", "is_chat_open",
 )
@@ -192,7 +192,7 @@ check("用户的话是请求里的最后一条 user 消息", fake.calls[0]["body
 check("先说 chat_wait 再说 chat_reply", cats(shown) == ["chat_wait", "chat_reply"], str(cats(shown)))
 check("chat_wait 的文字是「……」, 表情 n_left_glance", shown[0][1] == "……" and shown[0][2][0]["face"] == "n_left_glance", str(shown[0]))
 seg = shown[1][2][0]
-check("chat_reply 的 segment: text 与 face 正确", seg == {"text": "哼，知道了。", "face": "smirk"}, str(seg))
+check("chat_reply 的 segment: text 与 face 正确(另带 read_pause_ms)", {k: seg[k] for k in ("text", "face")} == {"text": "哼，知道了。", "face": "smirk"} and set(seg) == {"text", "face", "read_pause_ms"}, str(seg))
 check("chat_wait 与 chat_reply 都是用 cut_in 说的", dm.cut_in_calls == ["chat_wait", "chat_reply"], str(dm.cut_in_calls))
 check("回复到了后 _chat_waiting 复位", pet._chat_waiting is False)
 check("历史只在内存: 会话里有一轮", pet._chat_session.history_turns() == [("你好小花", '{"lines":[{"text":"哼，知道了。","face":"smirk"}]}')], str(pet._chat_session.history_turns()))
@@ -217,7 +217,7 @@ segs = shown[-1][2]
 check("回复的每一句做成一个 segment", shown[-1][0] == "chat_reply" and len(segs) == 3 and [x["text"] for x in segs] == ["甲。", "乙！", "丙……"], str(segs))
 check("每个 segment 的 face 是单个字符串(不是数组)", [x["face"] for x in segs] == ["smirk", "angry", "worry"] and all(isinstance(x["face"], str) for x in segs), str(segs))
 check("整组 segments 一次交给 cut_in(category chat_reply)", dm.cut_in_calls == ["chat_wait", "chat_reply"], str(dm.cut_in_calls))
-check("segment 里只有 text 和 face 两个键", all(set(x) == {"text", "face"} for x in segs))
+check("segment 里只有 text、face 和 read_pause_ms 三个键", all(set(x) == {"text", "face", "read_pause_ms"} for x in segs))
 check("历史里小花那一句是解析后的完整结构(紧凑 json)", pet._chat_session.history_turns() == [("说三句", '{"lines":[{"text":"甲。","face":"smirk"},{"text":"乙！","face":"angry"},{"text":"丙……","face":"worry"}]}')], str(pet._chat_session.history_turns()))
 pet.clock["t"] += 10
 pet._on_chat_submitted("第二次")
