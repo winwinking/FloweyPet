@@ -35,7 +35,7 @@ from api_chat import DEFAULT_BASE_URL, DEFAULT_MODEL
 from api_settings_panel import ApiSettingsPanel
 from chat_box import ChatBox
 from dialogue_arbiter import DialogueArbiter
-from config import DEFAULT_PET_SIZE_TIERS
+from config import DEFAULT_PET_SIZE_TIERS, DEFAULTS as CONFIG_DEFAULTS
 from dialogue_box import DialogueBox
 from dialogue_manager import PRI_CHAT
 from error_log import log_exception
@@ -1419,6 +1419,24 @@ class PetWindow(QWidget):
             max_per_window = 30
         return min_interval, max_per_window
 
+    def _chat_read_pause_params(self):
+        """(base, per_char, min, max) in ms for the chat reply's per-sentence
+        reading pause. All four must be positive numbers with min <= max;
+        otherwise the whole set falls back to config.DEFAULTS."""
+        defaults = CONFIG_DEFAULTS["api_chat"]
+        keys = ("read_pause_base_ms", "read_pause_per_char_ms", "read_pause_min_ms", "read_pause_max_ms")
+        cfg = self.config.get("api_chat")
+        cfg = cfg if isinstance(cfg, dict) else {}
+        vals = [cfg.get(k, defaults[k]) for k in keys]
+        ok = all(not isinstance(v, bool) and isinstance(v, (int, float)) and v > 0 for v in vals)
+        if not ok or vals[2] > vals[3]:
+            vals = [defaults[k] for k in keys]
+        return tuple(vals)
+
+    def _chat_read_pause_ms(self, text):
+        base, per_char, lo, hi = self._chat_read_pause_params()
+        return int(round(min(max(base + per_char * len(text), lo), hi)))
+
     def _say_chat_line(self, category, segments):
         """Plays a chat line (reply / error / wait). Normally it cuts in over
         whatever is on screen (usually the waiting "……"); while a reminder
@@ -1478,7 +1496,11 @@ class PetWindow(QWidget):
     def _on_chat_replied(self, reply):
         self._set_chat_waiting(False)
         # one segment per sentence: one bubble, one (single) face each
-        self._say_chat_line("chat_reply", [{"text": x["text"], "face": x["face"]} for x in reply["lines"]])
+        # chat replies only: each sentence gets a reading pause that scales with its length
+        self._say_chat_line("chat_reply", [
+            {"text": x["text"], "face": x["face"], "read_pause_ms": self._chat_read_pause_ms(x["text"])}
+            for x in reply["lines"]
+        ])
 
     def _on_chat_failed(self, code):
         self._set_chat_waiting(False)

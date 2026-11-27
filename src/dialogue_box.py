@@ -429,10 +429,23 @@ class DialogueBox(QWidget):
             points.append((threshold, self._face_schedule[i]))
         return points
 
+    def _page_pause_ms(self):
+        """Pause after a page finishes typing. A segment may carry an optional
+        "read_pause_ms" (chat replies do) to replace PAGE_PAUSE_MS; without a
+        usable value (missing / not a positive number) the fixed default
+        applies, so every hand-written line behaves exactly as before."""
+        try:
+            pause = self._segments[self._seg_idx].get("read_pause_ms")
+        except (AttributeError, IndexError, TypeError):
+            return PAGE_PAUSE_MS
+        if isinstance(pause, bool) or not isinstance(pause, (int, float)) or not pause > 0:
+            return PAGE_PAUSE_MS
+        return int(pause)
+
     def _tick(self):
         if self._revealed >= len(self._full_page_text):
             self._typing_timer.stop()
-            QTimer.singleShot(PAGE_PAUSE_MS, self._advance_page)
+            QTimer.singleShot(self._page_pause_ms(), self._advance_page)
             return
         ch = self._full_page_text[self._revealed]
         self._revealed += 1
