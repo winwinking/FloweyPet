@@ -120,10 +120,10 @@ check("segment 之间的 SEGMENT_END_PAUSE_MS 不变", seg_end == [db_mod.SEGMEN
 print("== 2 配置默认值 ==")
 D = config_mod.DEFAULTS["api_chat"]
 check("DEFAULTS 里有四个键且值正确",
-      (D.get("read_pause_base_ms"), D.get("read_pause_per_char_ms"), D.get("read_pause_min_ms"), D.get("read_pause_max_ms")) == (1200, 80, 1500, 4500), str(D))
+      (D.get("read_pause_base_ms"), D.get("read_pause_per_char_ms"), D.get("read_pause_min_ms"), D.get("read_pause_max_ms")) == (1500, 100, 1700, 2200), str(D))
 old = {"api_chat": {"base_url": "https://api.deepseek.com", "model": "deepseek-flash", "min_interval_seconds": 3, "max_per_10min": 80}}
 merged = config_mod._deep_merge(config_mod.DEFAULTS, old)["api_chat"]
-check("老 config(没有这四个键)读进来自动补上, 其余键保持", merged["read_pause_base_ms"] == 1200 and merged["read_pause_max_ms"] == 4500 and merged["max_per_10min"] == 80, str(merged))
+check("老 config(没有这四个键)读进来自动补上, 其余键保持", merged["read_pause_base_ms"] == 1500 and merged["read_pause_max_ms"] == 2200 and merged["max_per_10min"] == 80, str(merged))
 dev_cfg = ROOT / "dev_data" / "config.json"
 if dev_cfg.exists():
     loaded = json.loads(dev_cfg.read_text(encoding="utf-8"))
@@ -170,20 +170,22 @@ def reply(pet, texts):
 
 
 pet, shown = rig()
-reply(pet, ["一" * 10, "二" * 25, "三" * 60, "四" * 1, "五" * 200])
+reply(pet, ["一" * 10, "二" * 25, "三" * 60, "四" * 1, "五" * 200, "六" * 3, "七" * 5])
 segs = shown[-1][1]
-check("类别是 chat_reply, 每句一个 segment", shown[-1][0] == "chat_reply" and len(segs) == 5, str(shown))
+check("类别是 chat_reply, 每句一个 segment", shown[-1][0] == "chat_reply" and len(segs) == 7, str(shown))
 check("每句都带 read_pause_ms", all("read_pause_ms" in s for s in segs), str(segs))
-check("10 字 -> 2000ms", segs[0]["read_pause_ms"] == 2000, str(segs[0]))
-check("25 字 -> 3200ms", segs[1]["read_pause_ms"] == 3200, str(segs[1]))
-check("60 字 -> 4500ms(封顶)", segs[2]["read_pause_ms"] == 4500, str(segs[2]))
-check("1 字 -> 1280 被夹到下限 1500", segs[3]["read_pause_ms"] == 1500, str(segs[3]))
-check("200 字 -> 封顶 4500", segs[4]["read_pause_ms"] == 4500, str(segs[4]))
-check("text 和 face 原样保留", [s["text"] for s in segs] == ["一" * 10, "二" * 25, "三" * 60, "四", "五" * 200] and all(s["face"] == "smirk" for s in segs))
+check("10 字 -> 2500 被夹到上限 2200", segs[0]["read_pause_ms"] == 2200, str(segs[0]))
+check("25 字 -> 4000 被夹到上限 2200", segs[1]["read_pause_ms"] == 2200, str(segs[1]))
+check("60 字 -> 封顶 2200ms", segs[2]["read_pause_ms"] == 2200, str(segs[2]))
+check("1 字 -> 1600 被夹到下限 1700", segs[3]["read_pause_ms"] == 1700, str(segs[3]))
+check("200 字 -> 封顶 2200", segs[4]["read_pause_ms"] == 2200, str(segs[4]))
+check("3 字 -> 1800(落在区间内, 按公式算)", segs[5]["read_pause_ms"] == 1800, str(segs[5]))
+check("5 字 -> 2000(落在区间内, 按公式算)", segs[6]["read_pause_ms"] == 2000, str(segs[6]))
+check("text 和 face 原样保留", [s["text"] for s in segs] == ["一" * 10, "二" * 25, "三" * 60, "四", "五" * 200, "六" * 3, "七" * 5] and all(s["face"] == "smirk" for s in segs))
 check("read_pause_ms 是整数", all(isinstance(s["read_pause_ms"], int) for s in segs))
 # the value survives dm._substitute and reaches the box unchanged
 r = play([dict(s, text="好。") for s in segs[:2]])
-check("交给 DialogueBox 播放: 各用各的停顿", r == [(0, 2000), (1, 3200)], str(r))
+check("交给 DialogueBox 播放: 各用各的停顿", r == [(0, 2200), (1, 2200)], str(r))
 
 pet, shown = rig({"read_pause_base_ms": 100, "read_pause_per_char_ms": 10, "read_pause_min_ms": 50, "read_pause_max_ms": 500})
 reply(pet, ["一" * 10, "二" * 100, "三"])
@@ -204,13 +206,13 @@ BAD = {
 }
 for label, patch in BAD.items():
     pet, shown = rig(patch)
-    reply(pet, ["一" * 10, "二" * 60])
+    reply(pet, ["一" * 3, "二" * 60])
     got = [s["read_pause_ms"] for s in shown[-1][1]]
-    check(f"{label}: 回退默认(10 字 2000 / 60 字 4500)", got == [2000, 4500], str(got))
+    check(f"{label}: 回退默认(3 字 1800 / 60 字 2200)", got == [1800, 2200], str(got))
 for label, val in (("api_chat 不是 dict", "oops"), ("api_chat 是 None", None), ("api_chat 是空 dict", {})):
     pet, shown = rig(api_value=val)
-    reply(pet, ["一" * 10])
-    check(f"{label}: 用默认值", shown[-1][1][0]["read_pause_ms"] == 2000, str(shown[-1][1]))
+    reply(pet, ["一" * 3])
+    check(f"{label}: 用默认值(3 字 1800)", shown[-1][1][0]["read_pause_ms"] == 1800, str(shown[-1][1]))
 pet, shown = rig({"read_pause_min_ms": 3000, "read_pause_max_ms": 3000})
 reply(pet, ["一", "一" * 100])
 check("min == max 合法: 固定 3000", [s["read_pause_ms"] for s in shown[-1][1]] == [3000, 3000], str(shown[-1][1]))

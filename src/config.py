@@ -56,10 +56,10 @@ DEFAULTS = {
         "max_per_10min": 80,  # 聊天本地限流: 任意 10 分钟内最多发送这么多次
         # 聊天回复每句打完字后的停顿(毫秒) = base + per_char × 这句字数, 再夹在 [min, max] 之间。
         # 只作用于聊天回复; 手写台词仍用固定的 PAGE_PAUSE_MS。四个值必须都是正数且 min <= max, 否则整组回退默认值。
-        "read_pause_base_ms": 1200,
-        "read_pause_per_char_ms": 80,
-        "read_pause_min_ms": 1500,
-        "read_pause_max_ms": 4500,
+        "read_pause_base_ms": 1500,
+        "read_pause_per_char_ms": 100,
+        "read_pause_min_ms": 1700,
+        "read_pause_max_ms": 2200,
     },
     "check_updates": True,  # 是否检查更新：只读取一个公开的 version.json，不发送任何数据，只提示、不自动替换
     "update_url": "https://raw.githubusercontent.com/winwinking/FloweyPet/master/version.json",  # 版本信息文件的地址
