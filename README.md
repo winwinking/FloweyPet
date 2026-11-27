@@ -44,6 +44,11 @@ FloweyPet 是一只住在你 Windows 桌面上的、话很多的 Flowey（《传
 - **一键更新**：有新版本时小花会告诉你，托盘里会出现"更新到 vX"，点一下就会自动下载、校验、替换并重启（从 3.3.0 起可用，见[升级到 3.3.0 与一键更新](#升级到-330-与一键更新)）
 - **换版本不丢记录**：从 3.2.0 开始，设置和记录存放在固定位置，以后升级不用再手动搬
 
+### 3.4.1 更新内容
+
+- **修复**：聊天回复的第一句有时字还没打完就被切到下一句
+- **改进**：聊天回复每句打完后，他会按这句的长短停一会儿再换下一句。想调快慢，可以在 config.json 的 api_chat 里改 `read_pause_base_ms`、`read_pause_per_char_ms`、`read_pause_min_ms`、`read_pause_max_ms`（单位毫秒，改之前先从托盘退出小花）
+
 ### 3.4.0 更新内容
 
 - **小花能聊天了**：右键「行动 → 聊天」打开输入框，打字后回车发送，Esc 或输入框右边的 × 关闭。他会一句一个对话框、一个表情地回你，记得最近 6 轮对话（只存在内存里，退出小花就忘了）
@@ -217,6 +222,11 @@ This is an unofficial fan project. Flowey and all original characters, art and s
 - **Chat** (from 3.4.0) — right-click → ACT → 聊天, type and press Enter to talk to Flowey; he answers one sentence per bubble, one expression per sentence. Needs your own API key, see [What's new in 3.4.0](#whats-new-in-340)
 - **One-click update** — Flowey tells you when a new version is out, and the tray gets an "Update to vX" entry that downloads, verifies, replaces and restarts for you (from 3.3.0 on; see [Upgrading to 3.3.0 and one-click update](#upgrading-to-330-and-one-click-update))
 - **Data survives upgrades** — from 3.2.0 on, settings and stats live in a fixed folder
+
+### What's new in 3.4.1
+
+- **Fixed** — the first sentence of a chat reply was sometimes cut off and replaced by the next one before it finished typing
+- **Improved** — after each sentence of a chat reply, he now pauses for a while, scaled to how long that sentence is, before moving on to the next. To make it faster or slower, edit `read_pause_base_ms`, `read_pause_per_char_ms`, `read_pause_min_ms` and `read_pause_max_ms` under `api_chat` in config.json (in milliseconds; quit Flowey from the tray before editing)
 
 ### What's new in 3.4.0
 
